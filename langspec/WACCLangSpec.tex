@@ -358,8 +358,11 @@ The type of the expression given to the return statement must match the return t
 Once the return statement is executed, the function is immediately exited.
 
 \paragraph{Exit Statements:}
+
+\fillgap{DONE \ref{tab:print}}{3 marks}
+
 An exit statement is used to show program termination. 
-When the control flow of the program reaches this symbol, the program is immediately stopped, and no more instructions are carried out.
+When the control flow of the program reaches this symbol, the program is immediately stopped, and no more instructions are executed.
 The exit statement is followed by an expression, which must be an integer, or integer variable between 0-255. 
 If an integer is given outside of this range, it is wrapped to fit into the range.
 For example the statement \lit{exit -1} will be wrapped to \lit{exit 255}.
@@ -422,7 +425,12 @@ Each of the program branches is executed in its own scope, which are denoted by 
 A scoping statement introduces a new program scope, which is denoted by the \lit{begin} and \lit{end} tokens.
 
 \paragraph{Sequential Composition:}
-\fillgap{Define/describe sequential composition \\- i.e. \lit*{<stat> ; <stat>} }{2 marks}
+\fillgap{DONE \ref{tab:print}}{2 marks}
+Sequention composition is the act of joining two or more statements together with the use of a semicolon (\lit{;}).
+As a statement \synt{stat} can itself be a composition of two different statements, is it possible to compose together long chains of instructions.
+When running, the second statement is executed only after the first statement has finished.
+It is conventional, but not essential, to put each statement on a new line, finishing each line with the semicolon to compose them.
+It is importnat to note that the final statement in a composition does not require a semicolon, and adding one will cause a syntax error.
 
 \subsection{Expressions}
 %%%%%%%%%%%%%%%%%%%%%%%%%
