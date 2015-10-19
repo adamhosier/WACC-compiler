@@ -397,11 +397,11 @@ The behaviour of the print statements for each type of expression is shown in Ta
     \hline
     \lit*{char} & Output a single-character string. & \lit*{\textquotesingle c\textquotesingle} & ``c'' \\
     \hline
-    \lit*{string} or \lit*{char[]} & ??? & ??? & ??? \\
+    \lit*{string} or \lit*{char[]} & Outputs each character in the array in succession & ``chair'' & ``chair'' \\
     \hline
-    Other Array Types & ??? & ??? & ??? \\  
+    Other Array Types & Printing an array variable gives an address & [0, 1, 2] & \#addrs\# \\  
     \hline
-    \lit*{pair} & ??? & \lit*{newpair(a, b)}\footnotemark[1] & ??? \\
+    \lit*{pair} & Printing a pair gives an address & \lit*{newpair(a, b)}\footnotemark[1] & \#addrs\# \\
     \hline
   \end{tabulary}
   \caption{The behaviour of the print statements for each type of expression.}
@@ -444,7 +444,7 @@ or an expression enclosed by parenthesis.
 
 We discuss the meaning of each of these expressions in more detail below.
 
-The expressions of the WACC language have been chosen to be side-effect free.
+The expressions of the WACC language have been chosen to be side-effect free. This means that there are no expressions that when declared modify existing data.
 \fillgap{Define side-effect free expressions}{1 mark}
 
 \paragraph{Integer Literals:}
@@ -527,8 +527,8 @@ All unary operators have the same precedence, they are evaluated from right to l
     \lit{!} & \lit*{bool} & \lit*{bool} & Logical Not \\
     \lit{-} & \lit*{int} & \lit*{int} & Negation \\
     \lit{len} & T\lit*{[]} & \lit*{int} & Array Length \\
-    \lit{ord} & ??? & ??? & ??? \\
-    \lit{chr} & ??? & ??? & ??? \\
+    \lit{ord} & \lit*{char} & \lit*{int} & Ordinal Value \\
+    \lit{chr} & \lit*{int} & \lit*{char} & Inverse Ordinal Value \\
     \hline
   \end{tabulary}
   \caption{The unary operators of the WACC language with their types and meanings.}
@@ -567,12 +567,12 @@ with 1 being the highest and 6 being the lowest.
     \lit{\%} & 1 & \lit*{int} & \lit*{int} & \lit*{int} & Modulus \\
     \lit{+} & 2 & \lit*{int} & \lit*{int} & \lit*{int} & Plus \\
     \lit{-} & 2 & \lit*{int} & \lit*{int} & \lit*{int} & Minus \\
-    \lit{>} & 3 & ??? & ??? & ??? & Greater Than \\
-    \lit{>=} & 3 & ??? & ??? & ??? & Greater Than or Equal \\
-    \lit{<} & 3 & ??? & ??? & ??? & Less Than \\
-    \lit{<=} & 3 & ??? & ??? & ??? & Less Than or Equal \\
-    \lit{==} & 4 & ??? & ??? & ??? & Equality \\
-    \lit{!=} & 4 & ??? & ??? & ??? & Inequality \\
+    \lit{>} & 3 & \lit*{int} & \lit*{int} & \lit*{bool} & Greater Than \\
+    \lit{>=} & 3 & \lit*{int} & \lit*{int} & \lit*{bool} & Greater Than or Equal \\
+    \lit{<} & 3 & \lit*{int} & \lit*{int} & \lit*{bool} & Less Than \\
+    \lit{<=} & 3 & \lit*{int} & \lit*{int} & \lit*{bool} & Less Than or Equal \\
+    \lit{==} & 4 & \lit*{int} & \lit*{int} & \lit*{bool} & Equality \\
+    \lit{!=} & 4 & \lit*{int} & \lit*{int} & \lit*{bool} & Inequality \\
     \lit{\&\&} & 5 & \lit*{bool} & \lit*{bool} & \lit*{bool} & Logical And \\
     \lit{||} & 6 & \lit*{bool} & \lit*{bool} & \lit*{bool} & Logical Or \\
     \hline
