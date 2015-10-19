@@ -467,14 +467,14 @@ The meaning of each escaped character is shown in Table~\ref{tab:escapedcharacte
     Representation & ASCII Value & Description & Symbol \\
     \hline
     \lit*{\char`\\ 0} & \lit*{0x00} & null terminator & NUL \\
-    ??? & \lit*{0x08} & ??? & ??? \\
-    ??? & \lit*{0x09} & ??? & ??? \\
-    ??? & \lit*{0x0a} & ??? & ??? \\
-    ??? & \lit*{0x0c} & ??? & ??? \\
-    \lit*{\char`\\ r} & ??? & carriage return & CR \\
-    \lit*{\char`\\ "} & ??? & double quote & " \\
-    \lit*{\char`\\ '} & ??? & single quote & ' \\
-    \lit*{\char`\\ \char`\\} & ??? & backslash & \textbackslash \\
+    \lit*{\char`\\ b} & \lit*{0x08} & backspace & BS\\
+    \lit*{\char`\\ t} & \lit*{0x09} & tab & TAB \\
+    \lit*{\char`\\ n} & \lit*{0x0a} & new line & LF \\
+    \lit*{\char`\\ f} & \lit*{0x0c} & new page & FF \\
+    \lit*{\char`\\ r} & \lit*{0x0d} & carriage return & CR \\
+    \lit*{\char`\\ "} & \lit*{0x22} & double quote & " \\
+    \lit*{\char`\\ '} & \lit*{0x27} & single quote & ' \\
+    \lit*{\char`\\ \char`\\} & \lit*{0x5C} & backslash & \textbackslash \\
     \hline
   \end{tabular}
   \caption{The escaped-characters available in the WACC language.}
