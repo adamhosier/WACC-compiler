@@ -358,7 +358,19 @@ The type of the expression given to the return statement must match the return t
 Once the return statement is executed, the function is immediately exited.
 
 \paragraph{Exit Statements:}
-\fillgap{define exit statements}{2 marks}
+An exit statement is used to show program termination. 
+When the control flow of the program reaches this symbol, the program is immediately stopped, and no more instructions are carried out.
+The exit statement is followed by an expression, which must be an integer, or integer variable between 0-255. 
+If an integer is given outside of this range, it is wrapped to fit into the range.
+For example the statement \lit{exit -1} will be wrapped to \lit{exit 255}.
+The integer expression matches with a simple convention of exit codes:
+\begin{itemize}
+  \item \lit{0}: Success
+  \item \lit{100}: Syntax Error
+  \item \lit{200}: Semantic Error
+  \item \lit{255} or \lit{-1}: Common General Error
+  \item Other: More exit codes can be adopted at the programmers choice.
+\end{itemize}
 
 \paragraph{Print Statements:}
 There are two types of print command in the WACC language.
