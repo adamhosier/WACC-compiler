@@ -284,26 +284,26 @@ For example, in an \lit*{if} statement where we want to have an empty \lit*{else
 A variable declaration statement creates a new program variable in the current scope setting its static type and initial value.
 The statement must be given a valid WACC type \synt{type}, a variable name \synt{ident} and an initial assignment value \synt{assign-rhs}.
 
-Variable names must not clash with ... ??? ...
+Variable names must not clash with WACC keywords or variables that have been previously declared using the same identifier. 
 
-They can consist ... ??? ...
+They can consist of letters, numbers and the underscore character, however, a variable's identifier cannot begin with a number.
 
 The initial assignment to a variable follows all of the assignment restrictions discussed in detail in the assignment statement section below.
 
-A variable must be declared before ... ??? ...
+A variable must be declared before being accessed or passed around as a parameter.
 
-Any attempt to access an undeclared variable results in ... ??? ...
+Any attempt to access an undeclared variable results in a compilation error (semantic).
 
 Additionally, every use of a variable must match the type assigned to that variable when it was declared.
 
 A variable can only be accessed within the scope of its declaration (or any child scope) and it is destroyed when exiting this scope.
 Variables must be unique within their scope, so a variable cannot be redefined within the same scope.
 Variables can, however, be redefined within a child scope.
-In this case ... ??? ... 
+In this case the redefinition only holds within the child scope. We must adhere to the type that was specified in the redefinition, as it does not have the same definition as the variable defined in the parent scope. 
 
-Once the child scope is exited, ... ??? ...
+Once the child scope is exited, the redefinition of a variable is destroyed and its definition reverts back to that of the parent scope.
 
-\fillgap{Complete the above paragraph}{5 marks}
+\fillgap{DONE}{5 marks}
 
 \paragraph{Assignment Statements:}
 An assignment statement updates its target (the left-hand side of the \lit{=}) with a new value (the right-hand side of the \lit{=}).
@@ -419,7 +419,11 @@ Otherwise, the \lit{else} body statement is executed.
 Each of the program branches is executed in its own scope, which are denoted by the \lit{then} and \lit{else} tokens and the \lit{else} and \lit{fi} tokens, respectively.
 
 \paragraph{While Loop Statements:}
-\fillgap{Define/describe while loop statements}{6 marks}
+\fillgap{DONE}{6 marks}
+A while loop statement allows a body of code to be executed repeatedly given a \lit{bool} condition.
+The while loop's body is denoted by \lit{do} and closed with \lit{done}. 
+The execution of the while loop's body only terminates when the \lit{bool} given to the statement evaluates to \lit{false}.  
+
 
 \paragraph{Scoping Statements:}
 A scoping statement introduces a new program scope, which is denoted by the \lit{begin} and \lit{end} tokens.
@@ -543,9 +547,9 @@ returning \lit{true} if the sub-expression evaluates to \lit{false} and vice-ver
 
 \item The \lit{len} operator returns the length of the array referenced by the evaluation of its sub-expression.
 
-\item The \lit{ord} operator ... \fillgap{Define/describe the \lit{ord} operator}{1 mark}
+\item The \lit{ord} operator returns the ASCII \lit{int} representation of the given \lit{char} parameter. \fillgap{DONE}{1 mark}
 
-\item The \lit{chr} operator ... \fillgap{Define/describe the \lit{chr} operator}{1 mark} 
+\item The \lit{chr} operator returns the \lit{char} corresponding to the given \lit{int} under ASCII representation. \fillgap{DONE}{1 mark} 
 
 \end{itemize}
 
