@@ -359,7 +359,7 @@ Once the return statement is executed, the function is immediately exited.
 
 \paragraph{Exit Statements:}
 
-\fillgap{DONE \ref{tab:print}}{3 marks}
+\fillgap{DONE}{3 marks}
 
 An exit statement is used to show program termination. 
 When the control flow of the program reaches this symbol, the program is immediately stopped, and no more instructions are executed.
@@ -425,7 +425,7 @@ Each of the program branches is executed in its own scope, which are denoted by 
 A scoping statement introduces a new program scope, which is denoted by the \lit{begin} and \lit{end} tokens.
 
 \paragraph{Sequential Composition:}
-\fillgap{DONE \ref{tab:print}}{2 marks}
+\fillgap{DONE}{2 marks}
 Sequention composition is the act of joining two or more statements together with the use of a semicolon (\lit{;}).
 As a statement \synt{stat} can itself be a composition of two different statements, is it possible to compose together long chains of instructions.
 When running, the second statement is executed only after the first statement has finished.
@@ -458,7 +458,7 @@ A boolean literal \synt{bool-liter} is either \lit{true} or \lit{false}.
 A character literal \synt{char-liter} is a single ASCII character between two \lit{\char`'} symbols. 
 A \lit{\char`\\} can be used to escape the character that immediately follows the \lit{\char`\\}. 
 The meaning of each escaped character is shown in Table~\ref{tab:escapedcharacters}. 
-\fillgap{Fill in Table~\ref{tab:escapedcharacters}}{2 marks}
+\fillgap{DONE}{2 marks}
 %
 \begin{table}
   \centering
@@ -622,7 +622,12 @@ Any other type of occurrence of whitespace is ignored by the compiler.
 Note, in particular, that the code indentation in the example programs has no meaning, it simply aids readability. 
 Also note that whitespace inside a string or character literal is preserved by the compiler. 
 
-\fillgap{Define/describe comments}{3 marks}
+\fillgap{DONE}{3 marks}
+Comments are entries into the source code that provide no functional meaning.
+A program with no comments, will behave exactly the same as the same program full of valid comments.
+A valid comment is given by the \lit{\#} character followed by any non-EOL symbol, ending at the end of a line.
+Commends can be started anywhere in the code, including after a sequential combinatoin symbol (\lit{;}), but any code written between a \lit{\#} symbol, and the end of that line, is not executed, and discarded by the compiler.
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
