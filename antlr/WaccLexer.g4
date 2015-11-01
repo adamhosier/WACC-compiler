@@ -1,2 +1,3 @@
 lexer grammar WaccLexer;
 
+PROGRAM:
