@@ -105,7 +105,7 @@ fragment CHARACTER
   ;
 
 // literals
-INTEGER : DIGIT+ ;
+INTEGER : (PLUS | MINUS)? DIGIT+ ;
 TRUE : 'true' ;
 FALSE : 'false' ;
 CHAR_LIT : SINGLE_QUOTE CHARACTER SINGLE_QUOTE ;
