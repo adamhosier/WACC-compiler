@@ -45,6 +45,7 @@ DIV : '/' ;
 MOD : '%' ;
 PLUS : '+' ;
 MINUS : '-' ;
+EQUALS : '=' ;
 GREATER_THAN : '>' ;
 GREATER_THAN_EQ : '>=' ;
 LESS_THAN : '<' ;
