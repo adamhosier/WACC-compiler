@@ -76,3 +76,57 @@ expr
   | unary-oper expr
   | expr binary-oper expr
   | OPEN_PARENTHESES expr CLOSE_PARENTHESES
+
+unaryOper
+  : NOT
+  | MINUS
+  | LEN
+  | ORD
+  | CHR
+  ;
+
+binaryOper
+  : MULT 
+  | DIV 
+  | MOD 
+  | PLUS 
+  | MINUS 
+  | GREATER_THAN 
+  | GREATER_THAN_EQ 
+  | LESS_THAN
+  | LESS_THAN_EQ 
+  | EQ 
+  | NOT_EQ
+  | AND  
+  | OR 
+  ;
+
+ident : IDENT ; 
+
+arrayElem : ident (OPEN_BRACKETS expr CLOSE_BRACKETS)+ ;
+
+intLiter : intSign? digit+ ;
+  
+digit : DIGIT ;
+
+intSign 
+  : PLUS
+  | MINUS
+  ;
+
+boolLiter : BOOL_LIT ;
+
+charLiter : CHAR_LIT ;
+
+strLiter : STRING_LIT ;
+
+character : CHARACTER ;
+
+escapedChar : ESCAPED_CHAR ;
+
+arrayLiter : ARRAY_LIT ; -- cyrus implement on Basic Lexer Please
+
+pairLiter : PAIR_LIT ; -- cyrus implement on Basic Lexer Please
+
+comment : COMMENT ; 
+
