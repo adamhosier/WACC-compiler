@@ -50,7 +50,7 @@ pairElem
 
 type
   : baseType
-  | arrayType
+  | type OPEN_BRACKETS CLOSE_BRACKETS 
   | pairType
   ;
 
@@ -61,14 +61,12 @@ baseType
   | STRING
   ;
 
-arrayType: type OPEN_BLACKETS CLOSE_BRACKETS ;
-
 pairType: PAIR OPEN_PARENTHESES pairElemType COMMA pairElemType 
           CLOSE_PARENTHESES ;
 
 pairElemType
   : baseType
-  | arrayType
+  | type OPEN_BRACKETS CLOSE_BRACKETS 
   | pairType
   ;
 
@@ -84,3 +82,56 @@ expr
   | expr binaryOper expr
   | OPEN_PARENTHESES expr CLOSE_PARENTHESES
   ;
+
+unaryOper
+  : NOT
+  | MINUS
+  | LEN
+  | ORD
+  | CHR
+  ;
+
+binaryOper
+  : MULT 
+  | DIV 
+  | MOD 
+  | PLUS 
+  | MINUS 
+  | GREATER_THAN 
+  | GREATER_THAN_EQ 
+  | LESS_THAN
+  | LESS_THAN_EQ 
+  | EQ 
+  | NOT_EQ
+  | AND  
+  | OR 
+  ;
+
+ident : IDENT ; 
+
+arrayElem : ident (OPEN_BRACKETS expr CLOSE_BRACKETS)+ ;
+
+intLiter : intSign? digit+ ;
+  
+digit : DIGIT_LIT ;
+
+intSign 
+  : PLUS
+  | MINUS
+  ;
+
+boolLiter : BOOL_LIT ;
+
+charLiter : CHAR_LIT ;
+
+strLiter : STRING_LIT ;
+
+character : CHARACTER_LIT ;
+
+escapedChar : ESCAPED_CHAR_LIT ;
+
+arrayLiter : OPEN_BRACKETS (expr (COMMA expr)*)? CLOSE_BRACKETS ;
+
+pairLiter : NULL ;
+
+comment : COMMENT ; 
