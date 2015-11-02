@@ -6,17 +6,17 @@ options {
 
 prog: BEGIN (func)* stat END EOF ;
 
-func: type ident OPEN_PARENTHESES (param-list)? CLOSE_PARENTHESES IS stat END
+func: type ident OPEN_PARENTHESES (paramList)? CLOSE_PARENTHESES IS stat END ;
 
-param-list: param (COMMA param)*
+paramList: param (COMMA param)* ;
 
-param: type ident
+param: type ident ;
 
 stat
   : SKIP
-  | type ident EQUALS assign-rhs
-  | assign-lhs EQUALS assign-rhs
-  | READ assign-lhs 
+  | type ident EQUALS assignRhs
+  | assignLhs EQUALS assignRhs
+  | READ assignLhs 
   | FREE expr
   | RETURN expr
   | EXIT expr
@@ -26,53 +26,61 @@ stat
   | WHILE expr DO stat DONE
   | BEGIN stat END
   | stat SEMICOLON stat
+  ;
 
-assign-lhs
+assignLhs
   : ident
-  | array-elem
-  | pair-elem
+  | arrayElem
+  | pairElem
+  ;
 
-assign-rhs
+assignRhs
   : expr
-  | array-liter
+  | arrayLiter
   | NEW_PAIR OPEN_PARENTHESES expr COMMA expr CLOSE_PARENTHESES
-  | CALL ident OPEN_PARENTHESES arg-list CLOSE_PARENTHESES
+  | CALL ident OPEN_PARENTHESES argList CLOSE_PARENTHESES
+  ;
 
-arg-list: expr (COMMA expr)*
+argList: expr (COMMA expr)* ;
 
-pair-elem
+pairElem
   : FST expr
   | SND expr
+  ;
 
 type
-  : base-type
-  | array-type
-  | pair-type
+  : baseType
+  | arrayType
+  | pairType
+  ;
 
-base-type
+baseType
   : INT
   | BOOL
   | CHAR
   | STRING
+  ;
 
-array-type: type OPEN_BLACKETS CLOSE_BRACKETS
+arrayType: type OPEN_BLACKETS CLOSE_BRACKETS ;
 
-pair-type: PAIR OPEN_PARENTHESES pair-elem-type COMMA pair-elem-type 
-           CLOSE_PARENTHESES
+pairType: PAIR OPEN_PARENTHESES pairElemType COMMA pairElemType 
+          CLOSE_PARENTHESES ;
 
-pair-elem-type
-  : base-type
-  | array-type
-  | pair-type
+pairElemType
+  : baseType
+  | arrayType
+  | pairType
+  ;
 
 expr
-  : int-liter
-  | bool-liter
-  | char-liter
-  | str-liter
-  | pair-liter
+  : intLiter
+  | boolLiter
+  | charLiter
+  | strLiter
+  | pairLiter
   | ident
-  | array-elem
-  | unary-oper expr
-  | expr binary-oper expr
+  | arrayElem
+  | unaryOper expr
+  | expr binaryOper expr
   | OPEN_PARENTHESES expr CLOSE_PARENTHESES
+  ;
