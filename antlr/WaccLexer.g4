@@ -1,5 +1,8 @@
 lexer grammar WaccLexer;
 
+COMMENT : '#' ~[\r\n]* [\r\n] -> skip ;
+WS : [ \n\r\t]+ -> channel(HIDDEN) ;
+
 BEGIN : 'begin' ;
 END : 'end' ;
 IS : 'is' ;
@@ -64,8 +67,8 @@ CLOSE_BRACKETS : ']' ;
 COMMA : ',' ;
 SEMICOLON : ';' ;
 
-SINGLE_QUOTE : '\'' ;
-DOUBLE_QUOTE : '"' ;
+fragment SINGLE_QUOTE : '\'' ;
+fragment DOUBLE_QUOTE : '"' ;
 
 NULL : 'null' ;
 
@@ -96,6 +99,7 @@ fragment ESCAPED_CHAR
   | '\\' SINGLE_QUOTE
   | '\\' '\\')
   ;
+
 fragment CHARACTER
   :
   ~('\''
@@ -105,7 +109,7 @@ fragment CHARACTER
   ;
 
 // literals
-INTEGER : (PLUS | MINUS)? DIGIT+ ;
+INT_LIT : (PLUS | MINUS)? DIGIT+ ;
 TRUE : 'true' ;
 FALSE : 'false' ;
 BOOL_LIT : TRUE | FALSE ;
@@ -113,7 +117,4 @@ DIGIT_LIT : DIGIT ;
 CHARACTER_LIT : CHARACTER ;
 ESCAPED_CHAR_LIT : ESCAPED_CHAR ;
 CHAR_LIT : SINGLE_QUOTE CHARACTER SINGLE_QUOTE ;
-STRING_LIT : DOUBLE_QUOTE CHARACTER* DOUBLE_QUOTE ;
-
-COMMENT : '#' ~[\r\n]* [\r\n] -> skip ;
-WHITESPACE : (' '|'\n'|'\t'|'\r') -> skip ;
+STRING_LIT : DOUBLE_QUOTE (~'"')* DOUBLE_QUOTE ;

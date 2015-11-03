@@ -38,7 +38,8 @@ assignRhs
   : expr
   | arrayLiter
   | NEW_PAIR OPEN_PARENTHESES expr COMMA expr CLOSE_PARENTHESES
-  | CALL ident OPEN_PARENTHESES argList CLOSE_PARENTHESES
+  | pairElem
+  | CALL ident OPEN_PARENTHESES argList? CLOSE_PARENTHESES
   ;
 
 argList: expr (COMMA expr)* ;
@@ -61,13 +62,13 @@ baseType
   | STRING
   ;
 
-pairType: PAIR OPEN_PARENTHESES pairElemType COMMA pairElemType 
-          CLOSE_PARENTHESES ;
+pairType
+  : PAIR OPEN_PARENTHESES pairElemType COMMA pairElemType CLOSE_PARENTHESES ;
 
 pairElemType
   : baseType
   | type OPEN_BRACKETS CLOSE_BRACKETS 
-  | pairType
+  | PAIR 
   ;
 
 expr
@@ -111,7 +112,7 @@ ident : IDENT ;
 
 arrayElem : ident (OPEN_BRACKETS expr CLOSE_BRACKETS)+ ;
 
-intLiter : intSign? digit+ ;
+intLiter : INT_LIT;
   
 digit : DIGIT_LIT ;
 
