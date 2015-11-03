@@ -13,7 +13,7 @@ public class Main {
 
         // simulate file input from stdin
         // TODO: REMOVE THIS WHEN WE WANT FILES TO BE SENT FROM THE COMMAND LINE
-        System.setIn(new FileInputStream("~work/wacc_examples/valid/advanced/hashTable.wacc"));
+        System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/valid/advanced/hashTable.wacc"));
 
         // create a CharStream that reads from standard input
         ANTLRInputStream input = new ANTLRInputStream(System.in);
@@ -32,6 +32,7 @@ public class Main {
         // build and run my custom visitor
         System.out.println("====");
         AntlrVisitor visitor = new AntlrVisitor();
+        visitor.verbose = true; // TODO: REMOVE THIS WHEN NOT DEBUGGING
         visitor.visit(tree);
         System.out.println("====");
 
