@@ -469,7 +469,7 @@ public class WaccParser extends Parser {
 					setState(134);
 					if (!(precpred(_ctx, 1))) throw new FailedPredicateException(this, "precpred(_ctx, 1)");
 					setState(135); match(SEMICOLON);
-					setState(136); stat(2);
+					setState(136); stat(1);
 					}
 					} 
 				}
@@ -1839,7 +1839,7 @@ public class WaccParser extends Parser {
 		"\2\2\2\u0086d\3\2\2\2\u0086h\3\2\2\2\u0086j\3\2\2\2\u0086l\3\2\2\2\u0086"+
 		"n\3\2\2\2\u0086p\3\2\2\2\u0086r\3\2\2\2\u0086t\3\2\2\2\u0086|\3\2\2\2"+
 		"\u0086\u0082\3\2\2\2\u0087\u008d\3\2\2\2\u0088\u0089\f\3\2\2\u0089\u008a"+
-		"\7\66\2\2\u008a\u008c\5\n\6\4\u008b\u0088\3\2\2\2\u008c\u008f\3\2\2\2"+
+		"\7\66\2\2\u008a\u008c\5\n\6\3\u008b\u0088\3\2\2\2\u008c\u008f\3\2\2\2"+
 		"\u008d\u008b\3\2\2\2\u008d\u008e\3\2\2\2\u008e\13\3\2\2\2\u008f\u008d"+
 		"\3\2\2\2\u0090\u0094\5\"\22\2\u0091\u0094\5$\23\2\u0092\u0094\5\22\n\2"+
 		"\u0093\u0090\3\2\2\2\u0093\u0091\3\2\2\2\u0093\u0092\3\2\2\2\u0094\r\3"+

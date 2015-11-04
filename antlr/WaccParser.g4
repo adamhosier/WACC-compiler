@@ -25,7 +25,7 @@ stat
   | IF expr THEN stat ELSE stat FI
   | WHILE expr DO stat DONE
   | BEGIN stat END
-  | stat SEMICOLON stat
+  | <assoc=right> stat SEMICOLON stat
   ;
 
 assignLhs

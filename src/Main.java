@@ -13,23 +13,20 @@ public class Main {
 
         // simulate file input from stdin
         // TODO: REMOVE THIS WHEN WE WANT FILES TO BE SENT FROM THE COMMAND LINE
-        System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/valid/advanced/hashTable.wacc"));
+        //System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/valid/advanced/hashTable.wacc"));
+        //System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/valid/scope/scope.wacc"));
+        System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/valid/if/if6.wacc"));
 
-        // create a CharStream that reads from standard input
-        ANTLRInputStream input = new ANTLRInputStream(System.in);
+        // create a lexer that feeds off of input from System.in
+        WaccLexer lexer = new WaccLexer(new ANTLRInputStream(System.in));
 
-        // create a lexer that feeds off of input CharStream
-        WaccLexer lexer = new WaccLexer(input);
+        // create a parser that feeds off the tokens buffer from the lexer
+        WaccParser parser = new WaccParser(new CommonTokenStream(lexer));
 
-        // create a buffer of tokens pulled from the lexer
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        // begin parsing at "prog" antlr rule
+        ParseTree tree = parser.prog();
 
-        // create a parser that feeds off the tokens buffer
-        WaccParser parser = new WaccParser(tokens);
-
-        ParseTree tree = parser.prog(); // begin parsing at program rule
-
-        // build and run my custom visitor
+        // run the visitor
         System.out.println("====");
         AntlrVisitor visitor = new AntlrVisitor();
         visitor.verbose = true; // TODO: REMOVE THIS WHEN NOT DEBUGGING
