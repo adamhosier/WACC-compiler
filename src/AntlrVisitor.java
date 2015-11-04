@@ -32,7 +32,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     /////////// VISITOR METHODS ////////////
 
     public Void visitProg(ProgContext ctx) {
-        outputln("Visited main program entry");
+        outputln("V isited main program entry");
         return visitChildren(ctx);
     }
 
