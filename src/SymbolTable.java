@@ -3,34 +3,47 @@ import antlr.WaccParser.TypeContext;
 
 import javax.lang.model.element.Name;
 import javax.naming.NameNotFoundException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
 
 public class SymbolTable {
 
-    private Stack<Map<String, Symbol>> scopetables = new Stack<>();
-    private Map<String, Symbol> globaltable = new HashMap<>();
+    private LinkedList<Map<String, Symbol>> tables = new LinkedList<>();
+    private Map<String, Symbol> globaltable;
 
+    public SymbolTable() {
+        globaltable = new HashMap<>();
+        tables.add(globaltable);
+    }
 
     public void addGlobalVariable(String ident, TypeContext type) {
-        globaltable.put(ident, new VariableSymbol(type));
+        addVar(globaltable, ident, new VariableSymbol(type));
     }
 
     public void addScopeVariable(String ident, TypeContext type) {
-        scopetables.peek().put(ident, new VariableSymbol(type));
+        addVar(tables.getFirst(), ident, new VariableSymbol(type));
+    }
+
+    private void addVar(Map<String, Symbol> table, String ident, Symbol sym) {
+        if(table.containsKey(ident)) {
+            throw new RuntimeException("TODO: IMPROVE THIS ERROR (redefinition)");
+        }
+        table.put(ident, sym);
     }
 
     public void addFunction(String ident, TypeContext type, ParamListContext params) {
-        globaltable.put(ident, new FunctionSymbol(type, params));
+        addVar(globaltable, ident, new FunctionSymbol(type, params));
     }
 
     public void newScope() {
-        scopetables.push(new HashMap<String, Symbol>());
+        tables.addFirst(new HashMap<String, Symbol>());
     }
 
     public void endScope() {
-        scopetables.pop();
+        if(tables.size() > 1) {
+            tables.removeFirst();
+        } else {
+            throw new RuntimeException("TODO: IMPROVE THIS ERROR (too many scopes popped)");
+        }
     }
 
     public TypeContext lookupType(String ident) {
@@ -38,22 +51,12 @@ public class SymbolTable {
     }
 
     private Symbol getSymbol(String ident) {
-        if(symbolExistsInCurrentScope(ident)) {
-            return scopetables.peek().get(ident);
+        for(Map<String, Symbol> table : tables) {
+            if(table.containsKey(ident)) {
+                return table.get(ident);
+            }
         }
-        else if(symbolExistsGlobally(ident)) {
-            return globaltable.get(ident);
-        } else {
-            throw new RuntimeException("Identifier " + ident + " not found in current or global scope");
-        }
-    }
-
-    public boolean symbolExistsInCurrentScope(String ident) {
-        return scopetables.peek().containsKey(ident);
-    }
-
-    public boolean symbolExistsGlobally(String ident) {
-        return globaltable.containsKey(ident);
+        throw new RuntimeException("TODO: IMPROVE THIS ERROR (symbol not found)");
     }
 
     private abstract class Symbol {
