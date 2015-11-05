@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/wacclab.iml" filepath="$PROJECT_DIR$/wacclab.iml" />
+      <module fileurl="file://$PROJECT_DIR$/wacc.iml" filepath="$PROJECT_DIR$/wacc.iml" />
     </modules>
   </component>
 </project>

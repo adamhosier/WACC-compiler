@@ -4,35 +4,51 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import javax.swing.text.html.parser.Parser;
-
 public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
-    SymbolTable st = new SymbolTable();
+    SymbolTable st;
+    WaccVisitorErrorHandler errorHandler;
 
     // toggles if output is written to stdout
     public boolean verbose = false;
+
+    public AntlrVisitor() {
+        errorHandler = new WaccVisitorErrorHandler();
+        st = new SymbolTable(errorHandler);
+    }
 
     /////////// UTILITY METHODS ////////////
 
     private boolean matchGrammar(ParserRuleContext ctx, int[] pattern) {
         for(int i = 0; i < ctx.getChildCount(); i++) {
             ParseTree child = ctx.getChild(i);
-            if(child instanceof ParserRuleContext && ((ParserRuleContext) child).getRuleIndex() == pattern[i]) {
-
-            } else if (child instanceof TerminalNode && ctx.getToken(pattern[i], 0) == child ) {
-
-            } else {
+            if(!(child instanceof ParserRuleContext && ((ParserRuleContext) child).getRuleIndex() == pattern[i]) &&
+               !(child instanceof TerminalNode      && ctx.getToken(pattern[i], 0) == child )) {
                 return false;
             }
         }
         return true;
     }
 
+    private int getType(ParserRuleContext ctx) {
+        if(ctx instanceof TypeContext) {
+            return ((TypeContext) ctx).type().baseType().getRuleIndex();
+        }
+        return 0;
+    }
+
+    private int getType(int x) {
+        return x;
+    }
+
+    private String getTypeString(ParserRuleContext ctx) {
+        return tokenNames[getType(ctx)];
+    }
+
     /////////// VISITOR METHODS ////////////
 
     public Void visitProg(ProgContext ctx) {
-        outputln("V isited main program entry");
+        outputln("Visited main program entry");
         return visitChildren(ctx);
     }
 
@@ -72,7 +88,10 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     }
 
     private void visitStatDeclaration(StatContext ctx) {
-        outputln("Visited declaration " + ctx.getText());
+        outputln("Visited declaration");
+        outputln("Declaring var " + ctx.ident().getText() + " as type " + ctx.type().getText());
+        errorHandler.typeMismatch(ctx, ctx.type().getText(), getTypeString(ctx.assignRhs()));
+        st.addVariable(ctx.ident().getText(), ctx.type());
     }
 
     private void visitStatAssignment(StatContext ctx) {
@@ -107,10 +126,10 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         outputln("Visited if");
     }
 
+
     private void visitStatWhile(StatContext ctx) {
         outputln("Visited while");
     }
-
 
     private void visitStatNewScope(StatContext ctx) {
         outputln("Scope started (BEGIN)");
@@ -139,11 +158,11 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         return null;
     }
 
+
     public Void visitParam(ParamContext ctx) {
         output(ctx.type().getText() + " " + ctx.ident().getText());
         return null;
     }
-
 
     ////////// OUTPUT FUNCTIONS ////////////
 

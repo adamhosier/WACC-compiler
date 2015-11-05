@@ -7,19 +7,22 @@ import java.util.*;
 
 public class SymbolTable {
 
-    private LinkedList<Map<String, Symbol>> tables = new LinkedList<>();
     private Map<String, Symbol> globaltable;
+    private WaccVisitorErrorHandler errorHandler;
 
-    public SymbolTable() {
+    private LinkedList<Map<String, Symbol>> tables = new LinkedList<>();
+
+    public SymbolTable(WaccVisitorErrorHandler errorHandler) {
+        this.errorHandler = errorHandler;
         globaltable = new HashMap<>();
         tables.add(globaltable);
     }
 
-    public void addGlobalVariable(String ident, TypeContext type) {
-        addVar(globaltable, ident, new VariableSymbol(type));
+    public void addFunction(String ident, TypeContext type, ParamListContext params) {
+        addVar(globaltable, ident, new FunctionSymbol(type, params));
     }
 
-    public void addScopeVariable(String ident, TypeContext type) {
+    public void addVariable(String ident, TypeContext type) {
         addVar(tables.getFirst(), ident, new VariableSymbol(type));
     }
 
@@ -28,10 +31,6 @@ public class SymbolTable {
             throw new RuntimeException("TODO: IMPROVE THIS ERROR (redefinition)");
         }
         table.put(ident, sym);
-    }
-
-    public void addFunction(String ident, TypeContext type, ParamListContext params) {
-        addVar(globaltable, ident, new FunctionSymbol(type, params));
     }
 
     public void newScope() {
