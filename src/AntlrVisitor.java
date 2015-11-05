@@ -29,6 +29,10 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         return true;
     }
 
+    private boolean isIntExpr(ParserRuleContext ctx) {
+        return false;
+    }
+
     /////////// VISITOR METHODS ////////////
 
     public Void visitProg(ProgContext ctx) {
@@ -85,6 +89,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     private void visitStatFree(StatContext ctx) {
         outputln("Visited free");
+        visit(ctx.children.get(1));
     }
 
     private void visitStatReturn(StatContext ctx) {
@@ -97,10 +102,12 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     private void visitStatPrint(StatContext ctx) {
         outputln("Visited print");
+        visit(ctx.children.get(1));
     }
 
     private void visitStatPrintln(StatContext ctx) {
         outputln("Visited println");
+        visit(ctx.children.get(1));
     }
 
     private void visitStatIf(StatContext ctx) {
@@ -144,6 +151,154 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         return null;
     }
 
+    ////////// Visit assignLhs //////////
+
+    public Void visitAssignLhs(AssignLhsContext ctx) {
+        if(matchGrammar(ctx, new int[]{RULE_ident}))
+            visitExprIdent(ctx);
+        if(matchGrammar(ctx, new int[]{RULE_arrayElem}))
+            visitExprArrayElem(ctx);
+        if(matchGrammar(ctx, new int[]{RULE_pairElem}))
+            visitChildren(ctx);
+        return null;
+    }
+
+    ////////// Visit assignRhs //////////
+
+    public Void visitAssignRhs(AssignRhsContext ctx) {
+        if(matchGrammar(ctx, new int[]{RULE_expr}))
+            ctx.getChild(0).accept(this);
+        if(matchGrammar(ctx, new int[]{RULE_arrayLiter}))
+            ctx.getChild(0).accept(this);
+        if(matchGrammar(ctx, new int[]{NEW_PAIR, OPEN_PARENTHESES, RULE_expr,
+                COMMA, RULE_expr, CLOSE_PARENTHESES}))
+            visit(ctx.getChild(2));
+            visit(ctx.getChild(4));
+        if(matchGrammar(ctx, new int[]{RULE_pairElem}))
+            visit(ctx.getChild(0));
+//        if(matchGrammar(ctx, new int[]{CALL, RULE_ident, OPEN_PARENTHESES, argList?, CLOSE_PARENTHESES})
+        return null;
+    }
+
+    ////////// Visit arg list //////////
+
+    public Void visitArgList(ArgListContext ctx) {
+        return null;
+    }
+
+    ////////// Visit Pair Elem //////////
+
+    public Void visitPairElem(PairElemContext ctx) {
+        if(matchGrammar(ctx, new int[]{FST, RULE_expr}))
+            visit(ctx.getChild(1));
+        if(matchGrammar(ctx, new int[]{SND, RULE_expr}))
+            visit(ctx.getChild(1));
+        return null;
+    }
+
+    ////////// Visit type //////////
+
+    public Void visitType(TypeContext ctx) {
+        return null;
+    }
+
+    ////////// Visit base type //////////
+
+    public Void visitBaseType(BaseTypeContext ctx) {
+        return null;
+    }
+
+    ////////// Visit pair type //////////
+
+    public Void visitPairType(PairTypeContext ctx) {
+        return null;
+    }
+
+    ////////// Visit pair elem type //////////
+
+    public Void visitPairElemType(PairElemTypeContext ctx) {
+        return null;
+    }
+
+    ////////// Visit array elem //////////
+
+    public Void visitArrayElem(ArrayElemContext ctx) {
+        return null;
+    }
+
+    ////////// Visit array liter //////////
+
+    public Void visitArrayLiter(ArrayLiterContext ctx) {
+        return null;
+    }
+
+
+    ////////// Visit Expression //////////
+
+    public Void visitExpr(ExprContext ctx) {
+        if(matchGrammar(ctx, new int[]{RULE_intLiter}))
+            visitExprIntLiter(ctx);
+        if(matchGrammar(ctx, new int[]{RULE_boolLiter}))
+            visitExprBoolLiter(ctx);
+        if(matchGrammar(ctx, new int[]{RULE_charLiter}))
+            visitExprCharLiter(ctx);
+        if(matchGrammar(ctx, new int[]{RULE_strLiter}))
+            visitExprStringLiter(ctx);
+        if(matchGrammar(ctx, new int[]{RULE_pairLiter}))
+            visitExprPairLiter(ctx);
+        if(matchGrammar(ctx, new int[]{RULE_ident}))
+            visitExprIdent(ctx);
+        if(matchGrammar(ctx, new int[]{RULE_arrayElem}))
+            visitExprArrayElem(ctx);
+        if(matchGrammar(ctx, new int[]{RULE_unaryOper, RULE_expr}))
+            visitExprUnaryOper(ctx);
+        if(matchGrammar(ctx, new int[]{RULE_expr, RULE_binaryOper, RULE_expr}))
+            visitExprBinaryOper(ctx);
+        if(matchGrammar(ctx, new int[]{OPEN_PARENTHESES, RULE_expr, CLOSE_PARENTHESES}))
+            visitExprParentheses(ctx);
+        return null;
+    }
+
+    private void visitExprIntLiter(ExprContext ctx) {
+        outputln("Visited int literal");
+        int i = Integer.parseInt(ctx.getText());
+        System.out.println(i);
+        if (i > Integer.MAX_VALUE || i < Integer.MIN_VALUE) {
+            // overflow exception
+        }
+    }
+
+    private void visitExprBoolLiter(ExprContext ctx) { outputln("Visited bool literal"); }
+
+    private void visitExprCharLiter(ExprContext ctx) { outputln("Visited char literal"); }
+
+    private void visitExprStringLiter(ExprContext ctx) { outputln("Visited string literal"); }
+
+    private void visitExprPairLiter(ExprContext ctx) { outputln("Visited pair literal"); }
+
+    private void visitExprIdent(ParserRuleContext ctx) { outputln("Visited ident"); }
+
+    private void visitExprArrayElem(ParserRuleContext ctx) {
+        outputln("Visited array elem");
+        visitChildren(ctx);
+        // check expr is integer
+    }
+
+    private void visitExprUnaryOper(ExprContext ctx) {
+        outputln("Visited unary operation");
+        visit(ctx.children.get(1));
+    }
+
+    private void visitExprBinaryOper(ExprContext ctx) {
+        outputln("Visited binary operation");
+        visit(ctx.children.get(0));
+        visit(ctx.children.get(2));
+    }
+
+    private void visitExprParentheses(ExprContext ctx) {
+        outputln("Visited expr parentheses");
+        visit(ctx.children.get(1));
+    }
 
     ////////// OUTPUT FUNCTIONS ////////////
 
