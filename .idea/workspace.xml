@@ -1,22 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="44f000ac-73c1-4e2c-865b-a5ef01802c9d" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/bin/antlr/BasicLexer.class" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/bin/antlr/BasicParser$BinaryOperContext.class" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/bin/antlr/BasicParser$ExprContext.class" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/bin/antlr/BasicParser$ProgContext.class" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/bin/antlr/BasicParser.class" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/bin/antlr/BasicParserBaseVisitor.class" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/bin/antlr/BasicParserVisitor.class" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/rules" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/AntlrVisitor.java" afterPath="$PROJECT_DIR$/src/AntlrVisitor.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Main.java" afterPath="$PROJECT_DIR$/src/Main.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/SymbolTable.java" afterPath="$PROJECT_DIR$/src/SymbolTable.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/antlr/WaccParser.g4" afterPath="$PROJECT_DIR$/antlr/WaccParser.g4" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/antlr/WaccParser.java" afterPath="$PROJECT_DIR$/src/antlr/WaccParser.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-    </list>
+    <list default="true" id="44f000ac-73c1-4e2c-865b-a5ef01802c9d" name="Default" comment="" />
     <ignored path="wacc.iws" />
     <ignored path=".idea/workspace.xml" />
     <ignored path="$PROJECT_DIR$/out/" />
@@ -621,7 +606,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-1" y="24" width="1922" height="1153" extended-state="6" />
-    <editor active="true" />
+    <editor active="false" />
     <layout>
       <window_info id="Palette&#9;" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
@@ -639,7 +624,7 @@
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.25" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32921028" sideWeight="0.49375" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32921028" sideWeight="0.49375" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
