@@ -18,17 +18,6 @@ public class WaccVisitorErrorHandler {
         throwError(ctx, msg);
     }
     
-    public void arithmetic(ParserRuleContext ctx) {
-        String msg = "arithmetic error, tried to divide by zero ";
-        throwError(ctx, msg);
-    }
-    
-    public void nullPointer(ParserRuleContext ctx, String variableName, String variableType) {
-        String msg = "null pointer no assignment for the variable " 
-                      + variableName + " with type " + variableType;
-        throwError(ctx, msg);
-    }
-    
     public void integerOverflow(ParserRuleContext ctx) {
         overflow(ctx, "Integer", INTEGER_MIN_VALUE, INTEGER_MAX_VALUE);
     }
