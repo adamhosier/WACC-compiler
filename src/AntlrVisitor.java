@@ -151,15 +151,16 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         return null;
     }
 
+
     ////////// Visit assignLhs //////////
 
     public Void visitAssignLhs(AssignLhsContext ctx) {
         if(matchGrammar(ctx, new int[]{RULE_ident}))
-            visitExprIdent(ctx);
+            ctx.accept(this);
         if(matchGrammar(ctx, new int[]{RULE_arrayElem}))
-            visitExprArrayElem(ctx);
+            ctx.accept(this);
         if(matchGrammar(ctx, new int[]{RULE_pairElem}))
-            visitChildren(ctx);
+            ctx.accept(this);
         return null;
     }
 
@@ -183,6 +184,9 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     ////////// Visit arg list //////////
 
     public Void visitArgList(ArgListContext ctx) {
+        for (int i = 0; i < ctx.getChildCount(); i += 2) {
+            visit(ctx.getChild(0));
+        }
         return null;
     }
 
@@ -190,33 +194,9 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     public Void visitPairElem(PairElemContext ctx) {
         if(matchGrammar(ctx, new int[]{FST, RULE_expr}))
-            visit(ctx.getChild(1));
+            ctx.getChild(1).accept(this);
         if(matchGrammar(ctx, new int[]{SND, RULE_expr}))
-            visit(ctx.getChild(1));
-        return null;
-    }
-
-    ////////// Visit type //////////
-
-    public Void visitType(TypeContext ctx) {
-        return null;
-    }
-
-    ////////// Visit base type //////////
-
-    public Void visitBaseType(BaseTypeContext ctx) {
-        return null;
-    }
-
-    ////////// Visit pair type //////////
-
-    public Void visitPairType(PairTypeContext ctx) {
-        return null;
-    }
-
-    ////////// Visit pair elem type //////////
-
-    public Void visitPairElemType(PairElemTypeContext ctx) {
+            ctx.getChild(1).accept(this);
         return null;
     }
 
@@ -231,7 +211,6 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     public Void visitArrayLiter(ArrayLiterContext ctx) {
         return null;
     }
-
 
     ////////// Visit Expression //////////
 
@@ -291,6 +270,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     private void visitExprBinaryOper(ExprContext ctx) {
         outputln("Visited binary operation");
+        // check types of children
         visit(ctx.children.get(0));
         visit(ctx.children.get(2));
     }
