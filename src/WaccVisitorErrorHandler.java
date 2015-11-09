@@ -9,6 +9,8 @@ public class WaccVisitorErrorHandler {
         throwError(ctx, msg);
     }
 
+    ////////////////////////////////////////////////////
+
     private String getLine(ParserRuleContext ctx) {
         return "line " + ctx.getStart().getLine() + ":" + ctx.getStart().getCharPositionInLine() + " ";
     }

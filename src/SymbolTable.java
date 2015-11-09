@@ -1,5 +1,6 @@
 import antlr.WaccParser.ParamListContext;
 import antlr.WaccParser.TypeContext;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 import javax.lang.model.element.Name;
 import javax.naming.NameNotFoundException;
@@ -47,6 +48,10 @@ public class SymbolTable {
 
     public TypeContext lookupType(String ident) {
         return getSymbol(ident).getType();
+    }
+
+    public TypeContext lookupType(ParseTree child) {
+        return lookupType(child.getText());
     }
 
     private Symbol getSymbol(String ident) {
