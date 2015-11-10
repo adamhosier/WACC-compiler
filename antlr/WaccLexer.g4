@@ -31,10 +31,14 @@ SND : 'snd' ;
 
 // base-types
 INT : 'int' ;
-BOOL : 'bool' ;
+BOOL : 'bool';
 CHAR : 'char' ;
 STRING : 'string' ;
 PAIR : 'pair' ;
+
+BOOL_LIT : TRUE | FALSE ;
+TRUE : 'true' ;
+FALSE : 'false' ;
 
 //operators
 //unary
@@ -77,17 +81,6 @@ fragment LOWERCASE : 'a'..'z' ;
 fragment UPPERCASE : 'A'..'Z' ;
 fragment UNDERSCORE : '_' ;
 
-IDENT
-  :
-  (UNDERSCORE
-  | LOWERCASE
-  | UPPERCASE)
-  (UNDERSCORE
-  | LOWERCASE
-  | UPPERCASE
-  | DIGIT)*
-  ;
-
 fragment ESCAPED_CHAR
   :
   ('\\' '0'
@@ -108,13 +101,23 @@ fragment CHARACTER
   | ESCAPED_CHAR
   ;
 
+IDENT
+  :
+  (UNDERSCORE
+  | LOWERCASE
+  | UPPERCASE)
+  (UNDERSCORE
+  | LOWERCASE
+  | UPPERCASE
+  | DIGIT)*
+  ;
+
 // literals
 INT_LIT : (PLUS | MINUS)? DIGIT+ ;
-TRUE : 'true' ;
-FALSE : 'false' ;
-BOOL_LIT : TRUE | FALSE ;
 DIGIT_LIT : DIGIT ;
 CHARACTER_LIT : CHARACTER ;
 ESCAPED_CHAR_LIT : ESCAPED_CHAR ;
 CHAR_LIT : SINGLE_QUOTE CHARACTER SINGLE_QUOTE ;
 STRING_LIT : DOUBLE_QUOTE (~'"')* DOUBLE_QUOTE ;
+
+
