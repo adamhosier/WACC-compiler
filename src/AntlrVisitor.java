@@ -39,6 +39,9 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     }
 
     private WaccType getType(ParserRuleContext ctx) {
+        if(ctx instanceof TypeContext) {
+            return new WaccType(ctx.getRuleIndex());
+        }
         if(matchGrammar(ctx, new int[]{RULE_expr})) {
             ctx = (ParserRuleContext) ctx.getChild(0);
             if(matchGrammar(ctx, new int[]{INT_LIT})) return new WaccType(INT);
@@ -178,11 +181,11 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     private void visitStatDeclaration(StatContext ctx) {
         outputln("Visited declaration");
         outputln("Declaring var " + ctx.ident().getText());
-        outputln("  Expected type: " + ctx.type().getText());
+        outputln("  Expected type: " + getType(ctx.type()));
         outputln("  Actual type: " + getType(ctx.assignRhs()));
 
         if(!typesMatch(ctx.type(), ctx.assignRhs())) {
-
+            errorHandler.typeMismatch(ctx, getType(ctx.type()).toString(), getType(ctx.assignRhs()).toString());
         }
         st.addVariable(ctx.ident().getText(), ctx.type().getRuleIndex());
     }
