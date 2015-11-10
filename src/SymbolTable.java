@@ -66,7 +66,7 @@ public class SymbolTable {
     public int getArrayLength(String ident) {
         Symbol sym = getSymbol(ident);
         if(!(sym instanceof ArraySymbol)) {
-            return -1;
+            return -1; //TODO: MAYBE ERROR HERE INSTEAD OF THIS
         } else {
             return ((ArraySymbol) sym).getLength();
         }

@@ -118,10 +118,20 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         return WaccType.INVALID;
     }
 
+    private boolean typesMatch(Object lhs, ParserRuleContext rhs) {
+        if(lhs instanceof ParserRuleContext) {
+            return getType((ParserRuleContext) lhs).equals(getType(rhs));
+        } else if(lhs instanceof Integer) {
+            return getType(rhs).equals(lhs);
+        } else {
+            return false;
+        }
+    }
+
     private String getTypeString(ParserRuleContext ctx) {
         WaccType t = getType(ctx);
         if(t.isPair) {
-            return "pair(" + t.getFstId() + ", " + t.getSndId() + ")";
+            return "pair(" + tokenNames[t.getFstId()] + ", " + tokenNames[t.getSndId()] + ")";
         } else {
             return tokenNames[getType(ctx).getId()];
         }
@@ -171,7 +181,13 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     private void visitStatDeclaration(StatContext ctx) {
         outputln("Visited declaration");
-        outputln("Declaring var " + ctx.ident().getText() + " as type " + ctx.type().getText());
+        outputln("Declaring var " + ctx.ident().getText());
+        outputln("  Expected type: " + ctx.type().getText());
+        outputln("  Actual type: " + getType(ctx.assignRhs()));
+
+        if(!typesMatch(ctx.type(), ctx.assignRhs())) {
+
+        }
         st.addVariable(ctx.ident().getText(), ctx.type().getRuleIndex());
     }
 

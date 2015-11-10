@@ -1,3 +1,5 @@
+import antlr.WaccParser;
+
 public class WaccType {
 
     public static final WaccType ALL = new WaccType(-1);
@@ -32,6 +34,22 @@ public class WaccType {
 
     @Override
     public boolean equals(Object other) {
-        return (other instanceof WaccType) && (((WaccType) other).id == id && ((WaccType) other).id2 == id2);
+        if(other instanceof WaccType) {
+            WaccType oth = (WaccType) other;
+            return oth.id == id && oth.id2 == id2;
+        } else if(other instanceof Integer) {
+            return id == (Integer) other;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public String toString() {
+        if(isPair) {
+            return "pair(" + WaccParser.tokenNames[id] + ", " + WaccParser.tokenNames[id2] + ")";
+        } else {
+            return WaccParser.tokenNames[id];
+        }
     }
 }
