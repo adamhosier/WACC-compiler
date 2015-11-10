@@ -47,11 +47,11 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
             if(matchGrammar(ctx, new int[]{STRING_LIT})) return new WaccType(STRING);
             if(matchGrammar(ctx, new int[]{RULE_pairLiter})) return new WaccType(PAIR);
             if(matchGrammar(ctx, new int[]{RULE_ident})) {
-                return new WaccType(st.lookupType(ctx.getChild(0)).getRuleIndex());
+                return st.lookupType(ctx.getChild(0));
             }
             if(matchGrammar(ctx, new int[]{RULE_arrayElem})) {
                 //it is not the job of getType to check that the index expression is valid
-                return new WaccType(st.lookupType(ctx.getChild(0)).getRuleIndex());
+                return st.lookupType(ctx.getChild(0));
             }
             if(matchGrammar(ctx, new int[]{RULE_unaryOper, RULE_expr})) {
                 return getType((ParserRuleContext) ctx.getChild(1));
@@ -94,10 +94,10 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
             }
         }
         if(matchGrammar(ctx, new int[]{RULE_funcCall})) {
-            return new WaccType(st.lookupType(ctx.getChild(0).getChild(1)).getRuleIndex());
+            return st.lookupType(ctx.getChild(0).getChild(1));
         }
         if(matchGrammar(ctx, new int[]{RULE_ident})) {
-            return new WaccType(st.lookupType(ctx.getChild(0).getText()).getRuleIndex());
+            return st.lookupType(ctx.getChild(0).getText());
         }
         if(matchGrammar(ctx, new int[]{RULE_arrayElem})){
             return getType((ParserRuleContext) ctx.getChild(0).getChild(0));
@@ -168,8 +168,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     private void visitStatDeclaration(StatContext ctx) {
         outputln("Visited declaration");
         outputln("Declaring var " + ctx.ident().getText() + " as type " + ctx.type().getText());
-        errorHandler.typeMismatch(ctx, ctx.type().getText(), getTypeString(ctx.assignRhs()));
-        st.addVariable(ctx.ident().getText(), ctx.type());
+        st.addVariable(ctx.ident().getText(), ctx.type().getRuleIndex());
     }
 
     private void visitStatAssignment(StatContext ctx) {
