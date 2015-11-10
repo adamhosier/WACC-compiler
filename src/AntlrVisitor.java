@@ -358,7 +358,8 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     private void visitExprIdent(ParserRuleContext ctx) {
         outputln("Visited ident");
-        st.lookupType(ctx.getChild(0).getText());
+        WaccType ident = st.lookupType(ctx.getChild(0).getText());
+        if (ident == null)
         // throw error if ident not found
     }
 
@@ -367,9 +368,9 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         outputln("Visited array elem");
         visitExprIdent((ParserRuleContext) ctx.getChild(0));
         for (int i = 2; i < ctx.getChildCount() - 1; i += 3) {
-            String type = getTypeString((ParserRuleContext) ctx.getChild(i));
-            if (!type.equals(tokenNames[INT])) {
-                errorHandler.typeMismatch(ctx, tokenNames[INT], type);
+            // String type = getTypeString((ParserRuleContext) ctx.getChild(i));
+            if (!typesMatch(INT, ctx.getChild(i))) {
+                errorHandler.typeMismatch(ctx, tokenNames[INT], getTypeString((ParserRuleContext) ctx.getChild(i)));
             }
             // check expr is integer and in bounds(using sym tab)
         }
