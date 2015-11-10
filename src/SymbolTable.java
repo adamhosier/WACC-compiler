@@ -1,3 +1,4 @@
+import antlr.WaccParser;
 import antlr.WaccParser.ParamListContext;
 import antlr.WaccParser.TypeContext;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -19,12 +20,20 @@ public class SymbolTable {
         tables.add(globaltable);
     }
 
-    public void addFunction(String ident, TypeContext type, ParamListContext params) {
-        addVar(globaltable, ident, new FunctionSymbol(type, params));
+    public void addFunction(String ident, int type, ParamListContext params) {
+        addVar(globaltable, ident, new FunctionSymbol(new WaccType(type), params));
     }
 
-    public void addVariable(String ident, TypeContext type) {
-        addVar(tables.getFirst(), ident, new VariableSymbol(type));
+    public void addVariable(String ident, int type) {
+        addVar(tables.getFirst(), ident, new VariableSymbol(new WaccType(type)));
+    }
+
+    public void addPair(String ident, int t1, int t2) {
+        addVar(tables.getFirst(), ident, new VariableSymbol(new WaccType(t1, t2)));
+    }
+
+    public void addArray(String ident, WaccType type, int length) {
+        addVar(tables.getFirst(), ident, new ArraySymbol(type, length));
     }
 
     private void addVar(Map<String, Symbol> table, String ident, Symbol sym) {
@@ -35,7 +44,7 @@ public class SymbolTable {
     }
 
     public void newScope() {
-        tables.addFirst(new HashMap<String, Symbol>());
+        tables.addFirst(new HashMap<>());
     }
 
     public void endScope() {
@@ -46,12 +55,21 @@ public class SymbolTable {
         }
     }
 
-    public TypeContext lookupType(String ident) {
+    public WaccType lookupType(String ident) {
         return getSymbol(ident).getType();
     }
 
-    public TypeContext lookupType(ParseTree child) {
+    public WaccType lookupType(ParseTree child) {
         return lookupType(child.getText());
+    }
+
+    public int getArrayLength(String ident) {
+        Symbol sym = getSymbol(ident);
+        if(!(sym instanceof ArraySymbol)) {
+            return -1;
+        } else {
+            return ((ArraySymbol) sym).getLength();
+        }
     }
 
     private Symbol getSymbol(String ident) {
@@ -64,19 +82,19 @@ public class SymbolTable {
     }
 
     private abstract class Symbol {
-        private TypeContext type;
+        private WaccType type;
 
-        public TypeContext getType() {
+        public WaccType getType() {
             return type;
         }
 
-        public Symbol(TypeContext type) {
+        public Symbol(WaccType type) {
             this.type = type;
         }
     }
 
     private class VariableSymbol extends Symbol {
-        VariableSymbol(TypeContext type) {
+        VariableSymbol(WaccType type) {
             super(type);
         }
     }
@@ -88,10 +106,24 @@ public class SymbolTable {
             return params;
         }
 
-        FunctionSymbol(TypeContext type, ParamListContext params) {
+        FunctionSymbol(WaccType type, ParamListContext params) {
             super(type);
             this.params = params;
         }
 
+    }
+
+    private class ArraySymbol extends Symbol {
+
+        private final int length;
+
+        public int getLength() {
+            return length;
+        }
+
+        public ArraySymbol(WaccType type, int length) {
+            super(type);
+            this.length = length;
+        }
     }
 }
