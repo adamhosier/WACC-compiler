@@ -1,5 +1,7 @@
 import antlr.*;
 import static antlr.WaccParser.*;
+
+import org.antlr.v4.runtime.LexerNoViableAltException;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -375,38 +377,90 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     private void visitExprIdent(ParserRuleContext ctx) {
         outputln("Visited ident");
         WaccType ident = st.lookupType(ctx.getChild(0).getText());
-        if (ident == null)
-        // throw error if ident not found
+        if (ident == null) {
+            errorHandler.identNotFound((ParserRuleContext) ctx.getChild(0));
+        }
     }
 
     private void visitExprArrayElem(ParserRuleContext ctx) {
-        // only 2d array covered
         outputln("Visited array elem");
-        visitExprIdent((ParserRuleContext) ctx.getChild(0));
+        ParserRuleContext ctxi = (ParserRuleContext) ctx.getChild(0);
+        // Check identifier exists
+        visitExprIdent(ctxi);
+
+        int arrayLength = st.getArrayLength(ctxi.getText());
+        int index = Integer.parseInt(ctx.getChild(2).getText());
+        // ONLY CHECKS IF LEADING DIMENSION IN BOUNDS
+        if (index >= arrayLength) {
+            errorHandler.arrayOutOfBounds((ParserRuleContext) ctx.getChild(2), index);
+        }
+
+        // Check that each index expression is integer
         for (int i = 2; i < ctx.getChildCount() - 1; i += 3) {
-            // String type = getTypeString((ParserRuleContext) ctx.getChild(i));
-            if (!typesMatch(INT, ctx.getChild(i))) {
-                errorHandler.typeMismatch(ctx, tokenNames[INT], getTypeString((ParserRuleContext) ctx.getChild(i)));
+            ParserRuleContext ctxExpr = (ParserRuleContext) ctx.getChild(i);
+            if (!typesMatch(INT_LIT, ctxExpr)) {
+                errorHandler.typeMismatch(ctxExpr, tokenNames[INT_LIT], getTypeString(ctxExpr));
             }
-            // check expr is integer and in bounds(using sym tab)
         }
     }
 
     private void visitExprUnaryOper(ExprContext ctx) {
         outputln("Visited unary operation");
-        visit(ctx.children.get(1));
+        ParserRuleContext ctxOp= (ParserRuleContext) ctx.getChild(0);
+        ParserRuleContext ctxExpr = (ParserRuleContext) ctx.getChild(1);
+        if (typesMatch(NOT, ctxOp)) {
+            evalArgType(BOOL_LIT, ctxExpr);
+        }
+        if (typesMatch(MINUS, ctxOp) || typesMatch(CHR, ctxOp)) {
+            evalArgType(INT_LIT, ctxExpr);
+        }
+        if (typesMatch(LEN, ctxOp))
+            evalArgType(IDENT, ctxExpr);
+        if (typesMatch(ORD, ctxOp)) {
+            evalArgType(CHAR_LIT, ctxExpr);
+        }
+        visit(ctxExpr);
     }
 
     private void visitExprBinaryOper(ExprContext ctx) {
         outputln("Visited binary operation");
-        // check types of children
-        visit(ctx.children.get(0));
-        visit(ctx.children.get(2));
+        ParserRuleContext ctxOp= (ParserRuleContext) ctx.getChild(1);
+        ParserRuleContext ctxExpr1 = (ParserRuleContext) ctx.getChild(0);
+        ParserRuleContext ctxExpr2 = (ParserRuleContext) ctx.getChild(2);
+
+        if (typesMatch(MULT, ctxOp)
+                || typesMatch(DIV, ctxOp)
+                || typesMatch(MOD, ctxOp)
+                || typesMatch(PLUS, ctxOp)
+                || typesMatch(MINUS, ctxOp)
+                || typesMatch(GREATER_THAN, ctxOp)
+                || typesMatch(GREATER_THAN_EQ, ctxOp)
+                || typesMatch(LESS_THAN, ctxOp)
+                || typesMatch(LESS_THAN_EQ, ctxOp)
+                || typesMatch(EQ, ctxOp)
+                || typesMatch(NOT_EQ, ctxOp)) {
+            evalArgType(INT_LIT, ctxExpr1);
+            evalArgType(INT_LIT, ctxExpr2);
+        }
+        if (typesMatch(AND, ctxOp) || typesMatch(OR, ctxOp)) {
+            evalArgType(BOOL_LIT, ctxExpr1);
+            evalArgType(BOOL_LIT, ctxExpr2);
+        }
+
+        visit(ctx.getChild(0));
+        visit(ctx.getChild(2));
+    }
+
+    private void evalArgType(int expectedTypeToken, ParserRuleContext ctxExpr) {
+        if (!typesMatch(expectedTypeToken, ctxExpr)) {
+            errorHandler.typeMismatch(ctxExpr, tokenNames[expectedTypeToken],
+                                        getTypeString(ctxExpr));
+        }
     }
 
     private void visitExprParentheses(ExprContext ctx) {
         outputln("Visited expr parentheses");
-        visit(ctx.children.get(1));
+        visit(ctx.getChild(1));
     }
 
     ////////// OUTPUT FUNCTIONS ////////////
