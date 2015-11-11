@@ -2,8 +2,11 @@ import antlr.WaccParser;
 
 public class WaccType {
 
-    public static final WaccType ALL = new WaccType(-1);
-    public static final WaccType INVALID = new WaccType(-2);
+    private static final int ALL_ID = -1;
+    private static final int INVALID_ID = -2;
+
+    public static final WaccType ALL = new WaccType(ALL_ID);
+    public static final WaccType INVALID = new WaccType(INVALID_ID);
 
     public final boolean isPair;
     private int id;
@@ -46,6 +49,8 @@ public class WaccType {
 
     @Override
     public String toString() {
+        if(id == ALL_ID) return "All types";
+        if(id == INVALID_ID) return "Invalid type";
         if(isPair) {
             return "pair(" + WaccParser.tokenNames[id] + ", " + WaccParser.tokenNames[id2] + ")";
         } else {

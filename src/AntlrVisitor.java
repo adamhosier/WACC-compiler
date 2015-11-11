@@ -39,8 +39,9 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     }
 
     private WaccType getType(ParserRuleContext ctx) {
-        if(ctx instanceof TypeContext) {
-            return new WaccType(ctx.getRuleIndex());
+        if(matchGrammar(ctx, new int[]{RULE_baseType})) {
+            ctx = (ParserRuleContext) ctx.getChild(0);
+            return new WaccType(((TerminalNode) ctx.getChild(0)).getSymbol().getType());
         }
         if(matchGrammar(ctx, new int[]{RULE_expr})) {
             ctx = (ParserRuleContext) ctx.getChild(0);
@@ -105,15 +106,6 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         if(matchGrammar(ctx, new int[]{RULE_arrayElem})){
             return getType((ParserRuleContext) ctx.getChild(0).getChild(0));
         }
-        if(matchGrammar(ctx, new int[]{RULE_pairElem})) {
-            ParserRuleContext ctxp = (ParserRuleContext) ctx.getChild(0);
-            WaccType t = getType((ParserRuleContext) ctxp.getChild(1));
-            if(matchGrammar(ctxp, new int[]{FST, WaccType.ALL.getId()})) {
-                return new WaccType(t.getFstId());
-            } else {
-                return new WaccType(t.getSndId());
-            }
-        }
         return WaccType.INVALID;
     }
 
@@ -128,12 +120,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     }
 
     private String getTypeString(ParserRuleContext ctx) {
-        WaccType t = getType(ctx);
-        if(t.isPair) {
-            return "pair(" + tokenNames[t.getFstId()] + ", " + tokenNames[t.getSndId()] + ")";
-        } else {
-            return tokenNames[getType(ctx).getId()];
-        }
+        return getType(ctx).toString();
     }
 
     /////////// VISITOR METHODS ////////////
@@ -184,10 +171,14 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         outputln("  Expected type: " + getType(ctx.type()));
         outputln("  Actual type: " + getType(ctx.assignRhs()));
 
+        WaccType exp = getType(ctx.type());
+        WaccType acc = getType(ctx.assignRhs());
+
         if(!typesMatch(ctx.type(), ctx.assignRhs())) {
-            errorHandler.typeMismatch(ctx, getType(ctx.type()).toString(), getType(ctx.assignRhs()).toString());
+            errorHandler.typeMismatch(ctx, exp.toString(), acc.toString());
         }
-        st.addVariable(ctx.ident().getText(), ctx.type().getRuleIndex());
+
+        st.addVariable(ctx.ident().getText(), acc);
     }
 
     private void visitStatAssignment(StatContext ctx) {

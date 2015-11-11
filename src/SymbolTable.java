@@ -24,12 +24,8 @@ public class SymbolTable {
         addVar(globaltable, ident, new FunctionSymbol(new WaccType(type), params));
     }
 
-    public void addVariable(String ident, int type) {
-        addVar(tables.getFirst(), ident, new VariableSymbol(new WaccType(type)));
-    }
-
-    public void addPair(String ident, int t1, int t2) {
-        addVar(tables.getFirst(), ident, new VariableSymbol(new WaccType(t1, t2)));
+    public void addVariable(String ident, WaccType type) {
+        addVar(tables.getFirst(), ident, new VariableSymbol(type));
     }
 
     public void addArray(String ident, WaccType type, int length) {
