@@ -44,7 +44,7 @@ public class SymbolTable {
     }
 
     public void newScope() {
-        tables.addFirst(new HashMap<>());
+        tables.addFirst(new HashMap<String, Symbol>());
     }
 
     public void endScope() {
