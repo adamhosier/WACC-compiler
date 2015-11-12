@@ -112,14 +112,17 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         return WaccType.INVALID;
     }
 
-    private boolean typesMatch(Object lhs, ParserRuleContext rhs) {
-        if(lhs instanceof ParserRuleContext) {
-            return getType((ParserRuleContext) lhs).equals(getType(rhs));
-        } else if(lhs instanceof Integer || lhs instanceof WaccType) {
-            return getType(rhs).equals(lhs);
-        } else {
-            return false;
-        }
+    private WaccType objToType(Object o) {
+        if(o instanceof ParserRuleContext) return getType((ParserRuleContext) o);
+        if(o instanceof Integer) return new WaccType((Integer) o);
+        if(o instanceof WaccType) return (WaccType) o;
+        return WaccType.INVALID;
+    }
+
+    private boolean typesMatch(Object lhs, Object rhs) {
+        WaccType typel = objToType(lhs);
+        WaccType typer = objToType(rhs);
+        return typel.isValid() && typer.isValid() && lhs.equals(rhs);
     }
 
     private String getTypeString(ParserRuleContext ctx) {

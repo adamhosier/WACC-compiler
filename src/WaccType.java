@@ -51,6 +51,10 @@ public class WaccType {
         isPair = true;
     }
 
+    public boolean isValid() {
+        return id != INVALID_ID;
+    }
+
     public int getId() {
         return id;
     }
