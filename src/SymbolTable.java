@@ -52,7 +52,9 @@ public class SymbolTable {
     }
 
     public WaccType lookupType(String ident) {
-        return getSymbol(ident).getType();
+        Symbol sym = getSymbol(ident);
+        if(sym == null) return null;
+        else return sym.getType();
     }
 
     public WaccType lookupType(ParseTree child) {
@@ -74,7 +76,11 @@ public class SymbolTable {
                 return table.get(ident);
             }
         }
-        throw new RuntimeException("TODO: IMPROVE THIS ERROR (symbol not found)");
+        return null;
+    }
+
+    public boolean isDeclared(String ident) {
+        return getSymbol(ident) != null;
     }
 
     private abstract class Symbol {

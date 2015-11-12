@@ -1,5 +1,8 @@
 import antlr.WaccParser;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class WaccType {
 
     private static final int ALL_ID = -1;
@@ -7,6 +10,31 @@ public class WaccType {
 
     public static final WaccType ALL = new WaccType(ALL_ID);
     public static final WaccType INVALID = new WaccType(INVALID_ID);
+
+    /*
+     * Get a return type of a binary operator
+     */
+    public static WaccType fromBinaryOperator(int op) {
+        switch(op) {
+            case WaccParser.MULT:
+            case WaccParser.DIV:
+            case WaccParser.MOD:
+            case WaccParser.PLUS:
+            case WaccParser.MINUS:
+                return new WaccType(WaccParser.INT);
+            case WaccParser.GREATER_THAN:
+            case WaccParser.GREATER_THAN_EQ:
+            case WaccParser.LESS_THAN:
+            case WaccParser.LESS_THAN_EQ:
+            case WaccParser.EQ:
+            case WaccParser.NOT_EQ:
+            case WaccParser.AND:
+            case WaccParser.OR:
+                return new WaccType(WaccParser.BOOL);
+            default:
+                return WaccType.INVALID;
+        }
+    }
 
     public final boolean isPair;
     private int id;

@@ -1,3 +1,4 @@
+import antlr.WaccParser;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 public class WaccVisitorErrorHandler {
@@ -12,20 +13,25 @@ public class WaccVisitorErrorHandler {
         String msg = "type mismatch, expected " + expected + " got " + actual;
         throwError(ctx, msg);
     }
-    
+
     public void arrayOutOfBounds(ParserRuleContext ctx, int index) {
         String msg = "array out of bounds at index " + index;
         throwError(ctx, msg);
     }
-    
+
+    public void symbolNotFound(ParserRuleContext ctx, String ident) {
+        String msg = "symbol '" + ident + "' not found";
+        throwError(ctx, msg);
+    }
+
     public void integerOverflow(ParserRuleContext ctx) {
         overflow(ctx, "Integer", INTEGER_MIN_VALUE, INTEGER_MAX_VALUE);
     }
-    
+
     public void characterOverflow(ParserRuleContext ctx) {
         overflow(ctx, "Character", CHARACTER_MIN_VALUE, CHARACTER_MAX_VALUE);
     }
-    
+
     private void overflow(ParserRuleContext ctx, String type, int minRange, int maxRange) {
         String msg = type + " overflow, expected " + type + " between " + minRange + " and " + maxRange;
         throwError(ctx, msg);

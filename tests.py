@@ -14,13 +14,16 @@ def run_test(f):
     exit = p.returncode
 
     numtests += 1
-    if exit == 0: numpasses += 1
-
-    print(output.decode("utf-8"))
-    print("======== TEST {0} {1} ========".format(
-        numtests, "PASSED" if exit == 0 else "FAILED"))
-    print
-    print("Return code: {0}".format(p.returncode))
+    if exit == 0:
+         numpasses += 1
+    else:
+        print(output.decode("utf-8"))
+        print("======== TEST {0} {1} ========".format(
+            numtests, "PASSED" if exit == 0 else "FAILED"))
+        print()
+        print("Return code: {0}".format(p.returncode))
+        print()
+        print()
 
 
 # compile
@@ -35,7 +38,7 @@ if r != 0:
 # work in java bin directory
 os.chdir("bin")
 
-testdir = "../examples/invalid/semanticErr/variables"
+testdir = "../examples/valid/expressions"
 
 for subdir, dirs, files in os.walk(testdir):
     for f in files:

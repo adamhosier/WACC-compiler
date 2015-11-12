@@ -40,3 +40,4 @@ testing/test_files/
 
 #ignore ide files
 .idea/*
+out/*
