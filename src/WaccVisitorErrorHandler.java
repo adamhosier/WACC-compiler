@@ -9,7 +9,7 @@ public class WaccVisitorErrorHandler {
     static final int INTEGER_MAX_VALUE = Integer.MAX_VALUE;
     static final int INTEGER_MIN_VALUE = Integer.MIN_VALUE;
 
-    public void typeMismatch(ParserRuleContext ctx, String expected, String actual) {
+    public void typeMismatch(ParserRuleContext ctx, WaccType expected, WaccType actual) {
         String msg = "type mismatch, expected " + expected + " got " + actual;
         throwError(ctx, msg);
     }

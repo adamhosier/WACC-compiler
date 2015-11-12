@@ -168,14 +168,15 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     private void visitStatDeclaration(StatContext ctx) {
         outputln("Visited declaration");
         outputln("Declaring var " + ctx.ident().getText());
-        outputln("  Expected type: " + getType(ctx.type()));
-        outputln("  Actual type: " + getType(ctx.assignRhs()));
 
         WaccType exp = getType(ctx.type());
         WaccType acc = getType(ctx.assignRhs());
 
+        outputln("  Expected type: " + exp);
+        outputln("  Actual type: " + acc);
+
         if(!typesMatch(ctx.type(), ctx.assignRhs())) {
-            errorHandler.typeMismatch(ctx, exp.toString(), acc.toString());
+            errorHandler.typeMismatch(ctx, exp, acc);
         }
 
         st.addVariable(ctx.ident().getText(), acc);
@@ -183,6 +184,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     private void visitStatAssignment(StatContext ctx) {
         outputln("Visited assigment");
+        outputln("  Assigning ");
 
         String ident = ctx.assignLhs().getChild(0).getText();
 
@@ -193,7 +195,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         WaccType exp = st.lookupType(ident);
         WaccType acc = getType(ctx.assignRhs());
         if(!typesMatch(exp, ctx.assignRhs())) {
-            errorHandler.typeMismatch(ctx, exp.toString(), acc.toString());
+            errorHandler.typeMismatch(ctx, exp, acc);
         }
     }
 
