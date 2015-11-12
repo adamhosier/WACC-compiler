@@ -70,6 +70,10 @@ public class SymbolTable {
         }
     }
 
+    public ParamListContext getParamList(String ident) {
+        return ((FunctionSymbol) getSymbol(ident)).getParams();
+    }
+
     private Symbol getSymbol(String ident) {
         for(Map<String, Symbol> table : tables) {
             if(table.containsKey(ident)) {

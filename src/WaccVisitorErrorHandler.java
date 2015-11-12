@@ -13,7 +13,7 @@ public class WaccVisitorErrorHandler {
         String msg = "type mismatch, expected " + expected + " got " + actual;
         throwError(ctx, msg);
     }
-
+    
     public void arrayOutOfBounds(ParserRuleContext ctx, int index) {
         String msg = "array out of bounds at index " + index;
         throwError(ctx, msg);
@@ -27,10 +27,21 @@ public class WaccVisitorErrorHandler {
     public void integerOverflow(ParserRuleContext ctx) {
         overflow(ctx, "Integer", INTEGER_MIN_VALUE, INTEGER_MAX_VALUE);
     }
-
+    
     public void characterOverflow(ParserRuleContext ctx) {
         overflow(ctx, "Character", CHARACTER_MIN_VALUE, CHARACTER_MAX_VALUE);
     }
+
+    public void identNotFound(ParserRuleContext ctx) {
+        String ident = ctx.getChild(0).getText();
+        String msg = "identifier not found: " + ident;
+        throwError(ctx, msg);
+    }
+
+    public void invalidNumberOfArgs(ParserRuleContext ctx, String funcIdent) {
+        String msg = "invalid number of arguments passed to function \'" + funcIdent + '\'';
+    }
+    
 
     private void overflow(ParserRuleContext ctx, String type, int minRange, int maxRange) {
         String msg = type + " overflow, expected " + type + " between " + minRange + " and " + maxRange;
