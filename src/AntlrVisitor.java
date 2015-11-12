@@ -7,8 +7,6 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import javax.swing.text.html.parser.Parser;
-
 public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     private SymbolTable st;
@@ -46,35 +44,38 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     }
 
     private WaccType getType(ParserRuleContext ctx) {
-        if(ctx instanceof TypeContext) {
-            return new WaccType(ctx.getRuleIndex());
+        outputln(ruleNames[ctx.getRuleIndex()] + ": " + ctx.getText());
+        if(matchGrammar(ctx, new int[]{RULE_baseType})) {
+            ctx = (ParserRuleContext) ctx.getChild(0);
+            return new WaccType(((TerminalNode) ctx.getChild(0)).getSymbol().getType());
         }
         if(matchGrammar(ctx, new int[]{RULE_expr})) {
-            ctx = (ParserRuleContext) ctx.getChild(0);
-            if(matchGrammar(ctx, new int[]{INT_LIT})) return new WaccType(INT);
-            if(matchGrammar(ctx, new int[]{BOOL_LIT})) return new WaccType(BOOL);
-            if(matchGrammar(ctx, new int[]{CHAR_LIT})) return new WaccType(CHAR);
-            if(matchGrammar(ctx, new int[]{STRING_LIT})) return new WaccType(STRING);
-            if(matchGrammar(ctx, new int[]{RULE_pairLiter})) return new WaccType(PAIR);
-            if(matchGrammar(ctx, new int[]{RULE_ident})) {
-                return st.lookupType(ctx.getChild(0));
-            }
-            if(matchGrammar(ctx, new int[]{RULE_arrayElem})) {
-                //it is not the job of getType to check that the index expression is valid
-                return st.lookupType(ctx.getChild(0));
-            }
-            if(matchGrammar(ctx, new int[]{RULE_unaryOper, RULE_expr})) {
-                return getType((ParserRuleContext) ctx.getChild(1));
-            }
-            if(matchGrammar(ctx, new int[]{RULE_expr, RULE_binaryOper, RULE_expr})) {
-                // checks types match and returns type of result
-                WaccType t1 = getType((ParserRuleContext) ctx.getChild(0));
-                WaccType t2 = getType((ParserRuleContext) ctx.getChild(2));
-                return t1.equals(t2) ? t1 : WaccType.INVALID;
-            }
-            if(matchGrammar(ctx, new int[]{OPEN_PARENTHESES, RULE_expr, CLOSE_PARENTHESES})) {
-                return getType((ParserRuleContext) ctx.getChild(1));
-            }
+           return getType((ParserRuleContext) ctx.getChild(0));
+        }
+        if(matchGrammar(ctx, new int[]{INT_LIT})) return new WaccType(INT);
+        if(matchGrammar(ctx, new int[]{BOOL_LIT})) return new WaccType(BOOL);
+        if(matchGrammar(ctx, new int[]{CHAR_LIT})) return new WaccType(CHAR);
+        if(matchGrammar(ctx, new int[]{STRING_LIT})) return new WaccType(STRING);
+        if(matchGrammar(ctx, new int[]{RULE_pairLiter})) return new WaccType(PAIR);
+        if(matchGrammar(ctx, new int[]{RULE_ident})) {
+            return st.lookupType(ctx.getChild(0));
+        }
+        if(matchGrammar(ctx, new int[]{RULE_arrayElem})) {
+            //it is not the job of getType to check that the index expression is valid
+            return st.lookupType(ctx.getChild(0));
+        }
+        if(matchGrammar(ctx, new int[]{RULE_unaryOper, RULE_expr})) {
+            return getType((ParserRuleContext) ctx.getChild(1));
+        }
+        if(matchGrammar(ctx, new int[]{RULE_expr, RULE_binaryOper, RULE_expr})) {
+            // checks types match and returns type of result
+            WaccType t1 = getType((ParserRuleContext) ctx.getChild(0));
+            WaccType t2 = getType((ParserRuleContext) ctx.getChild(2));
+            int op = ((TerminalNode) ctx.getChild(1).getChild(0)).getSymbol().getType();
+            return t1.equals(t2) ? WaccType.fromBinaryOperator(op) : WaccType.INVALID;
+        }
+        if(matchGrammar(ctx, new int[]{OPEN_PARENTHESES, RULE_expr, CLOSE_PARENTHESES})) {
+            return getType((ParserRuleContext) ctx.getChild(1));
         }
         if(matchGrammar(ctx, new int[]{RULE_arrayLiter})) {
             ctx = (ParserRuleContext) ctx.getChild(0);
@@ -112,22 +113,13 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         if(matchGrammar(ctx, new int[]{RULE_arrayElem})){
             return getType((ParserRuleContext) ctx.getChild(0).getChild(0));
         }
-        if(matchGrammar(ctx, new int[]{RULE_pairElem})) {
-            ParserRuleContext ctxp = (ParserRuleContext) ctx.getChild(0);
-            WaccType t = getType((ParserRuleContext) ctxp.getChild(1));
-            if(matchGrammar(ctxp, new int[]{FST, WaccType.ALL.getId()})) {
-                return new WaccType(t.getFstId());
-            } else {
-                return new WaccType(t.getSndId());
-            }
-        }
         return WaccType.INVALID;
     }
 
     private boolean typesMatch(Object lhs, ParserRuleContext rhs) {
         if(lhs instanceof ParserRuleContext) {
             return getType((ParserRuleContext) lhs).equals(getType(rhs));
-        } else if(lhs instanceof Integer) {
+        } else if(lhs instanceof Integer || lhs instanceof WaccType) {
             return getType(rhs).equals(lhs);
         } else {
             return false;
@@ -135,12 +127,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     }
 
     private String getTypeString(ParserRuleContext ctx) {
-        WaccType t = getType(ctx);
-        if(t.isPair) {
-            return "pair(" + tokenNames[t.getFstId()] + ", " + tokenNames[t.getSndId()] + ")";
-        } else {
-            return tokenNames[getType(ctx).getId()];
-        }
+        return getType(ctx).toString();
     }
 
     /////////// VISITOR METHODS ////////////
@@ -188,17 +175,35 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     private void visitStatDeclaration(StatContext ctx) {
         outputln("Visited declaration");
         outputln("Declaring var " + ctx.ident().getText());
-        outputln("  Expected type: " + getType(ctx.type()));
-        outputln("  Actual type: " + getType(ctx.assignRhs()));
+
+        WaccType exp = getType(ctx.type());
+        WaccType acc = getType(ctx.assignRhs());
+
+        outputln("  Expected type: " + exp);
+        outputln("  Actual type: " + acc);
 
         if(!typesMatch(ctx.type(), ctx.assignRhs())) {
-            errorHandler.typeMismatch(ctx, getType(ctx.type()).toString(), getType(ctx.assignRhs()).toString());
+            errorHandler.typeMismatch(ctx, exp, acc);
         }
-        st.addVariable(ctx.ident().getText(), ctx.type().getRuleIndex());
+
+        st.addVariable(ctx.ident().getText(), acc);
     }
 
     private void visitStatAssignment(StatContext ctx) {
         outputln("Visited assigment");
+        outputln("  Assigning ");
+
+        String ident = ctx.assignLhs().getChild(0).getText();
+
+        if(!st.isDeclared(ident)) {
+            errorHandler.symbolNotFound(ctx, ident);
+        }
+
+        WaccType exp = st.lookupType(ident);
+        WaccType acc = getType(ctx.assignRhs());
+        if(!typesMatch(exp, ctx.assignRhs())) {
+            errorHandler.typeMismatch(ctx, exp, acc);
+        }
     }
 
     private void visitStatRead(StatContext ctx) {

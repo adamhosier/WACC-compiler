@@ -1,9 +1,40 @@
 import antlr.WaccParser;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class WaccType {
 
-    public static final WaccType ALL = new WaccType(-1);
-    public static final WaccType INVALID = new WaccType(-2);
+    private static final int ALL_ID = -1;
+    private static final int INVALID_ID = -2;
+
+    public static final WaccType ALL = new WaccType(ALL_ID);
+    public static final WaccType INVALID = new WaccType(INVALID_ID);
+
+    /*
+     * Get a return type of a binary operator
+     */
+    public static WaccType fromBinaryOperator(int op) {
+        switch(op) {
+            case WaccParser.MULT:
+            case WaccParser.DIV:
+            case WaccParser.MOD:
+            case WaccParser.PLUS:
+            case WaccParser.MINUS:
+                return new WaccType(WaccParser.INT);
+            case WaccParser.GREATER_THAN:
+            case WaccParser.GREATER_THAN_EQ:
+            case WaccParser.LESS_THAN:
+            case WaccParser.LESS_THAN_EQ:
+            case WaccParser.EQ:
+            case WaccParser.NOT_EQ:
+            case WaccParser.AND:
+            case WaccParser.OR:
+                return new WaccType(WaccParser.BOOL);
+            default:
+                return WaccType.INVALID;
+        }
+    }
 
     public final boolean isPair;
     private int id;
@@ -46,6 +77,8 @@ public class WaccType {
 
     @Override
     public String toString() {
+        if(id == ALL_ID) return "All types";
+        if(id == INVALID_ID) return "Invalid type";
         if(isPair) {
             return "pair(" + WaccParser.tokenNames[id] + ", " + WaccParser.tokenNames[id2] + ")";
         } else {

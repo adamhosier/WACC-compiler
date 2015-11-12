@@ -24,12 +24,8 @@ public class SymbolTable {
         addVar(globaltable, ident, new FunctionSymbol(new WaccType(type), params));
     }
 
-    public void addVariable(String ident, int type) {
-        addVar(tables.getFirst(), ident, new VariableSymbol(new WaccType(type)));
-    }
-
-    public void addPair(String ident, int t1, int t2) {
-        addVar(tables.getFirst(), ident, new VariableSymbol(new WaccType(t1, t2)));
+    public void addVariable(String ident, WaccType type) {
+        addVar(tables.getFirst(), ident, new VariableSymbol(type));
     }
 
     public void addArray(String ident, WaccType type, int length) {
@@ -56,7 +52,9 @@ public class SymbolTable {
     }
 
     public WaccType lookupType(String ident) {
-        return getSymbol(ident).getType();
+        Symbol sym = getSymbol(ident);
+        if(sym == null) return null;
+        else return sym.getType();
     }
 
     public WaccType lookupType(ParseTree child) {
@@ -82,7 +80,11 @@ public class SymbolTable {
                 return table.get(ident);
             }
         }
-        throw new RuntimeException("TODO: IMPROVE THIS ERROR (symbol not found)");
+        return null;
+    }
+
+    public boolean isDeclared(String ident) {
+        return getSymbol(ident) != null;
     }
 
     private abstract class Symbol {
