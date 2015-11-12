@@ -1,4 +1,5 @@
 import antlr.WaccParser;
+import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 public class WaccVisitorErrorHandler {
@@ -38,10 +39,15 @@ public class WaccVisitorErrorHandler {
         throwError(ctx, msg);
     }
 
+    public void invalidOperator(ParserRuleContext ctx) {
+        String msg = "invalid binary operator usage";
+        throwError(ctx, msg);
+    }
+
+
     public void invalidNumberOfArgs(ParserRuleContext ctx, String funcIdent) {
         String msg = "invalid number of arguments passed to function \'" + funcIdent + '\'';
     }
-    
 
     private void overflow(ParserRuleContext ctx, String type, int minRange, int maxRange) {
         String msg = type + " overflow, expected " + type + " between " + minRange + " and " + maxRange;

@@ -15,7 +15,7 @@ public class Main {
             // simulate file input from stdin
             // TODO: REMOVE THIS WHEN WE WANT FILES TO BE SENT FROM THE COMMAND LINE
             //System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/valid/advanced/hashTable.wacc"));
-            System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/invalid/semanticErr/expressions/intOpTypeErr.wacc"));
+            System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/invalid/semanticErr/expressions/moreArrExpr.wacc"));
             //System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/invalid/semanticErr/variables/basicTypeErr01.wacc"));
         }
 

@@ -36,7 +36,8 @@ public class WaccType {
         }
     }
 
-    public final boolean isPair;
+    private final boolean isPair;
+    private boolean isArray = false;
     private int id;
     private int id2;
 
@@ -67,11 +68,19 @@ public class WaccType {
         return id2;
     }
 
+    public void toArray() {
+        isArray = true;
+    }
+
+    public boolean isArray() {
+        return isArray;
+    }
+
     @Override
     public boolean equals(Object other) {
         if(other instanceof WaccType) {
             WaccType oth = (WaccType) other;
-            return oth.id == id && oth.id2 == id2;
+            return oth.id == id && oth.id2 == id2 && isArray == oth.isArray;
         } else if(other instanceof Integer) {
             return id == (Integer) other;
         } else {
@@ -83,10 +92,13 @@ public class WaccType {
     public String toString() {
         if(id == ALL_ID) return "All types";
         if(id == INVALID_ID) return "Invalid type";
+        String name = WaccParser.tokenNames[id];
         if(isPair) {
-            return "pair(" + WaccParser.tokenNames[id] + ", " + WaccParser.tokenNames[id2] + ")";
+            return "pair(" + name + ", " + WaccParser.tokenNames[id2] + ")";
+        } else if(isArray) {
+            return "array(" + name + ")";
         } else {
-            return WaccParser.tokenNames[id];
+            return name;
         }
     }
 

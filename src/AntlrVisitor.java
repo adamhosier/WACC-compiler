@@ -44,7 +44,9 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
             return new WaccType(((TerminalNode) ctx.getChild(0)).getSymbol().getType());
         }
         if(matchGrammar(ctx, new int[]{RULE_type, OPEN_BRACKETS, CLOSE_BRACKETS})) {
-            return getType((ParserRuleContext) ctx.getChild(0));
+            WaccType t = getType((ParserRuleContext) ctx.getChild(0));
+            t.toArray();
+            return t;
         }
         if(matchGrammar(ctx, new int[]{RULE_expr})) {
            return getType((ParserRuleContext) ctx.getChild(0));
@@ -68,14 +70,19 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
             // checks types match and returns type of result
             WaccType t1 = getType((ParserRuleContext) ctx.getChild(0));
             WaccType t2 = getType((ParserRuleContext) ctx.getChild(2));
-            WaccType op = WaccType.fromBinaryOperator(((TerminalNode) ctx.getChild(1).getChild(0))
-                    .getSymbol().getType());
+            int op = ((TerminalNode) ctx.getChild(1).getChild(0)).getSymbol().getType();
+            WaccType top = WaccType.fromBinaryOperator(op);
 
             if(!t1.equals(t2)) return WaccType.INVALID;
 
-            if(op.equals(new WaccType(INT))) {
-                return t1.equals(op) ? t1 : WaccType.INVALID;
-            } else if(op.equals(new WaccType(BOOL))) {
+            if(top.equals(new WaccType(INT))) {
+                return t1.equals(top) ? t1 : WaccType.INVALID;
+            } else if(top.equals(new WaccType(BOOL))) {
+                if(op == OR || op == AND) {
+                    return t1.equals(top) ? t1 : WaccType.INVALID;
+                } else {
+                    return t1.equals(new WaccType(INT)) ? t1 : WaccType.INVALID;
+                }
             } else {
                 return WaccType.INVALID;
             }
@@ -94,6 +101,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
                         return WaccType.INVALID;
                     }
                 }
+                type.toArray();
                 return type;
             }
         }
@@ -133,7 +141,6 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         //TODO: CHECK FOR ALL TYPES
         WaccType typel = objToType(lhs);
         WaccType typer = objToType(rhs);
-        outputln(typel + " " + typer);
         return typel.isValid() && typer.isValid() && lhs.equals(rhs);
     }
 
@@ -485,6 +492,10 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         ParserRuleContext ctxExpr1 = (ParserRuleContext) ctx.getChild(0);
         ParserRuleContext ctxExpr2 = (ParserRuleContext) ctx.getChild(2);
 
+        if(getType(ctxOp).equals(WaccType.INVALID)) {
+            errorHandler.invalidOperator(ctx);
+        }
+
         if (typesMatch(MULT, ctxOp)
                 || typesMatch(DIV, ctxOp)
                 || typesMatch(MOD, ctxOp)
@@ -496,12 +507,12 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
                 || typesMatch(LESS_THAN_EQ, ctxOp)
                 || typesMatch(EQ, ctxOp)
                 || typesMatch(NOT_EQ, ctxOp)) {
-            evalArgType(INT_LIT, ctxExpr1);
-            evalArgType(INT_LIT, ctxExpr2);
+            evalArgType(INT, ctxExpr1);
+            evalArgType(INT, ctxExpr2);
         }
         if (typesMatch(AND, ctxOp) || typesMatch(OR, ctxOp)) {
-            evalArgType(BOOL_LIT, ctxExpr1);
-            evalArgType(BOOL_LIT, ctxExpr2);
+            evalArgType(BOOL, ctxExpr1);
+            evalArgType(BOOL, ctxExpr2);
         }
 
         visit(ctx.getChild(0));
