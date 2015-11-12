@@ -38,10 +38,13 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     }
 
     private WaccType getType(ParserRuleContext ctx) {
-        outputln(ruleNames[ctx.getRuleIndex()] + ": " + ctx.getText());
+        //outputln(ruleNames[ctx.getRuleIndex()] + ": " + ctx.getText());
         if(matchGrammar(ctx, new int[]{RULE_baseType})) {
             ctx = (ParserRuleContext) ctx.getChild(0);
             return new WaccType(((TerminalNode) ctx.getChild(0)).getSymbol().getType());
+        }
+        if(matchGrammar(ctx, new int[]{RULE_type, OPEN_BRACKETS, CLOSE_BRACKETS})) {
+            return getType((ParserRuleContext) ctx.getChild(0));
         }
         if(matchGrammar(ctx, new int[]{RULE_expr})) {
            return getType((ParserRuleContext) ctx.getChild(0));
@@ -65,8 +68,17 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
             // checks types match and returns type of result
             WaccType t1 = getType((ParserRuleContext) ctx.getChild(0));
             WaccType t2 = getType((ParserRuleContext) ctx.getChild(2));
-            int op = ((TerminalNode) ctx.getChild(1).getChild(0)).getSymbol().getType();
-            return t1.equals(t2) ? WaccType.fromBinaryOperator(op) : WaccType.INVALID;
+            WaccType op = WaccType.fromBinaryOperator(((TerminalNode) ctx.getChild(1).getChild(0))
+                    .getSymbol().getType());
+
+            if(!t1.equals(t2)) return WaccType.INVALID;
+
+            if(op.equals(new WaccType(INT))) {
+                return t1.equals(op) ? t1 : WaccType.INVALID;
+            } else if(op.equals(new WaccType(BOOL))) {
+            } else {
+                return WaccType.INVALID;
+            }
         }
         if(matchGrammar(ctx, new int[]{OPEN_PARENTHESES, RULE_expr, CLOSE_PARENTHESES})) {
             return getType((ParserRuleContext) ctx.getChild(1));
@@ -77,7 +89,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
                 return WaccType.ALL;
             } else {
                 WaccType type = getType((ParserRuleContext) ctx.getChild(1));
-                for(int i = 2; i < ctx.getChildCount() - 1; i += 2) {
+                for(int i = 3; i < ctx.getChildCount() - 1; i += 2) {
                     if(!getType((ParserRuleContext) ctx.getChild(i)).equals(type)) {
                         return WaccType.INVALID;
                     }
@@ -118,8 +130,10 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     }
 
     private boolean typesMatch(Object lhs, Object rhs) {
+        //TODO: CHECK FOR ALL TYPES
         WaccType typel = objToType(lhs);
         WaccType typer = objToType(rhs);
+        outputln(typel + " " + typer);
         return typel.isValid() && typer.isValid() && lhs.equals(rhs);
     }
 
@@ -130,8 +144,11 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     /////////// VISITOR METHODS ////////////
 
     public Void visitProg(ProgContext ctx) {
+        System.out.println("====");
         outputln("Visited main program entry");
-        return visitChildren(ctx);
+        visitChildren(ctx);
+        System.out.println("====");
+        return null;
     }
 
     public Void visitFunc(FuncContext ctx) {
@@ -174,16 +191,14 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         outputln("Declaring var " + ctx.ident().getText());
 
         WaccType exp = getType(ctx.type());
-        WaccType acc = getType(ctx.assignRhs());
-
         outputln("  Expected type: " + exp);
+
+        WaccType acc = getType(ctx.assignRhs());
         outputln("  Actual type: " + acc);
 
-        if(!typesMatch(ctx.type(), ctx.assignRhs())) {
+        if(!typesMatch(acc, exp)) {
             errorHandler.typeMismatch(ctx, exp, acc);
         }
-
-        visitChildren(ctx);
 
         st.addVariable(ctx.ident().getText(), acc);
     }
@@ -430,7 +445,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         // Check identifier exists
         visitExprIdent(ctxi);
 
-        int arrayLength = st.getArrayLength(ctxi.getText());
+        int arrayLength = st.getArrayLength(ctxi.getText())[0];
         int index = Integer.parseInt(ctx.getChild(2).getText());
         // ONLY CHECKS IF LEADING DIMENSION IN BOUNDS
         if (index >= arrayLength || index < 0) {

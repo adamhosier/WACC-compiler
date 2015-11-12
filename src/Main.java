@@ -15,7 +15,7 @@ public class Main {
             // simulate file input from stdin
             // TODO: REMOVE THIS WHEN WE WANT FILES TO BE SENT FROM THE COMMAND LINE
             //System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/valid/advanced/hashTable.wacc"));
-            System.setIn(new FileInputStream("/home/adam/labs/wacclab/examples/valid/expressions/equalsExpr.wacc"));
+            System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/invalid/semanticErr/expressions/intOpTypeErr.wacc"));
             //System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/invalid/semanticErr/variables/basicTypeErr01.wacc"));
         }
 
@@ -30,11 +30,9 @@ public class Main {
         ParseTree tree = parser.prog();
 
         // run the visitor
-        System.out.println("====");
         AntlrVisitor visitor = new AntlrVisitor();
         visitor.verbose = true; // TODO: REMOVE THIS WHEN NOT DEBUGGING
         visitor.visit(tree);
-        System.out.println("====");
 
     }
 }

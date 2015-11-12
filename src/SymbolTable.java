@@ -28,7 +28,7 @@ public class SymbolTable {
         addVar(tables.getFirst(), ident, new VariableSymbol(type));
     }
 
-    public void addArray(String ident, WaccType type, int length) {
+    public void addArray(String ident, WaccType type, int[] length) {
         addVar(tables.getFirst(), ident, new ArraySymbol(type, length));
     }
 
@@ -61,12 +61,12 @@ public class SymbolTable {
         return lookupType(child.getText());
     }
 
-    public int getArrayLength(String ident) {
+    public int[] getArrayLength(String ident) {
         Symbol sym = getSymbol(ident);
         if(!(sym instanceof ArraySymbol)) {
-            return -1; //TODO: MAYBE ERROR HERE INSTEAD OF THIS
+            return null; //TODO: MAYBE ERROR HERE INSTEAD OF THIS
         } else {
-            return ((ArraySymbol) sym).getLength();
+            return ((ArraySymbol) sym).getLengths();
         }
     }
 
@@ -121,15 +121,15 @@ public class SymbolTable {
 
     private class ArraySymbol extends Symbol {
 
-        private final int length;
+        private final int[] lengths;
 
-        public int getLength() {
-            return length;
+        public int[] getLengths() {
+            return lengths;
         }
 
-        public ArraySymbol(WaccType type, int length) {
+        public ArraySymbol(WaccType type, int[] lengths) {
             super(type);
-            this.length = length;
+            this.lengths = lengths;
         }
     }
 }
