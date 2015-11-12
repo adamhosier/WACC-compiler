@@ -47,6 +47,12 @@ public class WaccVisitorErrorHandler {
 
     public void invalidNumberOfArgs(ParserRuleContext ctx, String funcIdent) {
         String msg = "invalid number of arguments passed to function \'" + funcIdent + '\'';
+        throwError(ctx, msg);
+    }
+
+    public void incompatibleArrayElemTypes(ParserRuleContext ctx) {
+        String msg = "incompatible types in array literal";
+        throwError(ctx, msg);
     }
 
     private void overflow(ParserRuleContext ctx, String type, int minRange, int maxRange) {
