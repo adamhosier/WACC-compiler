@@ -353,19 +353,25 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         // Check identifier exists
         visit(ctxi);
 
-        int arrayLength = st.getArrayLength(ctxi.getText());
-        int index = Integer.parseInt(ctx.getChild(2).getText());
-        // ONLY CHECKS IF LEADING DIMENSION IN BOUNDS
-        if (index >= arrayLength || index < 0) {
-            errorHandler.arrayOutOfBounds((ParserRuleContext) ctx.getChild(2), index);
-        }
+        int[] arrayLengths = st.getArrayLength(ctxi.getText());
+        int index = 0;
+//        int index = Integer.parseInt(ctx.getChild(2).getText());
+//        // ONLY CHECKS IF LEADING DIMENSION IN BOUNDS
+//        if (index >= arrayLength || index < 0) {
+//            errorHandler.arrayOutOfBounds((ParserRuleContext) ctx.getChild(2), index);
+//        }
 
         // Check that each index expression is integer
         for (int i = 2; i < ctx.getChildCount() - 1; i += 3) {
             ParserRuleContext ctxExpr = (ParserRuleContext) ctx.getChild(i);
+            int index = Integer.parseInt(ctxExpr.getText());
             if (!typesMatch(INT_LIT, ctxExpr)) {
                 errorHandler.typeMismatch(ctxExpr, new WaccType(INT_LIT), getType(ctxExpr));
             }
+            if (index >= arrayLengths[index] || index < 0) {
+                errorHandler.arrayOutOfBounds((ParserRuleContext) ctx.getChild(2), index);
+            }
+            index++;
         }
         return null;
     }
