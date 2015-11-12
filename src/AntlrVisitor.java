@@ -182,14 +182,17 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
             errorHandler.typeMismatch(ctx, exp, acc);
         }
 
+        visitChildren(ctx);
+
         st.addVariable(ctx.ident().getText(), acc);
     }
 
     private void visitStatAssignment(StatContext ctx) {
         outputln("Visited assigment");
-        outputln("  Assigning ");
 
         String ident = ctx.assignLhs().getChild(0).getText();
+
+        outputln("  Assigning to " + ident);
 
         if(!st.isDeclared(ident)) {
             errorHandler.symbolNotFound(ctx, ident);
@@ -200,10 +203,20 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         if(!typesMatch(exp, ctx.assignRhs())) {
             errorHandler.typeMismatch(ctx, exp, acc);
         }
+
+        visitChildren(ctx);
     }
 
     private void visitStatRead(StatContext ctx) {
         outputln("Visited read");
+
+        String ident = ctx.assignLhs().getChild(0).getText();
+
+        if(!st.isDeclared(ident)) {
+            errorHandler.symbolNotFound(ctx, ident);
+        }
+
+        visitChildren(ctx);
     }
 
     private void visitStatFree(StatContext ctx) {
