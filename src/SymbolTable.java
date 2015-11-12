@@ -1,53 +1,49 @@
-import antlr.WaccParser;
 import antlr.WaccParser.ParamListContext;
-import antlr.WaccParser.TypeContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import javax.lang.model.element.Name;
-import javax.naming.NameNotFoundException;
 import java.util.*;
 
 public class SymbolTable {
 
     private Map<String, Symbol> globaltable;
-    private WaccVisitorErrorHandler errorHandler;
 
     private LinkedList<Map<String, Symbol>> tables = new LinkedList<>();
 
-    public SymbolTable(WaccVisitorErrorHandler errorHandler) {
-        this.errorHandler = errorHandler;
+    public SymbolTable() {
         globaltable = new HashMap<>();
         tables.add(globaltable);
     }
 
-    public void addFunction(String ident, int type, ParamListContext params) {
-        addVar(globaltable, ident, new FunctionSymbol(new WaccType(type), params));
+    public boolean addFunction(String ident, int type, ParamListContext params) {
+        return addVar(globaltable, ident, new FunctionSymbol(new WaccType(type), params));
     }
 
-    public void addVariable(String ident, WaccType type) {
-        addVar(tables.getFirst(), ident, new VariableSymbol(type));
+    public boolean addVariable(String ident, WaccType type) {
+        return addVar(tables.getFirst(), ident, new VariableSymbol(type));
     }
 
-    public void addArray(String ident, WaccType type, int[] length) {
-        addVar(tables.getFirst(), ident, new ArraySymbol(type, length));
+    public boolean addArray(String ident, WaccType type, int[] length) {
+        return addVar(tables.getFirst(), ident, new ArraySymbol(type, length));
     }
 
-    private void addVar(Map<String, Symbol> table, String ident, Symbol sym) {
+    private boolean addVar(Map<String, Symbol> table, String ident, Symbol sym) {
         if(table.containsKey(ident)) {
-            throw new RuntimeException("TODO: IMPROVE THIS ERROR (redefinition)");
+            return false;
         }
         table.put(ident, sym);
+        return true;
     }
 
     public void newScope() {
         tables.addFirst(new HashMap<String, Symbol>());
     }
 
-    public void endScope() {
+    public boolean endScope() {
         if(tables.size() > 1) {
             tables.removeFirst();
+            return true;
         } else {
-            throw new RuntimeException("TODO: IMPROVE THIS ERROR (too many scopes popped)");
+            return false;
         }
     }
 
@@ -64,7 +60,7 @@ public class SymbolTable {
     public int[] getArrayLength(String ident) {
         Symbol sym = getSymbol(ident);
         if(!(sym instanceof ArraySymbol)) {
-            return null; //TODO: MAYBE ERROR HERE INSTEAD OF THIS
+            return null;
         } else {
             return ((ArraySymbol) sym).getLengths();
         }

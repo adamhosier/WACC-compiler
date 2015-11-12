@@ -39,11 +39,10 @@ if r != 0:
 os.chdir("bin")
 
 validtestdir = "../examples/valid"
-invalidtestdir = "../examples/invalid/semanticErr/expressions"
+invalidtestdir = "../examples/invalid"
 
 print("========== VALID TESTS ==========")
 for subdir, dirs, files in os.walk(validtestdir):
-    continue
     for f in files:
         path = os.path.join(subdir, f)
         with open(path, 'rb') as testfile:
