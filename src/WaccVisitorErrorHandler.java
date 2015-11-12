@@ -25,6 +25,16 @@ public class WaccVisitorErrorHandler {
     public void characterOverflow(ParserRuleContext ctx) {
         overflow(ctx, "Character", CHARACTER_MIN_VALUE, CHARACTER_MAX_VALUE);
     }
+
+    public void identNotFound(ParserRuleContext ctx) {
+        String ident = ctx.getChild(0).getText();
+        String msg = "identifier not found: " + ident;
+        throwError(ctx, msg);
+    }
+
+    public void invalidNumberOfArgs(ParserRuleContext ctx, String funcIdent) {
+        String msg = "invalid number of arguments passed to function \'" + funcIdent + '\'';
+    }
     
     private void overflow(ParserRuleContext ctx, String type, int minRange, int maxRange) {
         String msg = type + " overflow, expected " + type + " between " + minRange + " and " + maxRange;
