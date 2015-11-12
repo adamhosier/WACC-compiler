@@ -39,10 +39,6 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         return true;
     }
 
-    private boolean isIntExpr(ParserRuleContext ctx) {
-        return false;
-    }
-
     private WaccType getType(ParserRuleContext ctx) {
         outputln(ruleNames[ctx.getRuleIndex()] + ": " + ctx.getText());
         if(matchGrammar(ctx, new int[]{RULE_baseType})) {
