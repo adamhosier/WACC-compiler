@@ -1,6 +1,7 @@
 import antlr.*;
 import static antlr.WaccParser.*;
 
+import com.sun.xml.internal.rngom.digested.DDataPattern;
 import org.antlr.v4.runtime.LexerNoViableAltException;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -249,6 +250,11 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     }
 
     public Void visitIdent(IdentContext ctx) {
+        outputln("Visited ident");
+        WaccType ident = st.lookupType(ctx.getText());
+        if (ident == null) {
+            errorHandler.identNotFound(ctx);
+        }
         return null;
     }
 
@@ -293,17 +299,35 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
             ctx.getChild(4).accept(this);
         if(matchGrammar(ctx, new int[]{RULE_pairElem}))
             visit(ctx.getChild(0));
-//        if(matchGrammar(ctx, new int[]{CALL, RULE_ident, OPEN_PARENTHESES, argList?, CLOSE_PARENTHESES})
+        if(matchGrammar(ctx, new int[]{RULE_funcCall}))
+            visitFuncCall(ctx);
         return null;
     }
 
-    ////////// Visit arg list //////////
+    private void visitFuncCall(AssignRhsContext ctx) {
+        IdentContext ident = (IdentContext) ctx.getChild(1);
+        visit(ident); // visit ident
+        if (ctx.getChildCount() > 4) {
+            visitArgList((ArgListContext) ctx.getChild(3), ident.getText()); // visit arg list
+        }
+    }
 
-    public Void visitArgList(ArgListContext ctx) {
+    private void visitArgList(ArgListContext ctx, String ident) {
+        ParamListContext params = st.getParamList(ident);
+        if (ctx.getChildCount() != params.getChildCount()) {
+            errorHandler.invalidNumberOfArgs(ctx, ident);
+        }
+        // check each param matches type
+        WaccType argType;
+        WaccType paramType;
         for (int i = 0; i < ctx.getChildCount(); i += 2) {
             ctx.getChild(i).accept(this);
+            argType = getType((ParserRuleContext) ctx.getChild(i));
+            paramType = getType((ParserRuleContext) params.getChild(i));
+            if (!typesMatch(argType, paramType) {
+                errorHandler.typeMismatch((ParserRuleContext) ctx.getChild(i), paramType.toString(), argType.toString());
+            }
         }
-        return null;
     }
 
     ////////// Visit Pair Elem //////////
@@ -394,7 +418,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         int arrayLength = st.getArrayLength(ctxi.getText());
         int index = Integer.parseInt(ctx.getChild(2).getText());
         // ONLY CHECKS IF LEADING DIMENSION IN BOUNDS
-        if (index >= arrayLength) {
+        if (index >= arrayLength || index < 0) {
             errorHandler.arrayOutOfBounds((ParserRuleContext) ctx.getChild(2), index);
         }
 
