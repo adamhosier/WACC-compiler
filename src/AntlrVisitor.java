@@ -45,8 +45,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         }
         if(matchGrammar(ctx, new int[]{RULE_type, OPEN_BRACKETS, CLOSE_BRACKETS})) {
             WaccType t = getType(ctx.getChild(0));
-            t.toArray();
-            return t;
+            return t.toArray();
         }
         if(matchGrammar(ctx, new int[]{RULE_expr})) {
            return getType(ctx.getChild(0));
@@ -101,8 +100,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
                         return WaccType.INVALID;
                     }
                 }
-                type.toArray();
-                return type;
+                return type.toArray();
             }
         }
         if(matchGrammar(ctx, new int[]{NEW_PAIR, OPEN_PARENTHESES, RULE_expr, COMMA, RULE_expr, CLOSE_PARENTHESES})) {
@@ -131,7 +129,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     }
 
     private WaccType objToType(Object o) {
-        if(o instanceof ParserRuleContext) return getType((ParseTree) o);
+        if(o instanceof ParseTree) return getType((ParseTree) o);
         if(o instanceof Integer) return new WaccType((Integer) o);
         if(o instanceof WaccType) return (WaccType) o;
         return WaccType.INVALID;
@@ -141,7 +139,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         //TODO: CHECK FOR ALL TYPES
         WaccType typel = objToType(lhs);
         WaccType typer = objToType(rhs);
-        return typel.isValid() && typer.isValid() && lhs.equals(rhs);
+        return typel.isValid() && typer.isValid() && typel.equals(typer);
     }
 
     private String getTypeString(ParserRuleContext ctx) {
@@ -219,21 +217,38 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     private void visitStatAssignment(StatContext ctx) {
         outputln("Visited assigment");
 
-        String ident = ctx.assignLhs().getChild(0).getText();
+        AssignLhsContext lhs = ctx.assignLhs();
+
+        String ident = null;
+        WaccType acc = getType(ctx.assignRhs());
+
+        if(matchGrammar(lhs, new int[]{RULE_ident})) {
+            ident = lhs.ident().getText();
+
+            if(!st.isDeclared(ident)) {
+                errorHandler.symbolNotFound(ctx, ident);
+            }
+
+            WaccType exp = st.lookupType(ident);
+            if(!typesMatch(exp, ctx.assignRhs())) {
+                errorHandler.typeMismatch(ctx, exp, acc);
+            }
+        } else if(matchGrammar(lhs, new int[]{RULE_arrayElem})) {
+            ident = lhs.arrayElem().ident().getText();
+
+            if(!st.isDeclared(ident)) {
+                errorHandler.symbolNotFound(ctx, ident);
+            }
+
+            WaccType exp = st.lookupType(ident);
+            if(!typesMatch(exp.getBaseType(), ctx.assignRhs())) {
+                errorHandler.typeMismatch(ctx, exp.getBaseType(), acc);
+            }
+        } else if(matchGrammar(lhs, new int[]{RULE_pairElem})) {
+            ident = lhs.pairElem().expr().ident().getText();
+        }
 
         outputln("  Assigning to " + ident);
-
-        if(!st.isDeclared(ident)) {
-            errorHandler.symbolNotFound(ctx, ident);
-        }
-
-        WaccType exp = st.lookupType(ident);
-        WaccType acc = getType(ctx.assignRhs());
-        if(!typesMatch(exp, ctx.assignRhs())) {
-            errorHandler.typeMismatch(ctx, exp, acc);
-        }
-
-        visitChildren(ctx);
     }
 
     private void visitStatRead(StatContext ctx) {
@@ -395,19 +410,13 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         visit(ctxi);
 
         int[] arrayLengths = st.getArrayLength(ctxi.getText());
-        int currIndex = 0;
 
         // Check that each index expression is integer
         for (int i = 2; i < ctx.getChildCount() - 1; i += 3) {
-            ParserRuleContext ctxExpr = (ParserRuleContext) ctx.getChild(i);
-            int index = Integer.parseInt(ctxExpr.getText());
-            if (!typesMatch(INT_LIT, ctxExpr)) {
-                errorHandler.typeMismatch(ctxExpr, new WaccType(INT_LIT), getType(ctxExpr));
-            }
-            if (index >= arrayLengths[currIndex] || index < 0) {
-                errorHandler.arrayOutOfBounds((ParserRuleContext) ctx.getChild(i), index);
-            }
-            currIndex++;
+            ParseTree ctxExpr = ctx.getChild(i);
+            if (!typesMatch(INT, ctxExpr)) {
+                errorHandler.typeMismatch(ctxExpr, new WaccType(INT), getType(ctxExpr));
+            };
         }
         return null;
     }
@@ -443,8 +452,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
             visitExprStringLiter(ctx);
         if(matchGrammar(ctx, new int[]{RULE_pairLiter}))
             visitExprPairLiter(ctx);
-        if(matchGrammar(ctx, new int[]{RULE_ident})
-                || matchGrammar(ctx, new int[]{RULE_arrayElem}))
+        if(matchGrammar(ctx, new int[]{RULE_ident}) || matchGrammar(ctx, new int[]{RULE_arrayElem}))
             visit(ctx.getChild(0));
         if(matchGrammar(ctx, new int[]{RULE_unaryOper, RULE_expr}))
             visitExprUnaryOper(ctx);

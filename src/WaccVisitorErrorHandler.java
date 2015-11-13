@@ -1,5 +1,7 @@
+import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 public class WaccVisitorErrorHandler {
 
@@ -64,13 +66,23 @@ public class WaccVisitorErrorHandler {
         throwError(ctx, msg);
     }
 
-    private String getLine(ParserRuleContext ctx) {
-        return "line " + ctx.getStart().getLine() + ":" + ctx.getStart().getCharPositionInLine() + " ";
+    private String getLine(ParseTree ctx) {
+        int line = 0;
+        int pos = 0;
+        if(ctx instanceof ParserRuleContext) {
+            ParserRuleContext ctxp = (ParserRuleContext) ctx;
+            line = ctxp.getStart().getLine();
+            pos = ctxp.getStart().getCharPositionInLine();
+        } else if(ctx instanceof TerminalNode) {
+            TerminalNode ctxt = (TerminalNode) ctx;
+            line = ctxt.getSymbol().getLine();
+            pos = ctxt.getSymbol().getLine();
+        }
+        return "line " + line + ":" + pos + " ";
     }
 
     private void throwError(ParseTree ctx, String msg) {
-        if(ctx instanceof ParserRuleContext) System.err.println(getLine((ParserRuleContext) ctx) + msg);
-        else System.err.println(msg);
+        System.err.println(getLine(ctx) + msg);
         System.exit(ERROR_CODE);
     }
 }

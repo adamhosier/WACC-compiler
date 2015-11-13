@@ -68,8 +68,13 @@ public class WaccType {
         return id2;
     }
 
-    public void toArray() {
+    public WaccType getBaseType() {
+        return new WaccType(id);
+    }
+
+    public WaccType toArray() {
         isArray = true;
+        return this;
     }
 
     public boolean isArray() {
@@ -88,10 +93,11 @@ public class WaccType {
         }
     }
 
+
     @Override
     public String toString() {
-        if(id == ALL_ID) return "All types";
-        if(id == INVALID_ID) return "Invalid type";
+        if(id == ALL_ID) return "[All types]";
+        if(id == INVALID_ID) return "[Invalid type]";
         String name = WaccParser.tokenNames[id];
         if(isPair) {
             return "pair(" + name + ", " + WaccParser.tokenNames[id2] + ")";
@@ -101,6 +107,4 @@ public class WaccType {
             return name;
         }
     }
-
-
 }
