@@ -38,7 +38,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     }
 
     private WaccType getType(ParseTree ctx) {
-        //outputln(ruleNames[ctx.getRuleIndex()] + ": " + ctx.getText());
+        //outputln(ruleNames[((ParserRuleContext) ctx).getRuleIndex()] + ": " + ctx.getText());
         if(matchGrammar(ctx, new int[]{RULE_baseType})) {
             ctx = (ParserRuleContext) ctx.getChild(0);
             return new WaccType(((TerminalNode) ctx.getChild(0)).getSymbol().getType());
@@ -68,9 +68,11 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         if(matchGrammar(ctx, new int[]{RULE_expr, RULE_binaryOper, RULE_expr})) {
             // checks types match and returns type of result
             WaccType t1 = getType(ctx.getChild(0));
-            WaccType t2 = getType(ctx.getChild(2));
+
             int op = ((TerminalNode) ctx.getChild(1).getChild(0)).getSymbol().getType();
             WaccType top = WaccType.fromBinaryOperator(op);
+
+            WaccType t2 = getType(ctx.getChild(2));
 
             if(!t1.equals(t2)) return WaccType.INVALID;
 
@@ -136,10 +138,9 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     }
 
     private boolean typesMatch(Object lhs, Object rhs) {
-        //TODO: CHECK FOR ALL TYPES
         WaccType typel = objToType(lhs);
         WaccType typer = objToType(rhs);
-        return typel.isValid() && typer.isValid() && typel.equals(typer);
+        return typel.isAll() || typer.isAll() || (typel.isValid() && typer.isValid() && typel.equals(typer));
     }
 
     private String getTypeString(ParserRuleContext ctx) {
@@ -384,10 +385,10 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         WaccType paramType;
         for (int i = 0; i < ctx.getChildCount(); i += 2) {
             visit(ctx.getChild(i));
-            argType = getType((ParserRuleContext) ctx.getChild(i));
-            paramType = getType((ParserRuleContext) params.getChild(i));
+            argType = getType(ctx.getChild(i));
+            paramType = getType(params.getChild(i));
             if (!typesMatch(argType, paramType)) {
-                errorHandler.typeMismatch((ParserRuleContext) ctx.getChild(i), paramType, argType);
+                errorHandler.typeMismatch(ctx.getChild(i), paramType, argType);
             }
         }
     }
@@ -427,8 +428,8 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         outputln("Visited array literal");
         int childCount = ctx.getChildCount();
         if (childCount > 2) {
-            WaccType type = getType(ctx.getChild(2));
-            for (int i = 4; i < childCount - 1; i += 2) {
+            WaccType type = getType(ctx.getChild(1));
+            for (int i = 3; i < childCount - 1; i += 2) {
                 ParseTree ctxExpr = ctx.getChild(i);
                 WaccType nextType = getType(ctxExpr);
                 if (!typesMatch(type, nextType)) {
@@ -542,13 +543,13 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     private void visitExprBinaryOper(ExprContext ctx) {
         outputln("Visited binary operation");
-        ParserRuleContext ctxOp= (ParserRuleContext) ctx.getChild(1);
-        ParserRuleContext ctxExpr1 = (ParserRuleContext) ctx.getChild(0);
-        ParserRuleContext ctxExpr2 = (ParserRuleContext) ctx.getChild(2);
+        ParseTree ctxOp= ctx.getChild(1);
+        ParseTree ctxExpr1 = ctx.getChild(0);
+        ParseTree ctxExpr2 = ctx.getChild(2);
 
-        if(getType(ctxOp).equals(WaccType.INVALID)) {
-            errorHandler.invalidOperator(ctx);
-        }
+        //if(getType(ctxOp).equals(WaccType.INVALID)) {
+        //    errorHandler.invalidOperator(ctx, ctxOp.getText());
+        //}
 
         if (typesMatch(MULT, ctxOp)
                 || typesMatch(DIV, ctxOp)
@@ -573,7 +574,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         visit(ctx.getChild(2));
     }
 
-    private void evalArgType(int expectedTypeToken, ParserRuleContext ctxExpr) {
+    private void evalArgType(int expectedTypeToken, ParseTree ctxExpr) {
         if (!typesMatch(expectedTypeToken, ctxExpr)) {
             errorHandler.typeMismatch(ctxExpr, new WaccType(expectedTypeToken),
                                         getType(ctxExpr));

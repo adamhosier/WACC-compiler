@@ -40,8 +40,8 @@ public class WaccVisitorErrorHandler {
         throwError(ctx, msg);
     }
 
-    public void invalidOperator(ParseTree ctx) {
-        String msg = "invalid binary operator usage";
+    public void invalidOperator(ParseTree ctx, String op) {
+        String msg = "invalid binary operator usage (" + op + ")";
         throwError(ctx, msg);
     }
 

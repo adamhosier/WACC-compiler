@@ -56,6 +56,10 @@ public class WaccType {
         return id != INVALID_ID;
     }
 
+    public boolean isAll() {
+        return id == ALL_ID;
+    }
+
     public int getId() {
         return id;
     }
@@ -82,6 +86,7 @@ public class WaccType {
         return isArray;
     }
 
+
     @Override
     public boolean equals(Object other) {
         if(other instanceof WaccType) {
@@ -93,7 +98,6 @@ public class WaccType {
             return false;
         }
     }
-
 
     @Override
     public String toString() {
