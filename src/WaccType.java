@@ -69,7 +69,8 @@ public class WaccType {
     }
 
     public WaccType getBaseType() {
-        return new WaccType(id);
+        if(id == WaccParser.STRING) return new WaccType(WaccParser.CHAR);
+        else return new WaccType(id);
     }
 
     public WaccType toArray() {
