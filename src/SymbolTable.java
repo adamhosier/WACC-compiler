@@ -48,6 +48,7 @@ public class SymbolTable {
     }
 
     public WaccType lookupType(String ident) {
+        System.out.println("looking up " + ident);
         Symbol sym = getSymbol(ident);
         if(sym == null) return null;
         else return sym.getType();

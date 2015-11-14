@@ -36,10 +36,15 @@ public class WaccType {
         }
     }
 
-    private final boolean isPair;
+    private boolean isPair;
     private boolean isArray = false;
+    private boolean isFstPairArray = false;
+    private boolean isSndPairArray = false;
     private int id;
     private int id2;
+
+    public WaccType() {
+    }
 
     public WaccType(int id) {
         this.id = id;
@@ -72,26 +77,65 @@ public class WaccType {
         return id2;
     }
 
+    public boolean isFstArray() {
+        return isFstPairArray;
+    }
+
+    public boolean isSndArray() {
+        return isSndPairArray;
+    }
+
     public WaccType getBaseType() {
-        if(id == WaccParser.STRING) return new WaccType(WaccParser.CHAR);
-        else return new WaccType(id);
+        if(id == WaccParser.STRING && !isArray) {
+            return new WaccType(WaccParser.CHAR);
+        }
+        else {
+            WaccType t = this.copy();
+            t.isArray = false;
+            return t;
+        }
     }
 
     public WaccType toArray() {
-        isArray = true;
-        return this;
+        if(isArray) return this;
+        WaccType t = this.copy();
+        t.isArray = true;
+        return t;
+    }
+
+    public void setFstArray(boolean isArr) {
+        isFstPairArray = isArr;
+    }
+
+    public void setSndArray(boolean isArr) {
+        isSndPairArray = isArr;
     }
 
     public boolean isArray() {
         return isArray;
     }
 
+    public void setArray(boolean b) {
+        isArray = b;
+    }
+
+    private WaccType copy() {
+        WaccType t = new WaccType();
+        t.id = id;
+        t.id2 = id2;
+        t.isFstPairArray = isFstPairArray;
+        t.isSndPairArray = isSndPairArray;
+        t.isArray = isArray;
+        t.isPair = isPair;
+        return t;
+    }
 
     @Override
     public boolean equals(Object other) {
         if(other instanceof WaccType) {
             WaccType oth = (WaccType) other;
-            return oth.id == id && oth.id2 == id2 && isArray == oth.isArray;
+            return oth.id == id && oth.id2 == id2 && isArray == oth.isArray && isFstPairArray == oth.isFstPairArray
+                    && isSndPairArray == oth.isSndPairArray;
         } else if(other instanceof Integer) {
             return id == (Integer) other;
         } else {
@@ -103,13 +147,26 @@ public class WaccType {
     public String toString() {
         if(id == ALL_ID) return "[All types]";
         if(id == INVALID_ID) return "[Invalid type]";
-        String name = WaccParser.tokenNames[id];
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(WaccParser.tokenNames[id]);
+
         if(isPair) {
-            return "pair(" + name + ", " + WaccParser.tokenNames[id2] + ")";
-        } else if(isArray) {
-            return "array(" + name + ")";
-        } else {
-            return name;
+            if(isFstPairArray) {
+                sb.insert(0, "array(");
+                sb.append(")");
+            }
+            sb.insert(0, "pair(");
+            sb.append(", ");
+            if(isSndPairArray) sb.append("array(");
+            sb.append(WaccParser.tokenNames[id2]);
+            if(isSndPairArray) sb.append(")");
+            sb.append(")");
         }
+        if(isArray) {
+            sb.insert(0, "array(");
+            sb.append(")");
+        }
+        return sb.toString();
     }
 }

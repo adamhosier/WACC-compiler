@@ -37,11 +37,14 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         return true;
     }
 
+    /*
+     * Gets the type of any rule or terminal node
+     * Performs some type checking on expressions
+     */
     private WaccType getType(ParseTree ctx) {
         //outputln(ruleNames[((ParserRuleContext) ctx).getRuleIndex()] + ": " + ctx.getText());
         if(matchGrammar(ctx, new int[]{RULE_baseType})) {
-            ctx = (ParserRuleContext) ctx.getChild(0);
-            return new WaccType(((TerminalNode) ctx.getChild(0)).getSymbol().getType());
+            return new WaccType(((TerminalNode) ctx.getChild(0).getChild(0)).getSymbol().getType());
         }
         if(matchGrammar(ctx, new int[]{RULE_type, OPEN_BRACKETS, CLOSE_BRACKETS})) {
             WaccType t = getType(ctx.getChild(0));
@@ -59,8 +62,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
             return st.lookupType(ctx.getChild(0));
         }
         if(matchGrammar(ctx, new int[]{RULE_arrayElem})) {
-            //it is not the job of getType to check that the index expression is valid
-            return st.lookupType(ctx.getChild(0));
+            return st.lookupType(ctx.getChild(0).getChild(0)).getBaseType();
         }
         if(matchGrammar(ctx, new int[]{RULE_unaryOper, RULE_expr})) {
             return getType(ctx.getChild(1));
@@ -92,7 +94,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
             return getType(ctx.getChild(1));
         }
         if(matchGrammar(ctx, new int[]{RULE_arrayLiter})) {
-            ctx = (ParserRuleContext) ctx.getChild(0);
+            ctx = ctx.getChild(0);
             if(ctx.getChildCount() == 2) {
                 return WaccType.ALL;
             } else {
@@ -105,18 +107,31 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
                 return type.toArray();
             }
         }
-        if(matchGrammar(ctx, new int[]{NEW_PAIR, OPEN_PARENTHESES, RULE_expr, COMMA, RULE_expr, CLOSE_PARENTHESES})) {
-            WaccType type = new WaccType(getType(ctx.getChild(2)).getId(),
-                                         getType(ctx.getChild(4)).getId());
+        if(matchGrammar(ctx, new int[]{RULE_pairType})) {
+            return getType(ctx.getChild(0));
+        }
+        if(matchGrammar(ctx, new int[]{NEW_PAIR, OPEN_PARENTHESES, RULE_expr, COMMA, RULE_expr, CLOSE_PARENTHESES}) ||
+                matchGrammar(ctx, new int[]{PAIR, OPEN_PARENTHESES, RULE_pairElemType, COMMA, RULE_pairElemType,
+                        CLOSE_PARENTHESES})) {
+            WaccType fst = getType(ctx.getChild(2));
+            WaccType snd = getType(ctx.getChild(4));
+            WaccType pair = new WaccType(fst.getId(), snd.getId());
+            pair.setFstArray(fst.isArray());
+            pair.setSndArray(snd.isArray());
+            return pair;
         }
         if(matchGrammar(ctx, new int[]{RULE_pairElem})) {
-            ParseTree ctxp =    ctx.getChild(0);
-            WaccType t = getType(ctxp.getChild(1));
-            if(matchGrammar(ctxp, new int[]{FST, WaccType.ALL.getId()})) {
-                return new WaccType(t.getFstId());
+            ctx = ctx.getChild(0);
+            WaccType t = getType(ctx.getChild(1));
+            WaccType tnew;
+            if(matchGrammar(ctx, new int[]{FST, WaccType.ALL.getId()})) {
+                tnew = new WaccType(t.getFstId());
+                tnew.setArray(t.isFstArray());
             } else {
-                return new WaccType(t.getSndId());
+                tnew = new WaccType(t.getSndId());
+                tnew.setArray(t.isSndArray());
             }
+            return tnew;
         }
         if(matchGrammar(ctx, new int[]{RULE_funcCall})) {
             return st.lookupType(ctx.getChild(0).getChild(1));
@@ -130,6 +145,9 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         return WaccType.INVALID;
     }
 
+    /*
+     * Converts generic object into a WaccType if possible
+     */
     private WaccType objToType(Object o) {
         if(o instanceof ParseTree) return getType((ParseTree) o);
         if(o instanceof Integer) return new WaccType((Integer) o);
@@ -137,14 +155,14 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         return WaccType.INVALID;
     }
 
+    /*
+     * Checks that two types are equal
+     * Parameters can be ParseTrees, Integers or WaccTypes
+     */
     private boolean typesMatch(Object lhs, Object rhs) {
         WaccType typel = objToType(lhs);
         WaccType typer = objToType(rhs);
         return typel.isAll() || typer.isAll() || (typel.isValid() && typer.isValid() && typel.equals(typer));
-    }
-
-    private String getTypeString(ParserRuleContext ctx) {
-        return getType(ctx).toString();
     }
 
     /////////// VISITOR METHODS ////////////
