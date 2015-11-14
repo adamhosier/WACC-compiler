@@ -10,6 +10,7 @@ public class WaccType {
 
     public static final WaccType ALL = new WaccType(ALL_ID);
     public static final WaccType INVALID = new WaccType(INVALID_ID);
+    public static final WaccType PAIR = new WaccType(ALL_ID, ALL_ID);
 
     /*
      * Get a return type of a binary operator
@@ -66,6 +67,7 @@ public class WaccType {
     }
 
     public int getId() {
+        if(isPair) return WaccParser.PAIR;
         return id;
     }
 
@@ -134,8 +136,9 @@ public class WaccType {
     public boolean equals(Object other) {
         if(other instanceof WaccType) {
             WaccType oth = (WaccType) other;
-            return oth.id == id && oth.id2 == id2 && isArray == oth.isArray && isFstPairArray == oth.isFstPairArray
-                    && isSndPairArray == oth.isSndPairArray;
+            return oth.id == WaccParser.PAIR && isPair || oth.isPair && id == WaccParser.PAIR ||
+                    oth.id == id && oth.id2 == id2 && isArray == oth.isArray &&
+                    isFstPairArray == oth.isFstPairArray && isSndPairArray == oth.isSndPairArray;
         } else if(other instanceof Integer) {
             return id == (Integer) other;
         } else {
@@ -159,7 +162,7 @@ public class WaccType {
             sb.insert(0, "pair(");
             sb.append(", ");
             if(isSndPairArray) sb.append("array(");
-            sb.append(WaccParser.tokenNames[id2]);
+            sb.append(id2 == INVALID_ID ? "[Invalid type]" : WaccParser.tokenNames[id2]);
             if(isSndPairArray) sb.append(")");
             sb.append(")");
         }

@@ -10,7 +10,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     private SymbolTable st;
     private WaccVisitorErrorHandler errorHandler;
 
-    // toggles if output is written to stdout
+    // toggles if debugging output is written to stdout
     public boolean verbose = false;
 
     public AntlrVisitor() {
@@ -57,7 +57,9 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         if(matchGrammar(ctx, new int[]{BOOL_LIT})) return new WaccType(BOOL);
         if(matchGrammar(ctx, new int[]{CHAR_LIT})) return new WaccType(CHAR);
         if(matchGrammar(ctx, new int[]{STRING_LIT})) return new WaccType(STRING);
-        if(matchGrammar(ctx, new int[]{RULE_pairLiter})) return new WaccType(PAIR);
+        if(matchGrammar(ctx, new int[]{RULE_pairLiter}) || matchGrammar(ctx, new int[]{PAIR})) {
+            return new WaccType(PAIR);
+        }
         if(matchGrammar(ctx, new int[]{RULE_ident})) {
             return st.lookupType(ctx.getChild(0));
         }
@@ -78,13 +80,16 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
             if(!t1.equals(t2)) return WaccType.INVALID;
 
-            if(top.equals(new WaccType(INT))) {
+            if(top.getId() == INT) {
                 return t1.equals(top) ? t1 : WaccType.INVALID;
-            } else if(top.equals(new WaccType(BOOL))) {
+            } else if(top.getId() == BOOL) {
+                if(op == EQ) {
+                    return top;
+                }
                 if(op == OR || op == AND) {
-                    return t1.equals(top) ? t1 : WaccType.INVALID;
+                    return t1.getId() == BOOL ? top : WaccType.INVALID;
                 } else {
-                    return t1.equals(new WaccType(INT)) ? t1 : WaccType.INVALID;
+                    return t1.getId() == INT ? top : WaccType.INVALID;
                 }
             } else {
                 return WaccType.INVALID;
@@ -136,12 +141,6 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         if(matchGrammar(ctx, new int[]{RULE_funcCall})) {
             return st.lookupType(ctx.getChild(0).getChild(1));
         }
-        if(matchGrammar(ctx, new int[]{RULE_ident})) {
-            return st.lookupType(ctx.getChild(0).getText());
-        }
-        if(matchGrammar(ctx, new int[]{RULE_arrayElem})){
-            return getType(ctx.getChild(0).getChild(0));
-        }
         return WaccType.INVALID;
     }
 
@@ -161,8 +160,8 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
      */
     private boolean typesMatch(Object lhs, Object rhs) {
         WaccType typel = objToType(lhs);
-        WaccType typer = objToType(rhs);
-        return typel.isAll() || typer.isAll() || (typel.isValid() && typer.isValid() && typel.equals(typer));
+        WaccType typer = objToType(rhs);;
+        return typel.isValid() && typer.isValid() && (typel.isAll() || typer.isAll() ||  typel.equals(typer))   ;
     }
 
     /////////// VISITOR METHODS ////////////
@@ -561,25 +560,13 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     private void visitExprBinaryOper(ExprContext ctx) {
         outputln("Visited binary operation");
-        ParseTree ctxOp= ctx.getChild(1);
+        WaccType ctxOp = getType(ctx.getChild(1));
         ParseTree ctxExpr1 = ctx.getChild(0);
         ParseTree ctxExpr2 = ctx.getChild(2);
 
-        //if(getType(ctxOp).equals(WaccType.INVALID)) {
-        //    errorHandler.invalidOperator(ctx, ctxOp.getText());
-        //}
-
-        if (typesMatch(MULT, ctxOp)
-                || typesMatch(DIV, ctxOp)
-                || typesMatch(MOD, ctxOp)
-                || typesMatch(PLUS, ctxOp)
-                || typesMatch(MINUS, ctxOp)
-                || typesMatch(GREATER_THAN, ctxOp)
-                || typesMatch(GREATER_THAN_EQ, ctxOp)
-                || typesMatch(LESS_THAN, ctxOp)
-                || typesMatch(LESS_THAN_EQ, ctxOp)
-                || typesMatch(EQ, ctxOp)
-                || typesMatch(NOT_EQ, ctxOp)) {
+        if (typesMatch(MULT, ctxOp) || typesMatch(DIV, ctxOp) || typesMatch(MOD, ctxOp) || typesMatch(PLUS, ctxOp)
+                || typesMatch(MINUS, ctxOp) || typesMatch(GREATER_THAN, ctxOp) || typesMatch(GREATER_THAN_EQ, ctxOp)
+                || typesMatch(LESS_THAN, ctxOp)|| typesMatch(LESS_THAN_EQ, ctxOp)) {
             evalArgType(INT, ctxExpr1);
             evalArgType(INT, ctxExpr2);
         }
