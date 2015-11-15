@@ -14,7 +14,7 @@ public class Main {
         if(args.length == 0) {
             // simulate file input from stdin
             // TODO: REMOVE THIS WHEN WE WANT FILES TO BE SENT FROM THE COMMAND LINE
-            System.setIn(new FileInputStream("/home/adam/labs/wacclab/examples/invalid/semanticErr/variables/caseMatters.wacc"));
+            System.setIn(new FileInputStream("/home/adam/labs/wacclab/examples/valid/runtimeErr/nullDereference/readNull2.wacc"));
         }
 
         // create a lexer that feeds off of input from System.in

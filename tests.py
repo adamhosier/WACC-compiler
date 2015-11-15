@@ -34,8 +34,8 @@ if r != 0:
     print("Make failed")
     sys.exit(-1)
 
-validtestdir = "examples/valid"
-invalidtestdir = "examples/invalid"
+validtestdir = "examples/valid/runtimeErr"
+invalidtestdir = "examples/invalidd"
 
 print("========== VALID TESTS ==========")
 for subdir, dirs, files in os.walk(validtestdir):

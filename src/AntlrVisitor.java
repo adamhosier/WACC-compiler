@@ -43,7 +43,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
      * Performs some type checking on expressions
      */
     private WaccType getType(ParseTree ctx) {
-        outputln(ruleNames[((ParserRuleContext) ctx).getRuleIndex()] + ": " + ctx.getText());
+        //outputln(ruleNames[((ParserRuleContext) ctx).getRuleIndex()] + ": " + ctx.getText());
         if(matchGrammar(ctx, new int[]{RULE_baseType})) {
             return new WaccType(((TerminalNode) ctx.getChild(0).getChild(0)).getSymbol().getType());
         }
@@ -357,9 +357,9 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     private void visitStatFree(StatContext ctx) {
         outputln("Visited free");
-        ExprContext expr = (ExprContext) ctx.getChild(1);
-        if (!matchGrammar(expr, new int[]{RULE_pairLiter})
-                || !matchGrammar(expr, new int[]{RULE_arrayElem})) {
+        ExprContext expr = ctx.expr();
+        //if (!matchGrammar(expr, new int[]{RULE_pairLiter}) || !matchGrammar(expr, new int[]{RULE_arrayElem})) {
+        if(!typesMatch(getType(expr), PAIR)) {
             errorHandler.freeTypeMismatch(expr, getType(expr));
         }
         visit(expr);
