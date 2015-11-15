@@ -326,6 +326,12 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     private void visitStatRead(StatContext ctx) {
         outputln("Visited read");
+        ParserRuleContext expr = (ParserRuleContext) ctx.getChild(1).getChild(0);
+        if (!(expr instanceof IdentContext)
+                || !(expr instanceof ArrayElemContext)
+                || !(expr instanceof PairLiterContext)) {
+            errorHandler.readTypeMismatch(expr, getType(expr));
+        }
         visit(ctx.getChild(1));
     }
 
@@ -454,8 +460,15 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     public Void visitPairElem(PairElemContext ctx) {
         if(matchGrammar(ctx, new int[]{FST, RULE_expr})
-                || matchGrammar(ctx, new int[]{SND, RULE_expr}))
-            visit(ctx.getChild(1));
+                || matchGrammar(ctx, new int[]{SND, RULE_expr})) {
+            ParseTree ctxExpr = ctx.getChild(1);
+            WaccType exprType = getType(ctxExpr);
+            if (!typesMatch(IDENT, exprType)) {
+                errorHandler.typeMismatch(ctxExpr,
+                        new WaccType(IDENT), exprType);
+            }
+            visit(ctxExpr);
+        }
         return null;
     }
 
