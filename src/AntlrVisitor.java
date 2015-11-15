@@ -59,16 +59,18 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         if(matchGrammar(ctx, new int[]{CHAR_LIT})) return new WaccType(CHAR);
         if(matchGrammar(ctx, new int[]{STRING_LIT})) return new WaccType(STRING);
         if(matchGrammar(ctx, new int[]{RULE_pairLiter}) || matchGrammar(ctx, new int[]{PAIR})) {
-            return new WaccType(PAIR);
+            return new WaccType(WaccType.ALL_ID, WaccType.INVALID_ID);
         }
         if(matchGrammar(ctx, new int[]{RULE_ident})) {
-            return st.lookupType(ctx.getChild(0));
+            WaccType t = st.lookupType(ctx.getChild(0));
+            return t == null ? WaccType.INVALID : t;
         }
         if(matchGrammar(ctx, new int[]{RULE_type, RULE_ident})) {
             return getType(ctx.getChild(0));
         }
         if(matchGrammar(ctx, new int[]{RULE_arrayElem})) {
-            return st.lookupType(ctx.getChild(0).getChild(0)).getBaseType();
+            WaccType t = st.lookupType(ctx.getChild(0).getChild(0));
+            return t == null ? WaccType.INVALID : t.getBaseType();
         }
         if(matchGrammar(ctx, new int[]{RULE_unaryOper, RULE_expr})) {
             UnaryOperContext op = (UnaryOperContext) ctx.getChild(0);
@@ -86,7 +88,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
             if(op == EQ || op == NOT_EQ) return new WaccType(BOOL);
 
-            if(!typesMatch(t1, INT)) return WaccType.INVALID;
+            if(t1.isPair() || t1.isArray()) return WaccType.INVALID;
 
             if(typesMatch(top, INT)) {
                 return top;
@@ -345,19 +347,18 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         outputln("Visited read");
         AssignLhsContext lhs = ctx.assignLhs();
         WaccType assignment = getType(lhs);
-        WaccType Char = new WaccType(CHAR);
-        WaccType Int = new WaccType(INT);
-        if(!typesMatch(Char, assignment) && !typesMatch(Int, assignment)) {
-          errorHandler.typeMismatch(ctx, Char, Int, assignment);
+        outputln(assignment.toString());
+        if(!typesMatch(CHAR, assignment) && !typesMatch(INT, assignment)) {
+          errorHandler.typeMismatch(ctx, new WaccType(CHAR), new WaccType(INT), assignment);
         } 
         visit(ctx.getChild(1));
     }
 
     private void visitStatFree(StatContext ctx) {
         outputln("Visited free");
-        ExprContext expr = (ExprContext) ctx.getChild(1);
-        if (!matchGrammar(expr, new int[]{RULE_pairLiter})
-                || !matchGrammar(expr, new int[]{RULE_arrayElem})) {
+        ExprContext expr = ctx.expr();
+        //if (!matchGrammar(expr, new int[]{RULE_pairLiter}) || !matchGrammar(expr, new int[]{RULE_arrayElem})) {
+        if(!typesMatch(getType(expr), PAIR)) {
             errorHandler.freeTypeMismatch(expr, getType(expr));
         }
         visit(expr);
@@ -380,7 +381,10 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     private void visitStatPrint(StatContext ctx) {
         outputln("Visited print");
-        visit(ctx.getChild(1));
+        if(!getType(ctx.expr()).isValid()) {
+            errorHandler.unprintableType(ctx, ctx.expr().getText());
+        }
+        visit(ctx.expr());
     }
 
     private void visitStatIf(StatContext ctx) {
@@ -563,7 +567,8 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
             visit(ctx.getChild(0));
         if(matchGrammar(ctx, new int[]{RULE_unaryOper, RULE_expr}))
             visitExprUnaryOper(ctx);
-        if(matchGrammar(ctx, new int[]{RULE_expr, RULE_boolBinaryOper, RULE_expr}))
+        if(matchGrammar(ctx, new int[]{RULE_expr, RULE_boolBinaryOper, RULE_expr}) ||
+                matchGrammar(ctx, new int[]{RULE_expr, RULE_otherBinaryOper, RULE_expr}))
             visitExprBinaryOper(ctx);
         if(matchGrammar(ctx, new int[]{OPEN_PARENTHESES, RULE_expr, CLOSE_PARENTHESES}))
             visitExprParentheses(ctx);
@@ -619,7 +624,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     private void visitExprBinaryOper(ExprContext ctx) {
         outputln("Visited binary operation");
-        WaccType ctxOp = getType(ctx.getChild(1));
+        WaccType ctxOp = getType(ctx);
         ParseTree ctxExpr1 = ctx.getChild(0);
         ParseTree ctxExpr2 = ctx.getChild(2);
 

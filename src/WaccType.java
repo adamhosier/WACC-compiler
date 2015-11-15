@@ -5,8 +5,8 @@ import java.util.Map;
 
 public class WaccType {
 
-    private static final int ALL_ID = -1;
-    private static final int INVALID_ID = -2;
+    public static final int ALL_ID = -1;
+    public static final int INVALID_ID = -2;
 
     public static final WaccType ALL = new WaccType(ALL_ID);
     public static final WaccType INVALID = new WaccType(INVALID_ID);
@@ -111,6 +111,10 @@ public class WaccType {
 
     public void setSndArray(boolean isArr) {
         isSndPairArray = isArr;
+    }
+
+    public boolean isPair() {
+        return isPair;
     }
 
     public boolean isArray() {
