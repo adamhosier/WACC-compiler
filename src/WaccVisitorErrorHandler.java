@@ -15,11 +15,6 @@ public class WaccVisitorErrorHandler {
         throwError(ctx, msg);
     }
 
-    public void readTypeMismatch(ParseTree ctx, WaccType actual) {
-        String msg = "incompatible target for read statement";
-        throwError(ctx, msg);
-    }
-
     public void freeTypeMismatch(ParseTree ctx, WaccType actual) {
         String msg = "incompatible target for free statement";
         throwError(ctx, msg);
