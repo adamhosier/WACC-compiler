@@ -28,14 +28,15 @@ public class SymbolTable {
     }
 
     public boolean addFunction(String ident, WaccType type) {
-        outputln("> ADDING FUNCTION " + ident + " WITH TYPE " + type.toString());
+        outputln("> ADDING THE FUNCTION " + ident + " WITH TYPE "
+                 + type.toString());
         FunctionSymbol sym = new FunctionSymbol(type);
         return addVar(functions, ident, sym) && addVar(globaltable, ident, sym);
     }
 
     public boolean addVariable(String ident, WaccType type) {
-        outputln("> ADDING VARIABLE " + ident + " WITH TYPE " + type.toString() 
-                 + " AT SCOPE " + tables.size());
+        outputln("> ADDING THE VARIABLE " + ident + " WITH TYPE " 
+                 + type.toString() + " AT SCOPE " + tables.size());
         return addVar(tables.getFirst(), ident, new VariableSymbol(type));
     }
 
