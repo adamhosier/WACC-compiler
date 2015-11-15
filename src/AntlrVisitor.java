@@ -88,18 +88,18 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
             WaccType t2 = getType(ctx.getChild(2));
 
-            if(!t1.equals(t2)) return WaccType.INVALID;
+            if(!typesMatch(t1, t2)) return WaccType.INVALID;
 
-            if(top.getId() == INT) {
-                return t1.equals(top) ? t1 : WaccType.INVALID;
-            } else if(top.getId() == BOOL) {
-                if(op == EQ) {
+            if(typesMatch(top, INT)) {
+                return typesMatch(t1, top) ? t1 : WaccType.INVALID;
+            } else if(typesMatch(top, BOOL)) {
+                if(typesMatch(op, EQ) || typesMatch(op, NOT_EQ)) {
                     return top;
                 }
                 if(op == OR || op == AND) {
-                    return t1.getId() == BOOL ? top : WaccType.INVALID;
+                    return typesMatch(t1, BOOL) ? top : WaccType.INVALID;
                 } else {
-                    return t1.getId() == INT ? top : WaccType.INVALID;
+                    return typesMatch(t1, INT) ? top : WaccType.INVALID;
                 }
             } else {
                 return WaccType.INVALID;
@@ -160,6 +160,16 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         if(matchGrammar(ctx, new int[]{RULE_stat, SEMICOLON, RULE_stat})) {
             return getType(ctx.getChild(2));
         }
+        if(matchGrammar(ctx, new int[]{IF, RULE_expr, THEN, RULE_stat, ELSE, RULE_stat, FI})) {
+            WaccType t1 = getType(ctx.getChild(3));
+            WaccType t2 = getType(ctx.getChild(5));
+
+            outputln(t1 + " " + t2);
+            if(!t1.equals(t2)) {
+                return WaccType.INVALID;
+            }
+            return t1;
+        }
         return WaccType.INVALID;
     }
 
@@ -179,7 +189,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
      */
     private boolean typesMatch(Object lhs, Object rhs) {
         WaccType typel = objToType(lhs);
-        WaccType typer = objToType(rhs);;
+        WaccType typer = objToType(rhs);
         return typel.isValid() && typer.isValid() && (typel.isAll() || typer.isAll() ||  typel.equals(typer))   ;
     }
 
@@ -212,7 +222,6 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         visit(ctx.type());
 
         st.newScope();
-
         st.enterFunction(ident);
 
         visit(ctx.stat());
@@ -437,9 +446,10 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     }
 
     private void visitArgList(ArgListContext ctx, String ident) {
-        int size = st.getNumParams(ident);
+        outputln("Visited arg list");
+
         // check that number of args passed is correct
-        if (ctx.getChildCount() != size) {
+        if((ctx.getChildCount() + 1) / 2 != st.getNumParams(ident)) {
             errorHandler.invalidNumberOfArgs(ctx, ident);
         }
         // check each param matches type

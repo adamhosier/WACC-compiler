@@ -119,7 +119,8 @@ public class SymbolTable {
         if(sym == null) return;
 
         for(int i = 0; i < sym.getNumerParams(); i++) {
-            addVariable(ident, sym.getParamType(i));
+            Pair<WaccType, String> param = sym.getParam(i);
+            addVariable(param.b, param.a);
         }
     }
 
@@ -127,7 +128,6 @@ public class SymbolTable {
         FunctionSymbol sym = getFunctionSymbol(ident);
         if(sym == null) return 0;
         return sym.getNumerParams();
-
     }
 
     public boolean isDeclared(String ident) {
