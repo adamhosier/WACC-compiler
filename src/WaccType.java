@@ -136,9 +136,7 @@ public class WaccType {
     public boolean equals(Object other) {
         if(other instanceof WaccType) {
             WaccType oth = (WaccType) other;
-            return oth.id == WaccParser.PAIR && isPair || oth.isPair && id == WaccParser.PAIR ||
-                    oth.id == id && oth.id2 == id2 && isArray == oth.isArray &&
-                    isFstPairArray == oth.isFstPairArray && isSndPairArray == oth.isSndPairArray;
+            return isArray && getId() == WaccParser.CHAR && oth.getId() == WaccParser.STRING || oth.isArray && oth.getId() == WaccParser.CHAR && getId() == WaccParser.STRING || oth.getId() == WaccParser.PAIR && isPair || oth.isPair && getId() == WaccParser.PAIR || oth.getId() == getId() && oth.getSndId() == getSndId() && isArray == oth.isArray && isFstPairArray == oth.isFstPairArray && isSndPairArray == oth.isSndPairArray;
         } else if(other instanceof Integer) {
             return id == (Integer) other;
         } else {

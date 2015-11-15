@@ -41,13 +41,17 @@ print("========== VALID TESTS ==========")
 for subdir, dirs, files in os.walk(validtestdir):
     for f in files:
         path = os.path.join(subdir, f)
-        run_test(path, 0)
+        _, extension = os.path.splitext(path)
+        if(extension == ".wacc"):
+            run_test(path, 0)
 
 print("========== INVALID TESTS ==========")
 for subdir, dirs, files in os.walk(invalidtestdir):
     for f in files:
         path = os.path.join(subdir, f)
-        run_test(path, 200)
+        _, extension = os.path.splitext(path)
+        if(extension == ".wacc"):
+            run_test(path, 200)
 
 
 print()

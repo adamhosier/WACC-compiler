@@ -4,6 +4,16 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import java.util.*;
 
 public class SymbolTable {
+  
+    public final boolean verbose = false;
+    
+    public void output(String s) {
+      if(verbose) System.out.print(s);
+  }
+
+  public void outputln(String s) {
+      if(verbose) System.out.println(s);
+  }
 
     // points to the lowest table in the hash map list
     private Map<String, Symbol> globaltable;
@@ -18,20 +28,24 @@ public class SymbolTable {
     }
 
     public boolean addFunction(String ident, WaccType type) {
+        outputln("> ADDING THE FUNCTION " + ident + " WITH TYPE " + type.toString());
         FunctionSymbol sym = new FunctionSymbol(type);
         return addVar(functions, ident, sym) && addVar(globaltable, ident, sym);
     }
 
     public boolean addVariable(String ident, WaccType type) {
+        outputln("> ADDING THE VARIABLE " + ident + " WITH TYPE " + type.toString() + " AT SCOPE " + tables.size());
         return addVar(tables.getFirst(), ident, new VariableSymbol(type));
     }
 
     public boolean addArray(String ident, WaccType type, int[] length) {
+        outputln("> ADDING ARRAY " + ident + " WITH TYPE " + type.toString() 
+                 + " AT SCOPE " + tables.size());
         return addVar(tables.getFirst(), ident, new ArraySymbol(type, length));
     }
 
     private <T extends Symbol> boolean addVar(Map<String, T> table, String ident, T sym) {
-        if(table.containsKey(ident)) {
+        if(table.containsKey(ident) && !(table.get(ident) instanceof FunctionSymbol)) {
             return false;
         }
         table.put(ident, sym);
@@ -46,10 +60,12 @@ public class SymbolTable {
     }
 
     public void newScope() {
+        outputln("> NEW SCOPE CREATED: amount " + (tables.size() + 1));
         tables.addFirst(new HashMap<String, Symbol>());
     }
 
     public boolean endScope() {
+        outputln("> CURRENT SCOPE DESTROYED: amount " + (tables.size() - 1));
         if(tables.size() > 1) {
             tables.removeFirst();
             return true;
@@ -119,7 +135,8 @@ public class SymbolTable {
         if(sym == null) return;
 
         for(int i = 0; i < sym.getNumerParams(); i++) {
-            addVariable(ident, sym.getParamType(i));
+            Pair<WaccType, String> param = sym.getParam(i);
+            addVariable(param.b, param.a);
         }
     }
 
@@ -127,7 +144,6 @@ public class SymbolTable {
         FunctionSymbol sym = getFunctionSymbol(ident);
         if(sym == null) return 0;
         return sym.getNumerParams();
-
     }
 
     public boolean isDeclared(String ident) {
