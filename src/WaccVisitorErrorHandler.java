@@ -14,6 +14,13 @@ public class WaccVisitorErrorHandler {
         String msg = "type mismatch, expected " + expected + " got " + actual;
         throwError(ctx, msg);
     }
+    
+    public void typeMismatch(ParseTree ctx, WaccType expected1, 
+                             WaccType expected2, WaccType actual) {
+        String msg = "type mismatch, expected " + expected1 + " or " 
+                      + expected2 + " got " + actual;
+        throwError(ctx, msg);
+    }
 
     public void freeTypeMismatch(ParseTree ctx, WaccType actual) {
         String msg = "incompatible target for free statement";

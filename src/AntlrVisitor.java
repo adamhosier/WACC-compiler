@@ -337,6 +337,13 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     private void visitStatRead(StatContext ctx) {
         outputln("Visited read");
+        AssignLhsContext lhs = ctx.assignLhs();
+        WaccType assignment = getType(lhs);
+        WaccType Char = new WaccType(CHAR);
+        WaccType Int = new WaccType(INT);
+        if(!typesMatch(Char, assignment) && !typesMatch(Int, assignment)) {
+          errorHandler.typeMismatch(ctx, Char, Int, assignment);
+        } 
         visit(ctx.getChild(1));
     }
 
