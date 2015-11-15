@@ -113,6 +113,10 @@ public class WaccType {
         isSndPairArray = isArr;
     }
 
+    public boolean isPair() {
+        return isPair;
+    }
+
     public boolean isArray() {
         return isArray;
     }

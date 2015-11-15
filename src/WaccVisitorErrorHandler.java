@@ -76,6 +76,11 @@ public class WaccVisitorErrorHandler {
         throwError(ctx, msg);
     }
 
+    public void unprintableType(ParseTree ctx, String text) {
+        String msg = "'" + text + "' is not a printable expression";
+        throwError(ctx, msg);
+    }
+
     private void overflow(ParseTree ctx, String type, int minRange, int maxRange) {
         String msg = type + " overflow, expected " + type + " between " + minRange + " and " + maxRange;
         throwError(ctx, msg);
