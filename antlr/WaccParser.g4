@@ -82,7 +82,8 @@ expr
   | ident
   | arrayElem
   | unaryOper expr
-  | expr binaryOper expr
+  | expr otherBinaryOper expr
+  | expr boolBinaryOper expr
   | OPEN_PARENTHESES expr CLOSE_PARENTHESES
   ;
 
@@ -94,20 +95,23 @@ unaryOper
   | CHR
   ;
 
-binaryOper
-  : MULT 
-  | DIV 
-  | MOD 
-  | PLUS 
-  | MINUS 
-  | GREATER_THAN 
-  | GREATER_THAN_EQ 
-  | LESS_THAN
-  | LESS_THAN_EQ 
-  | EQ 
-  | NOT_EQ
-  | AND  
+boolBinaryOper
+  : AND
   | OR 
+  ;
+
+otherBinaryOper
+  : MULT
+  | DIV
+  | MOD
+  | PLUS
+  | MINUS
+  | GREATER_THAN
+  | GREATER_THAN_EQ
+  | LESS_THAN
+  | LESS_THAN_EQ
+  | EQ
+  | NOT_EQ
   ;
 
 ident : IDENT ; 

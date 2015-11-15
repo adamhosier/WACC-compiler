@@ -48,12 +48,6 @@ public interface WaccParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitArrayElem(@NotNull WaccParser.ArrayElemContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link WaccParser#binaryOper}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitBinaryOper(@NotNull WaccParser.BinaryOperContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link WaccParser#paramList}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -78,6 +72,12 @@ public interface WaccParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitType(@NotNull WaccParser.TypeContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link WaccParser#otherBinaryOper}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitOtherBinaryOper(@NotNull WaccParser.OtherBinaryOperContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link WaccParser#stat}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -89,6 +89,12 @@ public interface WaccParserVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitCharacter(@NotNull WaccParser.CharacterContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link WaccParser#boolBinaryOper}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBoolBinaryOper(@NotNull WaccParser.BoolBinaryOperContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link WaccParser#unaryOper}.
 	 * @param ctx the parse tree
