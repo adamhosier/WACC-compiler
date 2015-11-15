@@ -4,6 +4,16 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import java.util.*;
 
 public class SymbolTable {
+  
+    public final boolean verbose = true; 
+    
+    public void output(String s) {
+      if(verbose) System.out.print(s);
+  }
+
+  public void outputln(String s) {
+      if(verbose) System.out.println(s);
+  }
 
     // points to the lowest table in the hash map list
     private Map<String, Symbol> globaltable;
@@ -18,15 +28,21 @@ public class SymbolTable {
     }
 
     public boolean addFunction(String ident, WaccType type) {
+        outputln("> ADDING THE FUNCTION " + ident + " WITH TYPE "
+                 + type.toString());
         FunctionSymbol sym = new FunctionSymbol(type);
         return addVar(functions, ident, sym) && addVar(globaltable, ident, sym);
     }
 
     public boolean addVariable(String ident, WaccType type) {
+        outputln("> ADDING THE VARIABLE " + ident + " WITH TYPE " 
+                 + type.toString() + " AT SCOPE " + tables.size());
         return addVar(tables.getFirst(), ident, new VariableSymbol(type));
     }
 
     public boolean addArray(String ident, WaccType type, int[] length) {
+        outputln("> ADDING ARRAY " + ident + " WITH TYPE " + type.toString() 
+                 + " AT SCOPE " + tables.size());
         return addVar(tables.getFirst(), ident, new ArraySymbol(type, length));
     }
 
@@ -46,10 +62,12 @@ public class SymbolTable {
     }
 
     public void newScope() {
+        outputln("> NEW SCOPE CREATED: amount " + (tables.size() + 1));
         tables.addFirst(new HashMap<String, Symbol>());
     }
 
     public boolean endScope() {
+        outputln("> CURRENT SCOPE DESTROYED: amount " + (tables.size() - 1));
         if(tables.size() > 1) {
             tables.removeFirst();
             return true;
