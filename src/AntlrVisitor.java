@@ -88,7 +88,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
             if(op == EQ || op == NOT_EQ) return new WaccType(BOOL);
 
-            if(t1.isPair() || t1.isArray()) return WaccType.INVALID;
+            if(t1.isPair() || t1.isArray() || typesMatch(t1, BOOL)) return WaccType.INVALID;
 
             if(typesMatch(top, INT)) {
                 return top;
@@ -423,6 +423,9 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     private void visitStatComposition(StatContext ctx) {
         visit(ctx.getChild(0));
+        if(matchGrammar(ctx.getChild(0), new int[]{RETURN, RULE_expr})) {
+            errorHandler.unreachableCode(ctx.getChild(2));
+        }
         visit(ctx.getChild(2));
     }
 

@@ -88,6 +88,11 @@ public class WaccVisitorErrorHandler {
         throwError(ctx, msg);
     }
 
+    public void unreachableCode(ParseTree ctx) {
+        String msg = "unreachable code detected";
+        throwError(ctx, msg);
+    }
+
     private void overflow(ParseTree ctx, String type, int minRange, int maxRange) {
         String msg = type + " overflow, expected " + type + " between " + minRange + " and " + maxRange;
         throwError(ctx, msg);
