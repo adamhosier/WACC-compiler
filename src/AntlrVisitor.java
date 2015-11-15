@@ -1,3 +1,4 @@
+import antlr.WaccParser;
 import antlr.WaccParserBaseVisitor;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -202,7 +203,8 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
             FuncContext func = (FuncContext) ctx.getChild(i);
             String ident = func.ident().getText();
             outputln("Declaring func " + ident);
-            st.addFunction(ident, getType(func.type()));
+            boolean success = st.addFunction(ident, getType(func.type()));
+            if(!success) errorHandler.functionRedeclaration(ctx, ident);
             if(func.paramList() != null) visit(func.paramList());
         }
 
@@ -308,6 +310,10 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
         if(matchGrammar(lhs, new int[]{RULE_ident})) {
             ident = lhs.ident().getText();
+
+            if(st.isFunction(ident)) {
+                errorHandler.assignmentToFunction(ctx, ident);
+            }
 
             if(!st.isDeclared(ident)) {
                 errorHandler.symbolNotFound(ctx, ident);

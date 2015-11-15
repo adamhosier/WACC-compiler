@@ -5,7 +5,7 @@ import java.util.*;
 
 public class SymbolTable {
   
-    public final boolean verbose = false;
+    public final boolean verbose = true;
     
     public void output(String s) {
       if(verbose) System.out.print(s);
@@ -28,26 +28,27 @@ public class SymbolTable {
     }
 
     public boolean addFunction(String ident, WaccType type) {
-        outputln("> ADDING THE FUNCTION " + ident + " WITH TYPE " + type.toString());
+        output("> ADDING THE FUNCTION " + ident + " WITH TYPE " + type.toString());
         FunctionSymbol sym = new FunctionSymbol(type);
         return addVar(functions, ident, sym) && addVar(globaltable, ident, sym);
     }
 
     public boolean addVariable(String ident, WaccType type) {
-        outputln("> ADDING THE VARIABLE " + ident + " WITH TYPE " + type.toString() + " AT SCOPE " + tables.size());
+        output("> ADDING THE VARIABLE " + ident + " WITH TYPE " + type.toString() + " AT SCOPE " + tables.size());
         return addVar(tables.getFirst(), ident, new VariableSymbol(type));
     }
 
     public boolean addArray(String ident, WaccType type, int[] length) {
-        outputln("> ADDING ARRAY " + ident + " WITH TYPE " + type.toString() 
-                 + " AT SCOPE " + tables.size());
+        output("> ADDING ARRAY " + ident + " WITH TYPE " + type.toString() + " AT SCOPE " + tables.size());
         return addVar(tables.getFirst(), ident, new ArraySymbol(type, length));
     }
 
     private <T extends Symbol> boolean addVar(Map<String, T> table, String ident, T sym) {
-        if(table.containsKey(ident) && !(table.get(ident) instanceof FunctionSymbol)) {
+        if(table.containsKey(ident) && !(table.get(ident) instanceof FunctionSymbol && sym instanceof VariableSymbol)) {
+            outputln("... FAILED");
             return false;
         }
+        outputln("... DONE");
         table.put(ident, sym);
         return true;
     }
@@ -148,6 +149,10 @@ public class SymbolTable {
 
     public boolean isDeclared(String ident) {
         return getSymbol(ident) != null;
+    }
+
+    public boolean isFunction(String ident) {
+        return getSymbol(ident) instanceof FunctionSymbol;
     }
 
     private abstract class Symbol {
