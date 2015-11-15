@@ -42,7 +42,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
      * Performs some type checking on expressions
      */
     private WaccType getType(ParseTree ctx) {
-        //outputln(ruleNames[((ParserRuleContext) ctx).getRuleIndex()] + ": " + ctx.getText());
+        outputln(ruleNames[((ParserRuleContext) ctx).getRuleIndex()] + ": " + ctx.getText());
         if(matchGrammar(ctx, new int[]{RULE_baseType})) {
             return new WaccType(((TerminalNode) ctx.getChild(0).getChild(0)).getSymbol().getType());
         }
@@ -192,7 +192,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     /////////// VISITOR METHODS ////////////
 
     public Void visitProg(ProgContext ctx) {
-        System.out.println("====");
+        outputln("====");
         outputln("Visited main program entry");
 
         // visit function definitions
@@ -205,7 +205,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         }
 
         visitChildren(ctx);
-        System.out.println("====");
+        outputln("====");
         return null;
     }
 

@@ -1,3 +1,4 @@
+import antlr.WaccParser;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -84,5 +85,11 @@ public class WaccVisitorErrorHandler {
     private void throwError(ParseTree ctx, String msg) {
         System.err.println(getLine(ctx) + msg);
         System.exit(ERROR_CODE);
+    }
+
+    //TEMP
+    public void readTypeMismatch(ParserRuleContext expr, WaccType type) {
+    }
+    public void freeTypeMismatch(Object ctxExpr, WaccType exprType) {
     }
 }
