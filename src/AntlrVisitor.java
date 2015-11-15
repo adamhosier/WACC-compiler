@@ -2,8 +2,12 @@ import antlr.*;
 import static antlr.WaccParser.*;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.Pair;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+
+import java.util.List;
+import java.util.Map;
 
 public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
@@ -63,10 +67,16 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         if(matchGrammar(ctx, new int[]{RULE_ident})) {
             return st.lookupType(ctx.getChild(0));
         }
+        if(matchGrammar(ctx, new int[]{RULE_type, RULE_ident})) {
+            return getType(ctx.getChild(0));
+        }
         if(matchGrammar(ctx, new int[]{RULE_arrayElem})) {
             return st.lookupType(ctx.getChild(0).getChild(0)).getBaseType();
         }
         if(matchGrammar(ctx, new int[]{RULE_unaryOper, RULE_expr})) {
+            UnaryOperContext op = (UnaryOperContext) ctx.getChild(0);
+            if(matchGrammar(op, new int[]{LEN}) || matchGrammar(op, new int[]{ORD})) return new WaccType(INT);
+            if(matchGrammar(op, new int[]{CHR})) return new WaccType(CHAR);
             return getType(ctx.getChild(1));
         }
         if(matchGrammar(ctx, new int[]{RULE_expr, RULE_binaryOper, RULE_expr})) {
@@ -139,7 +149,16 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
             return tnew;
         }
         if(matchGrammar(ctx, new int[]{RULE_funcCall})) {
-            return st.lookupType(ctx.getChild(0).getChild(1));
+            return st.lookupFunctionType(ctx.getChild(0).getChild(1).getText());
+        }
+        if(matchGrammar(ctx, new int[]{RULE_stat})) {
+            return getType(ctx.getChild(0));
+        }
+        if(matchGrammar(ctx, new int[]{RETURN, RULE_expr})) {
+            return getType(ctx.getChild(1));
+        }
+        if(matchGrammar(ctx, new int[]{RULE_stat, SEMICOLON, RULE_stat})) {
+            return getType(ctx.getChild(2));
         }
         return WaccType.INVALID;
     }
@@ -169,14 +188,55 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     public Void visitProg(ProgContext ctx) {
         System.out.println("====");
         outputln("Visited main program entry");
+
+        // visit function definitions
+        for(int i = 1; i < ctx.getChildCount() - 3; i++) {
+            FuncContext func = (FuncContext) ctx.getChild(i);
+            String ident = func.ident().getText();
+            outputln("Declaring func " + ident);
+            st.addFunction(ident, getType(func.type()));
+            if(func.paramList() != null) visit(func.paramList());
+        }
+
         visitChildren(ctx);
         System.out.println("====");
         return null;
     }
 
     public Void visitFunc(FuncContext ctx) {
-        output("Function " + ctx.ident().getText());
-        return visitChildren(ctx);
+        String ident = ctx.ident().getText();
+        WaccType expReturn = st.lookupFunctionType(ident);
+
+        outputln("Visited function " + ident);
+
+        visit(ctx.type());
+
+        st.newScope();
+
+        st.enterFunction(ident);
+
+        visit(ctx.stat());
+
+        WaccType accReturn = getType(ctx.stat());
+
+        if(!typesMatch(expReturn, accReturn)) {
+            errorHandler.typeMismatch(ctx, expReturn, accReturn);
+        }
+
+        st.endScope();
+
+        return null;
+    }
+
+    public Void visitParamList(ParamListContext ctx) {
+        FuncContext f = (FuncContext) ctx.getParent();
+        for(int i = 0; i < ctx.getChildCount(); i += 2) {
+            ParamContext param = (ParamContext) ctx.getChild(i);
+            String paramName = param.ident().getText();
+            WaccType paramType = getType(param);
+            st.addParamToFunction(f.ident().getText(), paramName, paramType);
+        }
+        return null;
     }
 
     public Void visitStat(StatContext ctx) {
@@ -334,21 +394,6 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         return null;
     }
 
-    public Void visitParamList(ParamListContext ctx) {
-        output("(");
-        for(int i = 0; i < ctx.getChildCount(); i++){
-            if(i != 0) output(", ");
-            visit(ctx.children.get(i));
-        }
-        outputln(")");
-        return null;
-    }
-
-    public Void visitParam(ParamContext ctx) {
-        output(ctx.type().getText() + " " + ctx.ident().getText());
-        return null;
-    }
-
 
     ////////// Visit assignLhs //////////
 
@@ -378,23 +423,23 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         if(matchGrammar(ctx, new int[]{RULE_pairElem}))
             visit(ctx.getChild(0));
         if(matchGrammar(ctx, new int[]{RULE_funcCall}))
-            visitFuncCall(ctx);
+            visit(ctx.funcCall());
         return null;
     }
 
-    private void visitFuncCall(AssignRhsContext ctx) {
-        IdentContext ident = (IdentContext) ctx.getChild(1);
-        visit(ident);
+    public Void visitFuncCall(FuncCallContext ctx) {
+        visit(ctx.ident());
         // check that an argList exists
         if (ctx.getChildCount() > 4) {
-            visitArgList((ArgListContext) ctx.getChild(3), ident.getText()); // visit arg list
+            visitArgList((ArgListContext) ctx.getChild(3), ctx.ident().getText()); // visit arg list
         }
+        return null;
     }
 
     private void visitArgList(ArgListContext ctx, String ident) {
-        ParamListContext params = st.getParamList(ident);
+        int size = st.getNumParams(ident);
         // check that number of args passed is correct
-        if (ctx.getChildCount() != params.getChildCount()) {
+        if (ctx.getChildCount() != size) {
             errorHandler.invalidNumberOfArgs(ctx, ident);
         }
         // check each param matches type
@@ -403,7 +448,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         for (int i = 0; i < ctx.getChildCount(); i += 2) {
             visit(ctx.getChild(i));
             argType = getType(ctx.getChild(i));
-            paramType = getType(params.getChild(i));
+            paramType = st.getFunctionParamType(ident, i / 2);
             if (!typesMatch(argType, paramType)) {
                 errorHandler.typeMismatch(ctx.getChild(i), paramType, argType);
             }

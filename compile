@@ -30,6 +30,8 @@ with open(path, 'rb') as f:
 
     output, err = cmd.communicate(f.read())
     exit = cmd.returncode
+
+    print(output.decode("utf-8"))
     
     # error check
     if exit == SYNTAX_ERR_CODE:

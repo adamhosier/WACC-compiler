@@ -1,12 +1,15 @@
-import antlr.WaccParser.ParamListContext;
+import org.antlr.v4.runtime.misc.Pair;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.*;
 
 public class SymbolTable {
 
+    // points to the lowest table in the hash map list
     private Map<String, Symbol> globaltable;
 
+    // holds functions
+    private Map<String, FunctionSymbol> functions = new HashMap<>();
     private LinkedList<Map<String, Symbol>> tables = new LinkedList<>();
 
     public SymbolTable() {
@@ -14,8 +17,9 @@ public class SymbolTable {
         tables.add(globaltable);
     }
 
-    public boolean addFunction(String ident, int type, ParamListContext params) {
-        return addVar(globaltable, ident, new FunctionSymbol(new WaccType(type), params));
+    public boolean addFunction(String ident, WaccType type) {
+        FunctionSymbol sym = new FunctionSymbol(type);
+        return addVar(functions, ident, sym) && addVar(globaltable, ident, sym);
     }
 
     public boolean addVariable(String ident, WaccType type) {
@@ -26,12 +30,19 @@ public class SymbolTable {
         return addVar(tables.getFirst(), ident, new ArraySymbol(type, length));
     }
 
-    private boolean addVar(Map<String, Symbol> table, String ident, Symbol sym) {
+    private <T extends Symbol> boolean addVar(Map<String, T> table, String ident, T sym) {
         if(table.containsKey(ident)) {
             return false;
         }
         table.put(ident, sym);
         return true;
+    }
+
+    public void addParamToFunction(String funcIdent, String paramIdent, WaccType type) {
+        FunctionSymbol sym = getFunctionSymbol(funcIdent);
+        if(sym != null) {
+            sym.addParam(paramIdent, type);
+        }
     }
 
     public void newScope() {
@@ -48,7 +59,6 @@ public class SymbolTable {
     }
 
     public WaccType lookupType(String ident) {
-        System.out.println("looking up " + ident);
         Symbol sym = getSymbol(ident);
         if(sym == null) return null;
         else return sym.getType();
@@ -67,17 +77,57 @@ public class SymbolTable {
         }
     }
 
-    public ParamListContext getParamList(String ident) {
-        return ((FunctionSymbol) getSymbol(ident)).getParams();
+    public List<Pair<WaccType, String>> getParamList(String ident) {
+        FunctionSymbol sym = getFunctionSymbol(ident);
+        if(sym == null) return null;
+        else return sym.getParams();
     }
 
     private Symbol getSymbol(String ident) {
-        for(Map<String, Symbol> table : tables) {
+        for(Map<String, ? extends Symbol> table : tables) {
             if(table.containsKey(ident)) {
                 return table.get(ident);
             }
         }
         return null;
+    }
+
+    private FunctionSymbol getFunctionSymbol(String funcIdent) {
+        if(!functions.containsKey(funcIdent)) {
+            return null;
+        }
+        return functions.get(funcIdent);
+    }
+
+    public WaccType lookupFunctionType(String ident) {
+        FunctionSymbol sym = getFunctionSymbol(ident);
+        if(sym == null) {
+            return null;
+        }
+        return sym.getType();
+    }
+
+    public WaccType getFunctionParamType(String ident, int param) {
+        FunctionSymbol sym = getFunctionSymbol(ident);
+        if(sym == null) return null;
+        return sym.getParamType(param);
+    }
+
+    public void enterFunction(String ident) {
+        FunctionSymbol sym = getFunctionSymbol(ident);
+
+        if(sym == null) return;
+
+        for(int i = 0; i < sym.getNumerParams(); i++) {
+            addVariable(ident, sym.getParamType(i));
+        }
+    }
+
+    public int getNumParams(String ident) {
+        FunctionSymbol sym = getFunctionSymbol(ident);
+        if(sym == null) return 0;
+        return sym.getNumerParams();
+
     }
 
     public boolean isDeclared(String ident) {
@@ -96,27 +146,49 @@ public class SymbolTable {
         }
     }
 
-    private class VariableSymbol extends Symbol {
-        VariableSymbol(WaccType type) {
-            super(type);
-        }
-    }
-
     private class FunctionSymbol extends Symbol {
-        private ParamListContext params;
 
-        public ParamListContext getParams() {
+        private List<Pair<WaccType, String>> params;
+
+        FunctionSymbol(WaccType type) {
+            super(type);
+            params = new ArrayList<>();
+        }
+
+        public List<Pair<WaccType, String>> getParams() {
             return params;
         }
 
-        FunctionSymbol(WaccType type, ParamListContext params) {
-            super(type);
-            this.params = params;
+        public Pair<WaccType, String> getParam(int param) {
+            return params.get(param);
         }
 
+        public WaccType getParamType(int param) {
+            return getParam(param).a;
+        }
+
+        public void addParam(String ident, WaccType type) {
+            params.add(new Pair<>(type, ident));
+        }
+
+        public int getNumerParams() {
+            return params.size();
+        }
     }
 
-    private class ArraySymbol extends Symbol {
+    private class VariableSymbol extends Symbol {
+        public VariableSymbol(WaccType type) {
+            super(type);
+        }
+    }
+
+    private class PrimativeSymbol extends VariableSymbol {
+        PrimativeSymbol(WaccType type) {
+            super(type);
+        }
+    }
+
+    private class ArraySymbol extends VariableSymbol {
 
         private final int[] lengths;
 
