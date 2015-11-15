@@ -335,23 +335,17 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     private void visitStatRead(StatContext ctx) {
         outputln("Visited read");
-        ParserRuleContext expr = (ParserRuleContext) ctx.getChild(1).getChild(0);
-        if (!(expr instanceof IdentContext)
-                || !(expr instanceof ArrayElemContext)
-                || !(expr instanceof PairLiterContext)) {
-            errorHandler.readTypeMismatch(expr, getType(expr));
-        }
         visit(ctx.getChild(1));
     }
 
     private void visitStatFree(StatContext ctx) {
         outputln("Visited free");
-        ParserRuleContext expr = (ParserRuleContext) ctx.getChild(1).getChild(0);
-        if (!(expr instanceof ArrayElemContext)
-                || !(expr instanceof PairLiterContext)) {
+        ExprContext expr = (ExprContext) ctx.getChild(1);
+        if (!matchGrammar(expr, new int[]{RULE_pairLiter})
+                || !matchGrammar(expr, new int[]{RULE_arrayElem})) {
             errorHandler.freeTypeMismatch(expr, getType(expr));
         }
-        visit(ctx.getChild(1));
+        visit(expr);
     }
 
     private void visitStatReturn(StatContext ctx) {
