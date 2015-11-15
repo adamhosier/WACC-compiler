@@ -18,9 +18,9 @@ if not os.path.isfile(path):
     print("Fatal Error: file program not found at {0}".format(path))
     sys.exit()
 
-# navigate to bin, and update path
+# navigate to bin, and build path
+path = os.path.abspath(path)
 os.chdir("bin")
-path = "../" + path
 
 # open file as readable buffer
 with open(path, 'rb') as f:

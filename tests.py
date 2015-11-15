@@ -4,13 +4,12 @@ import os
 numtests = 0
 numpasses = 0
 
-def run_test(f, expectedErrorCode):
+def run_test(path, expectedErrorCode):
     global numtests, numpasses 
     print("Testing: {0}".format(path))
-    p = Popen(["java", "-classpath", "../lib/antlr-4.4-complete.jar:.", 
-        "Main", "run"], stdin=PIPE, stdout=PIPE, stderr=STDOUT);
+    p = Popen(["./compile", path], stdin=PIPE, stdout=PIPE, stderr=STDOUT);
           
-    output, err = p.communicate(f.read())
+    output, err = p.communicate()
     exit = p.returncode
 
     numtests += 1
@@ -35,25 +34,20 @@ if r != 0:
     print("Make failed")
     sys.exit(-1)
 
-# work in java bin directory
-os.chdir("bin")
-
-validtestdir = "../examples/valid"
-invalidtestdir = "../examples/invalid"
+validtestdir = "examples/valid"
+invalidtestdir = "examples/invalid"
 
 print("========== VALID TESTS ==========")
 for subdir, dirs, files in os.walk(validtestdir):
     for f in files:
         path = os.path.join(subdir, f)
-        with open(path, 'rb') as testfile:
-            run_test(testfile, 0)
+        run_test(path, 0)
 
 print("========== INVALID TESTS ==========")
 for subdir, dirs, files in os.walk(invalidtestdir):
     for f in files:
         path = os.path.join(subdir, f)
-        with open(path, 'rb') as testfile:
-            run_test(testfile, 200)
+        run_test(path, 200)
 
 
 print()
