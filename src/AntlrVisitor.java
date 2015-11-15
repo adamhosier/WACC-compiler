@@ -335,14 +335,13 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     private void visitStatRead(StatContext ctx) {
         outputln("Visited read");
-
-        String ident = ctx.assignLhs().getChild(0).getText();
-
-        if(!st.isDeclared(ident)) {
-            errorHandler.symbolNotFound(ctx, ident);
+        ParserRuleContext expr = (ParserRuleContext) ctx.getChild(1).getChild(0);
+        if (!(expr instanceof IdentContext)
+                || !(expr instanceof ArrayElemContext)
+                || !(expr instanceof PairLiterContext)) {
+            errorHandler.readTypeMismatch(expr, getType(expr));
         }
-
-        visit(ctx.getChild(0));
+        visit(ctx.getChild(1));
     }
 
     private void visitStatFree(StatContext ctx) {
@@ -485,22 +484,15 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     public Void visitPairElem(PairElemContext ctx) {
         if(matchGrammar(ctx, new int[]{FST, RULE_expr})
-                || matchGrammar(ctx, new int[]{SND, RULE_expr}))
-            visit(ctx.getChild(1));
-        return null;
-    }
-
-    ////////// Visit pair type //////////
-
-    public Void visitPairType(PairTypeContext ctx) {
-
-        return null;
-    }
-
-    ////////// Visit pair type //////////
-
-    public Void visitPairElemType(PairElemTypeContext ctx) {
-
+                || matchGrammar(ctx, new int[]{SND, RULE_expr})) {
+            ParseTree ctxExpr = ctx.getChild(1);
+            WaccType exprType = getType(ctxExpr);
+            if (!typesMatch(IDENT, exprType)) {
+                errorHandler.typeMismatch(ctxExpr,
+                        new WaccType(IDENT), exprType);
+            }
+            visit(ctxExpr);
+        }
         return null;
     }
 
