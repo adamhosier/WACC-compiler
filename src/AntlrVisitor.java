@@ -59,7 +59,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         if(matchGrammar(ctx, new int[]{CHAR_LIT})) return new WaccType(CHAR);
         if(matchGrammar(ctx, new int[]{STRING_LIT})) return new WaccType(STRING);
         if(matchGrammar(ctx, new int[]{RULE_pairLiter}) || matchGrammar(ctx, new int[]{PAIR})) {
-            return new WaccType(WaccType.ALL_ID, WaccType.INVALID_ID);
+            return new WaccType(WaccType.ALL_ID, WaccType.ALL_ID);
         }
         if(matchGrammar(ctx, new int[]{RULE_ident})) {
             WaccType t = st.lookupType(ctx.getChild(0));
