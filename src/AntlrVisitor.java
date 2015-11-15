@@ -377,7 +377,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     }
 
     private void visitStatIf(StatContext ctx) {
-        outputln("Visited if");
+       // TODO Add scoping
         WaccType conditional = getType(ctx.getChild(1));
         WaccType bool = new WaccType(BOOL);
         if(!typesMatch(bool, conditional)) {
@@ -388,7 +388,14 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     }
 
     private void visitStatWhile(StatContext ctx) {
+       // TODO Add scoping
         outputln("Visited while");
+        WaccType conditional = getType(ctx.getChild(1));
+        WaccType bool = new WaccType(BOOL);
+        if(!typesMatch(bool, conditional)){
+          errorHandler.typeMismatch(ctx, bool, conditional);
+        } 
+        visit(ctx.getChild(4));
     }
 
     private void visitStatNewScope(StatContext ctx) {
