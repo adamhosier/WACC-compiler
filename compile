@@ -1,6 +1,40 @@
-#!/usr/bin/ruby
-# Ruby front-end for your compiler.
-# You are free to change the language used for this script,
-# but do *not* change its name.
+#!/usr/bin/env python3
+import sys
+import os
+from subprocess import Popen, call, PIPE, STDOUT
 
-puts "TODO: setup this script to call your WACC compiler"
+EXPECTED_ARGS = 1
+SYNTAX_ERR_CODE = 100
+SEMANTIC_ERR_CODE = 200
+
+# check command usage
+if len(sys.argv) != EXPECTED_ARGS + 1:
+    print("Usage: compile [WACC-PROGRAM]")
+    sys.exit()
+
+# check file exists
+path = sys.argv[1]
+if not os.path.isfile(path):
+    print("Fatal Error: file program not found at {0}".format(path))
+    sys.exit()
+
+# navigate to bin, and update path
+os.chdir("bin")
+path = "../" + path
+
+# open file as readable buffer
+with open(path, 'rb') as f:
+    # call main java class
+    cmd = Popen(["java", "-classpath", "../lib/antlr-4.4-complete.jar:.", 
+                 "Main", "run"], stdin=PIPE, stdout=PIPE, stderr=STDOUT);
+
+    output, err = cmd.communicate(f.read())
+    exit = cmd.returncode
+    
+    # error check
+    if exit == SYNTAX_ERR_CODE:
+        print("#syntax_error#")
+    elif exit == SEMANTIC_ERR_CODE:
+        print("#semantic_error#")
+    
+    sys.exit(exit)
