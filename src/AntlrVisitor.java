@@ -375,6 +375,13 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     private void visitStatIf(StatContext ctx) {
         outputln("Visited if");
+        WaccType conditional = getType(ctx.getChild(1));
+        WaccType bool = new WaccType(BOOL);
+        if(!typesMatch(bool, conditional)) {
+          errorHandler.typeMismatch(ctx, bool, conditional);
+        } 
+        visit(ctx.getChild(4));
+        visit(ctx.getChild(6));
     }
 
     private void visitStatWhile(StatContext ctx) {
