@@ -1,13 +1,9 @@
-import antlr.*;
-import static antlr.WaccParser.*;
-
+import antlr.WaccParserBaseVisitor;
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.misc.Pair;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import java.util.List;
-import java.util.Map;
+import static antlr.WaccParser.*;
 
 public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
@@ -263,10 +259,9 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
             visitStatReturn(ctx);
         if(matchGrammar(ctx, new int[]{EXIT, RULE_expr}))
             visitStatExit(ctx);
-        if(matchGrammar(ctx, new int[]{PRINT, RULE_expr}))
+        if(matchGrammar(ctx, new int[]{PRINT, RULE_expr})
+                || matchGrammar(ctx, new int[]{PRINTLN, RULE_expr}))
             visitStatPrint(ctx);
-        if(matchGrammar(ctx, new int[]{PRINTLN, RULE_expr}))
-            visitStatPrintln(ctx);
         if(matchGrammar(ctx, new int[]{IF, RULE_expr, THEN, RULE_stat, ELSE, RULE_stat, FI}))
             visitStatIf(ctx);
         if(matchGrammar(ctx, new int[]{WHILE, RULE_expr, DO, RULE_stat, DONE}))
@@ -347,30 +342,38 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
             errorHandler.symbolNotFound(ctx, ident);
         }
 
-        visitChildren(ctx);
+        visit(ctx.getChild(0));
     }
 
     private void visitStatFree(StatContext ctx) {
         outputln("Visited free");
-        visit(ctx.children.get(1));
+        ExprContext ctxExpr = (ExprContext) ctx.getChild(1);
+        WaccType exprType = getType(ctxExpr);
+        if (!typesMatch(new WaccType(RULE_pairType), exprType)
+                || !typesMatch(new WaccType(RULE_arrayElem), exprType)) {
+            errorHandler.freeTypeMismatch(ctxExpr, exprType);
+        }
+        visit(ctx.getChild(1));
     }
 
     private void visitStatReturn(StatContext ctx) {
         outputln("Visited return");
+        visit(ctx.getChild(1));
     }
 
     private void visitStatExit(StatContext ctx) {
         outputln("Visited exit");
+        ExprContext ctxExpr = (ExprContext) ctx.getChild(1);
+        WaccType exprType = getType(ctxExpr);
+        if (!typesMatch(INT, exprType)) {
+            errorHandler.typeMismatch(ctxExpr, new WaccType(INT), exprType);
+        }
+        visit(ctxExpr);
     }
 
     private void visitStatPrint(StatContext ctx) {
         outputln("Visited print");
-        visit(ctx.children.get(1));
-    }
-
-    private void visitStatPrintln(StatContext ctx) {
-        outputln("Visited println");
-        visit(ctx.children.get(1));
+        visit(ctx.getChild(1));
     }
 
     private void visitStatIf(StatContext ctx) {
@@ -396,8 +399,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     public Void visitIdent(IdentContext ctx) {
         outputln("Visited ident");
-        WaccType ident = st.lookupType(ctx.getText());
-        if (ident == null) {
+        if (!st.isDeclared(ctx.getText())) {
             errorHandler.identNotFound(ctx);
         }
         return null;
@@ -471,6 +473,20 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         if(matchGrammar(ctx, new int[]{FST, RULE_expr})
                 || matchGrammar(ctx, new int[]{SND, RULE_expr}))
             visit(ctx.getChild(1));
+        return null;
+    }
+
+    ////////// Visit pair type //////////
+
+    public Void visitPairType(PairTypeContext ctx) {
+
+        return null;
+    }
+
+    ////////// Visit pair type //////////
+
+    public Void visitPairElemType(PairElemTypeContext ctx) {
+
         return null;
     }
 
