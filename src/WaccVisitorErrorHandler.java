@@ -1,3 +1,4 @@
+import antlr.WaccParser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -60,8 +61,18 @@ public class WaccVisitorErrorHandler {
         throwError(ctx, msg);
     }
 
-    public void variableRedeclaration(ParseTree ctx, String text) {
-        String msg = "variable '" + text + "' redeclared";
+    public void variableRedeclaration(ParseTree ctx, String ident) {
+        String msg = "variable '" + ident + "' redeclared";
+        throwError(ctx, msg);
+    }
+
+    public void functionRedeclaration(ParseTree ctx, String ident) {
+        String msg = "function '" + ident + "' redeclared";
+        throwError(ctx, msg);
+    }
+
+    public void assignmentToFunction(ParseTree ctx, String ident) {
+        String msg = "assignment to function '" + ident + "'";
         throwError(ctx, msg);
     }
 
@@ -89,5 +100,4 @@ public class WaccVisitorErrorHandler {
         System.err.println(getLine(ctx) + msg);
         System.exit(ERROR_CODE);
     }
-
 }

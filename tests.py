@@ -34,7 +34,7 @@ if r != 0:
     print("Make failed")
     sys.exit(-1)
 
-validtestdir = "examples/valid"
+validtestdir = "examples/valid/while"
 invalidtestdir = "examples/invalid"
 
 print("========== VALID TESTS ==========")
