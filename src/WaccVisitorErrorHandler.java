@@ -1,5 +1,3 @@
-import antlr.WaccParser;
-import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -14,6 +12,16 @@ public class WaccVisitorErrorHandler {
 
     public void typeMismatch(ParseTree ctx, WaccType expected, WaccType actual) {
         String msg = "type mismatch, expected " + expected + " got " + actual;
+        throwError(ctx, msg);
+    }
+
+    public void readTypeMismatch(ParseTree ctx, WaccType actual) {
+        String msg = "incompatible target for read statement";
+        throwError(ctx, msg);
+    }
+
+    public void freeTypeMismatch(ParseTree ctx, WaccType actual) {
+        String msg = "incompatible target for free statement";
         throwError(ctx, msg);
     }
     
@@ -87,9 +95,4 @@ public class WaccVisitorErrorHandler {
         System.exit(ERROR_CODE);
     }
 
-    //TEMP
-    public void readTypeMismatch(ParserRuleContext expr, WaccType type) {
-    }
-    public void freeTypeMismatch(Object ctxExpr, WaccType exprType) {
-    }
 }
