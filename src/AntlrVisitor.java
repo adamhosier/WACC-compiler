@@ -43,7 +43,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
      * Performs some type checking on expressions
      */
     private WaccType getType(ParseTree ctx) {
-        //outputln(ruleNames[((ParserRuleContext) ctx).getRuleIndex()] + ": " + ctx.getText());
+        outputln(ruleNames[((ParserRuleContext) ctx).getRuleIndex()] + ": " + ctx.getText());
         if(matchGrammar(ctx, new int[]{RULE_baseType})) {
             return new WaccType(((TerminalNode) ctx.getChild(0).getChild(0)).getSymbol().getType());
         }
@@ -59,7 +59,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         if(matchGrammar(ctx, new int[]{CHAR_LIT})) return new WaccType(CHAR);
         if(matchGrammar(ctx, new int[]{STRING_LIT})) return new WaccType(STRING);
         if(matchGrammar(ctx, new int[]{RULE_pairLiter}) || matchGrammar(ctx, new int[]{PAIR})) {
-            return new WaccType(PAIR);
+            return new WaccType(WaccType.ALL_ID, WaccType.INVALID_ID);
         }
         if(matchGrammar(ctx, new int[]{RULE_ident})) {
             WaccType t = st.lookupType(ctx.getChild(0));
@@ -347,10 +347,9 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         outputln("Visited read");
         AssignLhsContext lhs = ctx.assignLhs();
         WaccType assignment = getType(lhs);
-        WaccType Char = new WaccType(CHAR);
-        WaccType Int = new WaccType(INT);
-        if(!typesMatch(Char, assignment) && !typesMatch(Int, assignment)) {
-          errorHandler.typeMismatch(ctx, Char, Int, assignment);
+        outputln(assignment.toString());
+        if(!typesMatch(CHAR, assignment) && !typesMatch(INT, assignment)) {
+          errorHandler.typeMismatch(ctx, new WaccType(CHAR), new WaccType(INT), assignment);
         } 
         visit(ctx.getChild(1));
     }
