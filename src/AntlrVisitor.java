@@ -337,11 +337,10 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     private void visitStatFree(StatContext ctx) {
         outputln("Visited free");
-        ExprContext ctxExpr = (ExprContext) ctx.getChild(1);
-        WaccType exprType = getType(ctxExpr);
-        if (!typesMatch(new WaccType(RULE_pairType), exprType)
-                || !typesMatch(new WaccType(RULE_arrayElem), exprType)) {
-            errorHandler.freeTypeMismatch(ctxExpr, exprType);
+        ParserRuleContext expr = (ParserRuleContext) ctx.getChild(1).getChild(0);
+        if (!(expr instanceof ArrayElemContext)
+                || !(expr instanceof PairLiterContext)) {
+            errorHandler.freeTypeMismatch(expr, getType(expr));
         }
         visit(ctx.getChild(1));
     }
