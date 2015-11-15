@@ -5,7 +5,7 @@ import java.util.*;
 
 public class SymbolTable {
   
-    public final boolean verbose = true; 
+    public final boolean verbose = false;
     
     public void output(String s) {
       if(verbose) System.out.print(s);
@@ -28,15 +28,13 @@ public class SymbolTable {
     }
 
     public boolean addFunction(String ident, WaccType type) {
-        outputln("> ADDING THE FUNCTION " + ident + " WITH TYPE "
-                 + type.toString());
+        outputln("> ADDING THE FUNCTION " + ident + " WITH TYPE " + type.toString());
         FunctionSymbol sym = new FunctionSymbol(type);
         return addVar(functions, ident, sym) && addVar(globaltable, ident, sym);
     }
 
     public boolean addVariable(String ident, WaccType type) {
-        outputln("> ADDING THE VARIABLE " + ident + " WITH TYPE " 
-                 + type.toString() + " AT SCOPE " + tables.size());
+        outputln("> ADDING THE VARIABLE " + ident + " WITH TYPE " + type.toString() + " AT SCOPE " + tables.size());
         return addVar(tables.getFirst(), ident, new VariableSymbol(type));
     }
 
@@ -47,7 +45,7 @@ public class SymbolTable {
     }
 
     private <T extends Symbol> boolean addVar(Map<String, T> table, String ident, T sym) {
-        if(table.containsKey(ident)) {
+        if(table.containsKey(ident) && !(table.get(ident) instanceof FunctionSymbol)) {
             return false;
         }
         table.put(ident, sym);

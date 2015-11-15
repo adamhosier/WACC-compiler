@@ -14,9 +14,7 @@ public class Main {
         if(args.length == 0) {
             // simulate file input from stdin
             // TODO: REMOVE THIS WHEN WE WANT FILES TO BE SENT FROM THE COMMAND LINE
-            //System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/valid/advanced/hashTable.wacc"));
-            System.setIn(new FileInputStream("/home/adam/labs/wacclab/examples/valid/advanced/hashTable.wacc"));
-            //System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/invalid/semanticErr/variables/basicTypeErr01.wacc"));
+            System.setIn(new FileInputStream("/home/adam/labs/wacclab/examples/valid/function/simple_functions/sameArgName.wacc"));
         }
 
         // create a lexer that feeds off of input from System.in
