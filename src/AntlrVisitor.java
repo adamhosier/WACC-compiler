@@ -480,7 +480,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
                 || matchGrammar(ctx, new int[]{SND, RULE_expr})) {
             ParseTree ctxExpr = ctx.getChild(1);
             WaccType exprType = getType(ctxExpr);
-            if (!typesMatch(IDENT, exprType)) {
+            if (!matchGrammar(ctxExpr, new int[]{RULE_ident})) {
                 errorHandler.typeMismatch(ctxExpr,
                         new WaccType(IDENT), exprType);
             }
