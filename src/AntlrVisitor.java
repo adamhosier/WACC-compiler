@@ -326,14 +326,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     private void visitStatRead(StatContext ctx) {
         outputln("Visited read");
-
-        String ident = ctx.assignLhs().getChild(0).getText();
-
-        if(!st.isDeclared(ident)) {
-            errorHandler.symbolNotFound(ctx, ident);
-        }
-
-        visit(ctx.getChild(0));
+        visit(ctx.getChild(1));
     }
 
     private void visitStatFree(StatContext ctx) {
@@ -463,20 +456,6 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         if(matchGrammar(ctx, new int[]{FST, RULE_expr})
                 || matchGrammar(ctx, new int[]{SND, RULE_expr}))
             visit(ctx.getChild(1));
-        return null;
-    }
-
-    ////////// Visit pair type //////////
-
-    public Void visitPairType(PairTypeContext ctx) {
-
-        return null;
-    }
-
-    ////////// Visit pair type //////////
-
-    public Void visitPairElemType(PairElemTypeContext ctx) {
-
         return null;
     }
 
