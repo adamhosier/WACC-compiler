@@ -39,6 +39,15 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
     public WaccType visitProg(ProgContext ctx) {
         outputln("====");
         outputln("Visited main program entry");
+
+        for(FuncContext func : ctx.func()) {
+            String ident = func.ident().getText();
+            outputln("Declaring func " + ident);
+            boolean success = st.addFunction(ident, visit(func.type()));
+            if(!success) errorHandler.functionRedeclaration(ctx, ident);
+            if(func.paramList() != null) visit(func.paramList());
+        }
+
         visitChildren(ctx);
         outputln("====");
         return null;
@@ -46,12 +55,15 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
 
     @Override
     public WaccType visitFunc(FuncContext ctx) {
-
+        outputln("Visited function");
         WaccType expectedType = visit(ctx.type());
 
-        visit(ctx.paramList());
+        st.newScope();
 
+        st.enterFunction(ctx.ident().getText());
         WaccType returnType = visitStat(ctx.stat());
+
+        st.endScope();
 
         if(!typesMatch(expectedType, returnType)) {
             errorHandler.typeMismatch(ctx, expectedType, returnType);
@@ -76,16 +88,23 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
 
     @Override
     public WaccType visitParam(ParamContext ctx) {
-        return new WaccType(ctx.type());
+        return visitType(ctx.type());
     }
 
     @Override
     public WaccType visitStat(StatContext ctx) {
-        return visitChildren(ctx);
+        // check for unreachable code
+        if(ctx.SEMICOLON() != null && ctx.stat(0).returnStat() != null) {
+            errorHandler.unreachableCode(ctx.stat(1));
+            return null;
+        } else {
+            return visitChildren(ctx);
+        }
     }
 
     @Override
     public WaccType visitVarDeclaration(VarDeclarationContext ctx) {
+        outputln("Visited declaration for " + ctx.ident().getText());
         WaccType expected = visit(ctx.type());
         WaccType actual = visit(ctx.assignRhs());
 
@@ -93,7 +112,7 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
             errorHandler.typeMismatch(ctx, expected, actual);
         }
 
-        boolean success = st.addVariable(ctx.ident().getText(), actual);
+        boolean success = st.addVariable(ctx.ident().getText(), expected);
         if(!success) {
             errorHandler.variableRedeclaration(ctx, ctx.ident().getText());
         }
@@ -102,6 +121,7 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
 
     @Override
     public WaccType visitVarAssignment(VarAssignmentContext ctx) {
+        outputln("Visited assignment to " + ctx.assignLhs().getText());
         WaccType expected = visit(ctx.assignLhs());
         WaccType actual = visit(ctx.assignRhs());
 
@@ -113,6 +133,7 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
 
     @Override
     public WaccType visitReadStat(ReadStatContext ctx) {
+        outputln("Visited read");
         WaccType assignment = visit(ctx.assignLhs());
 
         if(!typesMatch(CHAR, assignment) && !typesMatch(INT, assignment)) {
@@ -123,6 +144,7 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
 
     @Override
     public WaccType visitFreeStat(FreeStatContext ctx) {
+        outputln("Visited free");
         WaccType exprType = visit(ctx.expr());
         if(!typesMatch(exprType, PAIR)) {
             errorHandler.freeTypeMismatch(ctx.expr(), exprType);
@@ -132,20 +154,23 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
 
     @Override
     public WaccType visitReturnStat(ReturnStatContext ctx) {
+        outputln("Visited return");
         return visit(ctx.expr());
     }
 
     @Override
     public WaccType visitExitStat(ExitStatContext ctx) {
+        outputln("Visited exit");
         WaccType exprType = visit(ctx.expr());
         if (!typesMatch(INT, exprType)) {
             errorHandler.typeMismatch(ctx.expr(), new WaccType(INT), exprType);
         }
-        return null;
+        return WaccType.ALL;
     }
 
     @Override
     public WaccType visitPrintStat(PrintStatContext ctx) {
+        outputln("Visited print");
         if(!visit(ctx.expr()).isValid()) {
             errorHandler.unprintableType(ctx, ctx.expr().getText());
         }
@@ -154,7 +179,8 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
 
     @Override
     public WaccType visitPrintlnStat(PrintlnStatContext ctx) {
-        if(!visit(ctx.expr()).isValid()) {
+        outputln("Visited println");
+            if(!visit(ctx.expr()).isValid()) {
             errorHandler.unprintableType(ctx, ctx.expr().getText());
         }
         return null;
@@ -162,21 +188,23 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
 
     @Override
     public WaccType visitIfStat(IfStatContext ctx) {
+        outputln("Visited if");
         WaccType conditional = visit(ctx.expr());
         if(!typesMatch(BOOL, conditional)) {
             errorHandler.typeMismatch(ctx, new WaccType(BOOL), conditional);
         }
         st.newScope();
-        visit(ctx.stat(0));
+        WaccType stat1 = visit(ctx.stat(0));
         st.endScope();
         st.newScope();
-        visit(ctx.stat(1));
+        WaccType stat2 = visit(ctx.stat(1));
         st.endScope();
-        return null;
+        return typesMatch(stat1, stat2) ? stat1 : WaccType.INVALID;
     }
 
     @Override
     public WaccType visitWhileStat(WhileStatContext ctx) {
+        outputln("Visited while");
         WaccType conditional = visit(ctx.expr());
         if(!typesMatch(BOOL, conditional)){
             errorHandler.typeMismatch(ctx, new WaccType(BOOL), conditional);
@@ -189,6 +217,7 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
 
     @Override
     public WaccType visitScopeStat(ScopeStatContext ctx) {
+        outputln("Visited new scope");
         st.newScope();
         visit(ctx.stat());
         st.endScope();
@@ -197,6 +226,7 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
 
     @Override
     public WaccType visitAssignLhs(AssignLhsContext ctx) {
+        outputln("Visited assignLhs");
         if(ctx.ident() != null) {
             return visit(ctx.ident());
         } else if(ctx.arrayElem() != null) {
@@ -209,11 +239,13 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
 
     @Override
     public WaccType visitAssignRhs(AssignRhsContext ctx) {
+        outputln("Visited assignRhs");
         return visitChildren(ctx);
     }
 
     @Override
     public WaccType visitNewPair(NewPairContext ctx) {
+        outputln("Visited newpair");
         WaccType fst = visit(ctx.expr(0));
         WaccType snd = visit(ctx.expr(1));
         WaccType pair = new WaccType(fst.getId(), snd.getId());
@@ -224,16 +256,20 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
 
     @Override
     public WaccType visitFuncCall(FuncCallContext ctx) {
-        visit(ctx.argList());
+        outputln("Calling function");
+        if(ctx.argList() != null) visit(ctx.argList());
         return st.lookupFunctionType(ctx.ident().getText());
     }
 
     @Override
     public WaccType visitArgList(ArgListContext ctx) {
+        outputln("Visiting arg list");
         String ident = ((FuncCallContext) ctx.getParent()).ident().getText();
 
         // check that number of args passed is correct
         if(ctx.expr().size() != st.getNumParams(ident)) {
+            outputln(st.getParamList(ident).toString());
+            outputln(ctx.expr().size() + " " + st.getNumParams(ident));
             errorHandler.invalidNumberOfArgs(ctx, ident);
         }
 
@@ -250,14 +286,15 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
 
     @Override
     public WaccType visitPairElem(PairElemContext ctx) {
+        outputln("Visited pair elem");
         WaccType exprType = visit(ctx.expr());
         WaccType newType;
         if(ctx.FST() != null) {
             newType = new WaccType(exprType.getFstId());
-            newType.setFstArray(exprType.isFstArray());
+            newType.setArray(exprType.isFstArray());
         } else {
             newType = new WaccType(exprType.getSndId());
-            newType.setFstArray(exprType.isSndArray());
+            newType.setArray(exprType.isSndArray());
         }
         return newType;
     }
@@ -307,25 +344,51 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
 
     @Override
     public WaccType visitExpr(ExprContext ctx) {
-        if(ctx.INT_LIT() != null) return new WaccType(INT);
+        outputln("Visited expression " + ctx.getText());
+        if(ctx.INT_LIT() != null) return visitExprIntLiter(ctx);
         if(ctx.BOOL_LIT() != null) return new WaccType(BOOL);
-        if(ctx.CHAR_LIT() != null) return new WaccType(CHAR);
+        if(ctx.CHAR_LIT() != null) return visitExprCharLiter(ctx);
         if(ctx.STRING_LIT() != null) return new WaccType(STRING);
         if(ctx.pairLiter() != null) return visit(ctx.pairLiter());
         if(ctx.ident() != null) return visit(ctx.ident());
         if(ctx.arrayElem() != null) return visit(ctx.arrayElem());
-        if(ctx.unaryOper() != null) visit(ctx.unaryOper());
-        if(ctx.otherBinaryOper() != null) visit(ctx.otherBinaryOper());
-        if(ctx.boolBinaryOper() != null) visit(ctx.boolBinaryOper());
-        if(ctx.OPEN_PARENTHESES() != null) visit(ctx.expr(0));
+        if(ctx.unaryOper() != null) return visit(ctx.unaryOper());
+        if(ctx.otherBinaryOper() != null) return visit(ctx.otherBinaryOper());
+        if(ctx.boolBinaryOper() != null) return visit(ctx.boolBinaryOper());
+        if(ctx.OPEN_PARENTHESES() != null) return visit(ctx.expr(0));
         return null;
+    }
+
+
+    private WaccType visitExprIntLiter(ExprContext ctx) {
+        int i;
+        try {
+            i = Integer.parseInt(ctx.getText());
+        } catch(NumberFormatException e) {
+            errorHandler.integerOverflow(ctx);
+            return null;
+        }
+
+        if (i < WaccVisitorErrorHandler.INTEGER_MIN_VALUE || i > WaccVisitorErrorHandler.INTEGER_MAX_VALUE) {
+            errorHandler.integerOverflow(ctx);
+        }
+
+        return new WaccType(INT);
+    }
+
+    private WaccType visitExprCharLiter(ExprContext ctx) {
+        char c = ctx.getText().charAt(0);
+        if (c > 255) {
+            errorHandler.characterOverflow(ctx);
+        }
+        return new WaccType(CHAR);
     }
 
     @Override
     public WaccType visitUnaryOper(UnaryOperContext ctx) {
+        outputln("Visited unary operator");
         WaccType exprType = visit(((ExprContext) ctx.getParent()).expr(0));
         int op = ((TerminalNode) ctx.getChild(0)).getSymbol().getType();
-
         if(op == NOT) {
             if(!typesMatch(BOOL, exprType)) {
                 errorHandler.typeMismatch(ctx, new WaccType(BOOL), exprType);
@@ -437,7 +500,7 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
             }
         }
 
-        return baseType.toArray();
+        return baseType.getBaseType();
     }
 
     @Override
@@ -450,9 +513,14 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
                     errorHandler.incompatibleArrayElemTypes(ctx.expr(i));
                 }
             }
-            return arrayType;
+            return arrayType.toArray();
         }
         return WaccType.ALL;
+    }
+
+    @Override
+    public WaccType visitPairLiter(PairLiterContext ctx) {
+        return WaccType.PAIR;
     }
 
     ////////// OUTPUT FUNCTIONS ////////////

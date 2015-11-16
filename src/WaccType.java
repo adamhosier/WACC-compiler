@@ -77,10 +77,12 @@ public class WaccType {
     }
 
     public int getFstId() {
+        if(id == WaccParser.PAIR) return ALL_ID;
         return id;
     }
 
     public int getSndId() {
+        if(id == WaccParser.PAIR) return ALL_ID;
         return id2;
     }
 
