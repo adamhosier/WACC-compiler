@@ -14,19 +14,31 @@ param: type ident ;
 
 stat
   : SKIP
-  | type ident EQUALS assignRhs
-  | assignLhs EQUALS assignRhs
-  | READ assignLhs 
-  | FREE expr
-  | RETURN expr
-  | EXIT expr
-  | PRINT expr
-  | PRINTLN expr
-  | IF expr THEN stat ELSE stat FI
-  | WHILE expr DO stat DONE
-  | BEGIN stat END
+  | varDeclaration
+  | varAssignment
+  | readStat
+  | freeStat
+  | returnStat
+  | exitStat
+  | printStat
+  | printlnStat
+  | ifStat
+  | whileStat
+  | scopeStat
   | <assoc=right> stat SEMICOLON stat
   ;
+
+varDeclaration : type ident EQUALS assignRhs;
+varAssignment : assignLhs EQUALS assignRhs;
+readStat : READ assignLhs;
+freeStat : FREE expr;
+returnStat : RETURN expr;
+exitStat : EXIT expr;
+printStat : PRINT expr;
+printlnStat : PRINTLN expr;
+ifStat : IF expr THEN stat ELSE stat FI;
+whileStat : WHILE expr DO stat DONE;
+scopeStat : BEGIN stat END;
 
 assignLhs
   : ident
@@ -37,10 +49,12 @@ assignLhs
 assignRhs
   : expr
   | arrayLiter
-  | NEW_PAIR OPEN_PARENTHESES expr COMMA expr CLOSE_PARENTHESES
+  | newPair
   | pairElem
   | funcCall
   ;
+
+newPair : NEW_PAIR OPEN_PARENTHESES expr COMMA expr CLOSE_PARENTHESES;
 
 funcCall: CALL ident OPEN_PARENTHESES argList? CLOSE_PARENTHESES ;
 

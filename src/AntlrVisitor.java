@@ -1,3 +1,4 @@
+/*
 import antlr.WaccParser;
 import antlr.WaccParserBaseVisitor;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -21,10 +22,12 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
 
     /////////// UTILITY METHODS ////////////
 
-    /*
+    */
+/*
      * Given a context, and list of token or rule identifiers, check if the contexts children matches the format of
      *  the given list.
-     */
+     *//*
+
     private boolean matchGrammar(ParseTree ctx, int[] pattern) {
         if(ctx.getChildCount() != pattern.length) return false;
         for(int i = 0; i < ctx.getChildCount(); i++) {
@@ -38,10 +41,12 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         return true;
     }
 
-    /*
+    */
+/*
      * Gets the type of any rule or terminal node
      * Performs some type checking on expressions
-     */
+     *//*
+
     private WaccType getType(ParseTree ctx) {
         outputln(ruleNames[((ParserRuleContext) ctx).getRuleIndex()] + ": " + ctx.getText());
         if(matchGrammar(ctx, new int[]{RULE_baseType})) {
@@ -129,12 +134,7 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         if(matchGrammar(ctx, new int[]{NEW_PAIR, OPEN_PARENTHESES, RULE_expr, COMMA, RULE_expr, CLOSE_PARENTHESES}) ||
                 matchGrammar(ctx, new int[]{PAIR, OPEN_PARENTHESES, RULE_pairElemType, COMMA, RULE_pairElemType,
                         CLOSE_PARENTHESES})) {
-            WaccType fst = getType(ctx.getChild(2));
-            WaccType snd = getType(ctx.getChild(4));
-            WaccType pair = new WaccType(fst.getId(), snd.getId());
-            pair.setFstArray(fst.isArray());
-            pair.setSndArray(snd.isArray());
-            return pair;
+           f
         }
         if(matchGrammar(ctx, new int[]{RULE_pairElem})) {
             ctx = ctx.getChild(0);
@@ -174,9 +174,11 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         return WaccType.INVALID;
     }
 
-    /*
+    */
+/*
      * Converts generic object into a WaccType if possible
-     */
+     *//*
+
     private WaccType objToType(Object o) {
         if(o instanceof ParseTree) return getType((ParseTree) o);
         if(o instanceof Integer) return new WaccType((Integer) o);
@@ -184,10 +186,12 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
         return WaccType.INVALID;
     }
 
-    /*
+    */
+/*
      * Checks that two types are equal
      * Parameters can be ParseTrees, Integers or WaccTypes
-     */
+     *//*
+
     private boolean typesMatch(Object lhs, Object rhs) {
         WaccType typel = objToType(lhs);
         WaccType typer = objToType(rhs);
@@ -667,4 +671,4 @@ public class AntlrVisitor extends WaccParserBaseVisitor<Void>{
     public void outputln(String s) {
         if(verbose) System.out.println(s);
     }
-}
+}*/

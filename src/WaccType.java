@@ -1,4 +1,5 @@
 import antlr.WaccParser;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,13 +39,17 @@ public class WaccType {
     }
 
     private boolean isPair;
+
     private boolean isArray = false;
     private boolean isFstPairArray = false;
     private boolean isSndPairArray = false;
     private int id;
     private int id2;
-
     public WaccType() {
+    }
+
+    public WaccType(WaccParser.TypeContext type) {
+        this.id = ((TerminalNode) type.baseType()).getSymbol().getType();
     }
 
     public WaccType(int id) {
