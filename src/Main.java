@@ -28,8 +28,7 @@ public class Main {
         ParseTree tree = parser.prog();
 
         // run the visitor
-        AntlrVisitor visitor = new AntlrVisitor();
-        visitor.verbose = true; // TODO: REMOVE THIS WHEN NOT DEBUGGING
+        WaccVisitor visitor = new WaccVisitor();
         visitor.visit(tree);
 
     }
