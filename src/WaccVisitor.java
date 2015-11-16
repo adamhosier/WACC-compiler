@@ -66,7 +66,7 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
 
         st.endScope();
 
-        if(returnType == null) {
+        if(returnType == null || !returnType.isValid()) {
             errorHandler.missingReturnStatement(ctx, ident);
         }
 
