@@ -11,7 +11,7 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
     private SymbolTable st = new SymbolTable();
     private WaccVisitorErrorHandler errorHandler = new WaccVisitorErrorHandler();
 
-    public boolean verbose = true;
+    public boolean verbose = false;
 
     //////////////// UTILITY METHODS //////////////
     /*
@@ -56,20 +56,25 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
     @Override
     public WaccType visitFunc(FuncContext ctx) {
         outputln("Visited function");
+        String ident = ctx.ident().getText();
         WaccType expectedType = visit(ctx.type());
 
         st.newScope();
 
-        st.enterFunction(ctx.ident().getText());
+        st.enterFunction(ident);
         WaccType returnType = visitStat(ctx.stat());
 
         st.endScope();
+
+        if(returnType == null) {
+            errorHandler.missingReturnStatement(ctx, ident);
+        }
 
         if(!typesMatch(expectedType, returnType)) {
             errorHandler.typeMismatch(ctx, expectedType, returnType);
         }
 
-        st.addFunction(ctx.ident().getText(), expectedType);
+        st.addFunction(ident, expectedType);
         return expectedType;
     }
 
@@ -378,7 +383,7 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
 
     private WaccType visitExprCharLiter(ExprContext ctx) {
         char c = ctx.getText().charAt(0);
-        if (c > 255) {
+        if (c > WaccVisitorErrorHandler.CHARACTER_MAX_VALUE) {
             errorHandler.characterOverflow(ctx);
         }
         return new WaccType(CHAR);

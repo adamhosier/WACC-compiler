@@ -10,13 +10,6 @@ import java.io.FileInputStream;
 public class Main {
 
     public static void main(String[] args) throws Exception {
-
-        if(args.length == 0) {
-            // simulate file input from stdin
-            // TODO: REMOVE THIS WHEN WE WANT FILES TO BE SENT FROM THE COMMAND LINE
-            System.setIn(new FileInputStream("/home/adam/labs/wacclab/examples/valid/advanced/ticTacToe.wacc"));
-        }
-
         // create a lexer that feeds off of input from System.in
         WaccLexer lexer = new WaccLexer(new ANTLRInputStream(System.in));
 

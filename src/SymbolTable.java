@@ -5,7 +5,7 @@ import java.util.*;
 
 public class SymbolTable {
   
-    public final boolean verbose = true;
+    public final boolean verbose = false;
     
     public void output(String s) {
       if(verbose) System.out.print(s);

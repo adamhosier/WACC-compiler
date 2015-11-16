@@ -5,7 +5,8 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 public class WaccVisitorErrorHandler {
 
-    static final int ERROR_CODE = 200;
+    static final int ERROR_CODE_SEMANTIC = 200;
+    static final int ERROR_CODE_SYNTAX = 100;
     static final int CHARACTER_MAX_VALUE = 255;
     static final int CHARACTER_MIN_VALUE = 0;
     static final int INTEGER_MAX_VALUE = (int) (Math.pow(2, 31) - 1);
@@ -13,29 +14,29 @@ public class WaccVisitorErrorHandler {
 
     public void typeMismatch(ParseTree ctx, WaccType expected, WaccType actual) {
         String msg = "type mismatch, expected " + expected + " got " + actual;
-        throwError(ctx, msg);
+        throwError(ctx, msg, ERROR_CODE_SEMANTIC);
     }
     
     public void typeMismatch(ParseTree ctx, WaccType expected1, 
                              WaccType expected2, WaccType actual) {
         String msg = "type mismatch, expected " + expected1 + " or " 
                       + expected2 + " got " + actual;
-        throwError(ctx, msg);
+        throwError(ctx, msg, ERROR_CODE_SEMANTIC);
     }
 
     public void freeTypeMismatch(ParseTree ctx, WaccType actual) {
         String msg = "incompatible target for free statement";
-        throwError(ctx, msg);
+        throwError(ctx, msg, ERROR_CODE_SEMANTIC);
     }
     
     public void arrayOutOfBounds(ParseTree ctx, int index) {
         String msg = "array out of bounds at index " + index;
-        throwError(ctx, msg);
+        throwError(ctx, msg, ERROR_CODE_SEMANTIC);
     }
 
     public void symbolNotFound(ParseTree ctx, String ident) {
         String msg = "symbol '" + ident + "' not found";
-        throwError(ctx, msg);
+        throwError(ctx, msg, ERROR_CODE_SEMANTIC);
     }
 
     public void integerOverflow(ParseTree ctx) {
@@ -49,53 +50,58 @@ public class WaccVisitorErrorHandler {
     public void identNotFound(ParseTree ctx) {
         String ident = ctx.getChild(0).getText();
         String msg = "identifier not found: " + ident;
-        throwError(ctx, msg);
+        throwError(ctx, msg, ERROR_CODE_SEMANTIC);
     }
 
     public void invalidOperator(ParseTree ctx, String op) {
         String msg = "invalid binary operator usage (" + op + ")";
-        throwError(ctx, msg);
+        throwError(ctx, msg, ERROR_CODE_SEMANTIC);
     }
 
 
     public void invalidNumberOfArgs(ParseTree ctx, String funcIdent) {
         String msg = "invalid number of arguments passed to function \'" + funcIdent + '\'';
-        throwError(ctx, msg);
+        throwError(ctx, msg, ERROR_CODE_SEMANTIC);
     }
 
     public void incompatibleArrayElemTypes(ParseTree ctx) {
         String msg = "incompatible types in array literal";
-        throwError(ctx, msg);
+        throwError(ctx, msg, ERROR_CODE_SEMANTIC);
     }
 
     public void variableRedeclaration(ParseTree ctx, String ident) {
         String msg = "variable '" + ident + "' redeclared";
-        throwError(ctx, msg);
+        throwError(ctx, msg, ERROR_CODE_SEMANTIC);
     }
 
     public void functionRedeclaration(ParseTree ctx, String ident) {
         String msg = "function '" + ident + "' redeclared";
-        throwError(ctx, msg);
+        throwError(ctx, msg, ERROR_CODE_SEMANTIC);
     }
 
     public void assignmentToFunction(ParseTree ctx, String ident) {
         String msg = "assignment to function '" + ident + "'";
-        throwError(ctx, msg);
+        throwError(ctx, msg, ERROR_CODE_SEMANTIC);
     }
 
     public void unprintableType(ParseTree ctx, String text) {
         String msg = "'" + text + "' is not a printable expression";
-        throwError(ctx, msg);
+        throwError(ctx, msg, ERROR_CODE_SEMANTIC);
     }
 
     public void unreachableCode(ParseTree ctx) {
         String msg = "unreachable code detected";
-        throwError(ctx, msg);
+        throwError(ctx, msg, ERROR_CODE_SEMANTIC);
+    }
+
+    public void missingReturnStatement(ParseTree ctx, String funcName) {
+        String msg = "function '" + funcName + "' missing return statement";
+        throwError(ctx, msg, ERROR_CODE_SYNTAX);
     }
 
     private void overflow(ParseTree ctx, String type, int minRange, int maxRange) {
         String msg = type + " overflow, expected " + type + " between " + minRange + " and " + maxRange;
-        throwError(ctx, msg);
+        throwError(ctx, msg, ERROR_CODE_SYNTAX);
     }
 
     private String getLine(ParseTree ctx) {
@@ -113,8 +119,8 @@ public class WaccVisitorErrorHandler {
         return "line " + line + ":" + pos + " ";
     }
 
-    private void throwError(ParseTree ctx, String msg) {
+    private void throwError(ParseTree ctx, String msg, int code) {
         System.err.println(getLine(ctx) + msg);
-        System.exit(ERROR_CODE);
+        System.exit(code);
     }
 }
