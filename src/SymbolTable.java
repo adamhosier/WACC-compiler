@@ -4,45 +4,57 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import java.util.*;
 
 public class SymbolTable {
-  
-    public final boolean verbose = false;
-    
-    public void output(String s) {
-      if(verbose) System.out.print(s);
-  }
 
-  public void outputln(String s) {
-      if(verbose) System.out.println(s);
-  }
+    public boolean verbose = false;
 
     // points to the lowest table in the hash map list
     private Map<String, Symbol> globaltable;
 
     // holds functions
     private Map<String, FunctionSymbol> functions = new HashMap<>();
+
+    // holds tables in different scopes
     private LinkedList<Map<String, Symbol>> tables = new LinkedList<>();
+
 
     public SymbolTable() {
         globaltable = new HashMap<>();
         tables.add(globaltable);
     }
 
+    /*
+     * Outputs debugging strings to stdout if verbose option is true
+     */
+    public void output(String s) {
+        if(verbose) System.out.print(s);
+    }
+
+    public void outputln(String s) {
+        if(verbose) System.out.println(s);
+    }
+
+    /*
+     * Adds a function to the functions and global table
+     * Returns false on failure
+     */
     public boolean addFunction(String ident, WaccType type) {
         output("> ADDING THE FUNCTION " + ident + " WITH TYPE " + type.toString());
         FunctionSymbol sym = new FunctionSymbol(type);
         return addVar(functions, ident, sym) && addVar(globaltable, ident, sym);
     }
 
+    /*
+     * Adds a variable to the symbol table in the current scope
+     * Returns false on failure
+     */
     public boolean addVariable(String ident, WaccType type) {
         output("> ADDING THE VARIABLE " + ident + " WITH TYPE " + type.toString() + " AT SCOPE " + tables.size());
         return addVar(tables.getFirst(), ident, new VariableSymbol(type));
     }
 
-    public boolean addArray(String ident, WaccType type, int[] length) {
-        output("> ADDING ARRAY " + ident + " WITH TYPE " + type.toString() + " AT SCOPE " + tables.size());
-        return addVar(tables.getFirst(), ident, new ArraySymbol(type, length));
-    }
-
+    /*
+     * Takes some generic table, an identifier and a symbol and adds that symbol to the given table under its ident
+     */
     private <T extends Symbol> boolean addVar(Map<String, T> table, String ident, T sym) {
         if(table.containsKey(ident) && !(table.get(ident) instanceof FunctionSymbol && sym instanceof VariableSymbol)) {
             outputln("... FAILED");
@@ -53,6 +65,9 @@ public class SymbolTable {
         return true;
     }
 
+    /*
+     * Given some function name, parameter name and parameter type, add it to the function symbol
+     */
     public void addParamToFunction(String funcIdent, String paramIdent, WaccType type) {
         FunctionSymbol sym = getFunctionSymbol(funcIdent);
         if(sym != null) {
@@ -60,11 +75,17 @@ public class SymbolTable {
         }
     }
 
+    /*
+     * Create new scope
+     */
     public void newScope() {
         outputln("> NEW SCOPE CREATED: amount " + (tables.size() + 1));
         tables.addFirst(new HashMap<String, Symbol>());
     }
 
+    /*
+     * Destroy top most scope
+     */
     public boolean endScope() {
         outputln("> CURRENT SCOPE DESTROYED: amount " + (tables.size() - 1));
         if(tables.size() > 1) {
@@ -75,25 +96,18 @@ public class SymbolTable {
         }
     }
 
+    /*
+     * Gets the type of the variable [ident], or null if it doesn't exist
+     */
     public WaccType lookupType(String ident) {
         Symbol sym = getSymbol(ident);
         if(sym == null) return null;
         else return sym.getType();
     }
 
-    public WaccType lookupType(ParseTree child) {
-        return lookupType(child.getText());
-    }
-
-    public int[] getArrayLength(String ident) {
-        Symbol sym = getSymbol(ident);
-        if(!(sym instanceof ArraySymbol)) {
-            return null;
-        } else {
-            return ((ArraySymbol) sym).getLengths();
-        }
-    }
-
+    /*
+     * Gets a list of types and strings of all parameters of functions
+     */
     public List<Pair<WaccType, String>> getParamList(String ident) {
         FunctionSymbol sym = getFunctionSymbol(ident);
         if(sym == null) return null;
@@ -116,6 +130,9 @@ public class SymbolTable {
         return functions.get(funcIdent);
     }
 
+    /*
+     * Given the identifier of a function, return it's result type, or null if it doesn't exist
+     */
     public WaccType lookupFunctionType(String ident) {
         FunctionSymbol sym = getFunctionSymbol(ident);
         if(sym == null) {
@@ -124,19 +141,28 @@ public class SymbolTable {
         return sym.getType();
     }
 
+    /*
+     * Given the identifier of a function, and one of its parameters,
+     *  return the parameters result type, or null if it doesn't exist
+     */
     public WaccType getFunctionParamType(String ident, int param) {
         FunctionSymbol sym = getFunctionSymbol(ident);
         if(sym == null) return null;
         return sym.getParamType(param);
     }
 
+    /*
+     * Enters the function called [ident] pushing all of its parameters to the current scope
+     * NOTE: doest not create a new scope
+     */
     public void enterFunction(String ident) {
         FunctionSymbol sym = getFunctionSymbol(ident);
 
         if(sym == null) return;
 
-        for(int i = 0; i < sym.getNumerParams(); i++) {
-            Pair<WaccType, String> param = sym.getParam(i);
+        //sym.getParams().forEach((Pair<WaccType, String> param) -> addVariable(param.b, param.a));
+
+        for(Pair<WaccType, String> param : sym.getParams()) {
             addVariable(param.b, param.a);
         }
     }
@@ -147,6 +173,9 @@ public class SymbolTable {
         return sym.getNumerParams();
     }
 
+    /*
+     * Checks if a variable given by [ident] is declared
+     */
     public boolean isDeclared(String ident) {
         return getSymbol(ident) != null;
     }
@@ -154,6 +183,8 @@ public class SymbolTable {
     public boolean isFunction(String ident) {
         return getSymbol(ident) instanceof FunctionSymbol;
     }
+
+    ///////////// INNER CLASSES /////////////
 
     private abstract class Symbol {
         private WaccType type;
@@ -203,23 +234,4 @@ public class SymbolTable {
         }
     }
 
-    private class PrimativeSymbol extends VariableSymbol {
-        PrimativeSymbol(WaccType type) {
-            super(type);
-        }
-    }
-
-    private class ArraySymbol extends VariableSymbol {
-
-        private final int[] lengths;
-
-        public int[] getLengths() {
-            return lengths;
-        }
-
-        public ArraySymbol(WaccType type, int[] lengths) {
-            super(type);
-            this.lengths = lengths;
-        }
-    }
 }

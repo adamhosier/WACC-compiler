@@ -13,50 +13,21 @@ public class WaccType {
     public static final WaccType INVALID = new WaccType(INVALID_ID);
     public static final WaccType PAIR = new WaccType(ALL_ID, ALL_ID);
 
-    /*
-     * Get a return type of a binary operator
-     */
-    public static WaccType fromBinaryOperator(int op) {
-        switch(op) {
-            case WaccParser.MULT:
-            case WaccParser.DIV:
-            case WaccParser.MOD:
-            case WaccParser.PLUS:
-            case WaccParser.MINUS:
-                return new WaccType(WaccParser.INT);
-            case WaccParser.GREATER_THAN:
-            case WaccParser.GREATER_THAN_EQ:
-            case WaccParser.LESS_THAN:
-            case WaccParser.LESS_THAN_EQ:
-            case WaccParser.EQ:
-            case WaccParser.NOT_EQ:
-            case WaccParser.AND:
-            case WaccParser.OR:
-                return new WaccType(WaccParser.BOOL);
-            default:
-                return WaccType.INVALID;
-        }
-    }
-
-    private boolean isPair;
-
+    private boolean isPair = false;
     private boolean isArray = false;
     private boolean isFstPairArray = false;
     private boolean isSndPairArray = false;
     private int id;
     private int id2;
-    public WaccType() {
-    }
 
-    public WaccType(WaccParser.TypeContext type) {
-        this.id = ((TerminalNode) type.baseType()).getSymbol().getType();
-    }
+    private WaccType() {}
 
+    // single types
     public WaccType(int id) {
         this.id = id;
-        isPair = false;
     }
 
+    // pair types
     public WaccType(int id1, int id2) {
         this.id = id1;
         this.id2 = id2;
@@ -86,6 +57,10 @@ public class WaccType {
         return id2;
     }
 
+    public boolean isPair() {
+        return isPair;
+    }
+
     public boolean isFstArray() {
         return isFstPairArray;
     }
@@ -94,7 +69,12 @@ public class WaccType {
         return isSndPairArray;
     }
 
+    /*
+     * Gets the base type of an array
+     * e.g. getBaseType(int[]) == int
+     */
     public WaccType getBaseType() {
+        // strings are arrays of chars
         if(id == WaccParser.STRING && !isArray) {
             return new WaccType(WaccParser.CHAR);
         }
@@ -103,6 +83,14 @@ public class WaccType {
             t.isArray = false;
             return t;
         }
+    }
+
+    public boolean isArray() {
+        return isArray;
+    }
+
+    public void setArray(boolean b) {
+        isArray = b;
     }
 
     public WaccType toArray() {
@@ -120,18 +108,6 @@ public class WaccType {
         isSndPairArray = isArr;
     }
 
-    public boolean isPair() {
-        return isPair;
-    }
-
-    public boolean isArray() {
-        return isArray;
-    }
-
-    public void setArray(boolean b) {
-        isArray = b;
-    }
-
     private WaccType copy() {
         WaccType t = new WaccType();
         t.id = id;
@@ -145,13 +121,16 @@ public class WaccType {
 
     @Override
     public boolean equals(Object other) {
-        if(other instanceof WaccType) {
+        if (other instanceof WaccType) {
             WaccType oth = (WaccType) other;
-            return isArray && getId() == WaccParser.CHAR && oth.getId() == WaccParser.STRING || oth.isArray && oth.getId() == WaccParser.CHAR && getId() == WaccParser.STRING || oth.getId() == WaccParser.PAIR && isPair || oth.isPair && getId() == WaccParser.PAIR || oth.getId() == getId() && oth.getSndId() == getSndId() && isArray == oth.isArray && isFstPairArray == oth.isFstPairArray && isSndPairArray == oth.isSndPairArray;
-        } else if(other instanceof Integer) {
-            return id == (Integer) other;
+            return isArray && getId() == WaccParser.CHAR && oth.getId() == WaccParser.STRING || oth.isArray &&
+                    oth.getId() == WaccParser.CHAR && getId() == WaccParser.STRING || oth.getId() == WaccParser.PAIR &&
+                    isPair || oth.isPair && getId() == WaccParser.PAIR || oth.getId() == getId() &&
+                    oth.getSndId() == getSndId() && isArray == oth.isArray && isFstPairArray == oth.isFstPairArray &&
+                    isSndPairArray == oth.isSndPairArray;
         } else {
-            return false;
+            // allow equals method to compare integers too
+            return other instanceof Integer && id == (Integer) other;
         }
     }
 
@@ -179,6 +158,7 @@ public class WaccType {
             sb.insert(0, "array(");
             sb.append(")");
         }
+
         return sb.toString();
     }
 }
