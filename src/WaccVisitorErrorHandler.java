@@ -1,4 +1,3 @@
-import antlr.WaccParser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -28,11 +27,6 @@ public class WaccVisitorErrorHandler {
         String msg = "incompatible target for free statement";
         throwError(ctx, msg, ERROR_CODE_SEMANTIC);
     }
-    
-    public void arrayOutOfBounds(ParseTree ctx, int index) {
-        String msg = "array out of bounds at index " + index;
-        throwError(ctx, msg, ERROR_CODE_SEMANTIC);
-    }
 
     public void symbolNotFound(ParseTree ctx, String ident) {
         String msg = "symbol '" + ident + "' not found";
@@ -47,17 +41,10 @@ public class WaccVisitorErrorHandler {
         overflow(ctx, "Character", CHARACTER_MIN_VALUE, CHARACTER_MAX_VALUE);
     }
 
-    public void identNotFound(ParseTree ctx) {
-        String ident = ctx.getChild(0).getText();
-        String msg = "identifier not found: " + ident;
-        throwError(ctx, msg, ERROR_CODE_SEMANTIC);
-    }
-
     public void invalidOperator(ParseTree ctx, String op) {
         String msg = "invalid binary operator usage (" + op + ")";
         throwError(ctx, msg, ERROR_CODE_SEMANTIC);
     }
-
 
     public void invalidNumberOfArgs(ParseTree ctx, String funcIdent) {
         String msg = "invalid number of arguments passed to function \'" + funcIdent + '\'';
