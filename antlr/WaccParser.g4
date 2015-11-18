@@ -91,7 +91,7 @@ expr
   : INT_LIT 
   | BOOL_LIT 
   | CHAR_LIT 
-  | STRING_LIT 
+  | STRING_LIT
   | pairLiter
   | ident
   | arrayElem
