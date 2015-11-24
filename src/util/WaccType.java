@@ -1,8 +1,6 @@
-import antlr.WaccParser;
-import org.antlr.v4.runtime.tree.TerminalNode;
+package util;
 
-import java.util.HashMap;
-import java.util.Map;
+import antlr.WaccParser;
 
 public class WaccType {
 

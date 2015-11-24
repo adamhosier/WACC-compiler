@@ -1,3 +1,5 @@
+package util;
+
 import org.antlr.v4.runtime.misc.Pair;
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -160,7 +162,7 @@ public class SymbolTable {
 
         if(sym == null) return;
 
-        //sym.getParams().forEach((Pair<WaccType, String> param) -> addVariable(param.b, param.a));
+        //sym.getParams().forEach((Pair<util.WaccType, String> param) -> addVariable(param.b, param.a));
 
         for(Pair<WaccType, String> param : sym.getParams()) {
             addVariable(param.b, param.a);

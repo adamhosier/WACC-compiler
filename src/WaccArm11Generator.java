@@ -1,9 +1,9 @@
 import antlr.WaccParserBaseVisitor;
-import instructions.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.RuleNode;
+import util.Arm11Program;
+import util.SymbolTable;
 
-import java.util.Comparator;
 import java.util.PriorityQueue;
 
 import static antlr.WaccParser.*;
@@ -57,14 +57,19 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Void> {
 
     @Override
     public Void visitProg(ProgContext ctx) {
+        state.startFunction("main");
         visitChildren(ctx);
+        state.endFunction();
         return null;
     }
 
     @Override
     public Void visitFunc(FuncContext ctx) {
         String ident = ctx.ident().getText();
-        state.addFunction(ident);
+        state.startFunction(ident);
+        //TODO: param list
+        visit(ctx.stat());
+        state.endFunction();
         return null;
     }
 

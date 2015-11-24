@@ -2,6 +2,8 @@ import static antlr.WaccParser.*;
 
 import antlr.WaccParserBaseVisitor;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import util.SymbolTable;
+import util.WaccType;
 
 public class WaccSyntaxAnalyser extends WaccParserBaseVisitor<WaccType> {
 
@@ -17,7 +19,7 @@ public class WaccSyntaxAnalyser extends WaccParserBaseVisitor<WaccType> {
     }
 
     /*
-     * Converts generic object into a WaccType if possible
+     * Converts generic object into a util.WaccType if possible
      */
     private WaccType objToType(Object o) {
         if(o instanceof Integer) return new WaccType((Integer) o);

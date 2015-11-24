@@ -1,5 +1,8 @@
+package util;
+
 import instructions.Instruction;
 import instructions.LabelInstruction;
+import instructions.PopInstruction;
 import instructions.PushInstruction;
 
 import java.util.LinkedList;
@@ -21,9 +24,13 @@ public class Arm11Program {
         instructions.add(ins);
     }
 
-    public void addFunction(String ins) {
+    public void startFunction(String ins) {
         instructions.add(new LabelInstruction(ins));
-        instructions.add(new PushInstruction());
+        instructions.add(new PushInstruction(Registers.lr));
+    }
+
+    public void endFunction() {
+        instructions.add(new PopInstruction(Registers.pc));
     }
 
     public String toCode() {
@@ -34,6 +41,7 @@ public class Arm11Program {
         //generate .text
 
         for(Instruction ins : instructions) {
+            for(int i = 0; i < ins.indentation; i++) program.append("\t");
             program.append(ins.toCode());
             program.append('\n');
         }
