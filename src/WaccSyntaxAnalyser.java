@@ -3,7 +3,7 @@ import static antlr.WaccParser.*;
 import antlr.WaccParserBaseVisitor;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
+public class WaccSyntaxAnalyser extends WaccParserBaseVisitor<WaccType> {
 
     private SymbolTable st = new SymbolTable();
     private WaccVisitorErrorHandler errorHandler = new WaccVisitorErrorHandler();
@@ -11,6 +11,11 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
     public boolean verbose = false;
 
     //////////////// UTILITY METHODS //////////////
+
+    public SymbolTable getSymbolTable() {
+        return st;
+    }
+
     /*
      * Converts generic object into a WaccType if possible
      */
@@ -380,6 +385,7 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
         return base;
     }
 
+
     @Override
     public WaccType visitExpr(ExprContext ctx) {
         outputln("Visited expression " + ctx.getText());
@@ -396,7 +402,6 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
         if(ctx.OPEN_PARENTHESES() != null) return visit(ctx.expr(0)); // case of ( expr )
         return null;
     }
-
 
     private WaccType visitExprIntLiter(ExprContext ctx) {
         int i;
@@ -561,5 +566,4 @@ public class WaccVisitor extends WaccParserBaseVisitor<WaccType> {
     public WaccType visitPairLiter(PairLiterContext ctx) {
         return WaccType.PAIR;
     }
-
 }

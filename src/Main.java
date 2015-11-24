@@ -4,7 +4,6 @@ import org.antlr.v4.runtime.tree.*;
 
 // import antlr package (your code)
 import antlr.*;
-import org.antlr.v4.runtime.tree.gui.SystemFontMetrics;
 
 import java.io.FileInputStream;
 
@@ -28,11 +27,12 @@ public class Main {
         ParseTree tree = parser.prog();
 
         // run the visitor
-        WaccVisitor visitor = new WaccVisitor();
-        visitor.visit(tree);
+        WaccSyntaxAnalyser analyser = new WaccSyntaxAnalyser();
+        analyser.visit(tree);
 
         // run the generator
         WaccArm11Generator generator = new WaccArm11Generator();
+        generator.setSymbolTable(analyser.getSymbolTable());
         generator.visit(tree);
 
         System.out.println(generator.generate());

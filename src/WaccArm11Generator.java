@@ -11,24 +11,44 @@ import static antlr.WaccParser.*;
 public class WaccArm11Generator extends WaccParserBaseVisitor<Void> {
 
     private Arm11Program state = new Arm11Program();
+    private SymbolTable st;
 
     public String generate() {
         return state.toCode();
     }
 
+    public void setSymbolTable(SymbolTable symbolTable) {
+        this.st = symbolTable;
+    }
+
+    /*
+     * Adds each child of [tree] to a priority queue, with priority given by the childs weight
+     * Then visits each of these children starting at the one which uses the most registers for optimal register usage
+     */
     @Override
     public Void visitChildren(RuleNode tree) {
         PriorityQueue<ParseTree> children = new PriorityQueue<>(this::compareWeights);
-
+        for(int i = 0; i < tree.getChildCount(); i++) {
+            children.add(tree.getChild(i));
+        }
+        children.forEach(this::visit);
         return null;
     }
 
+    /*
+     * Compares the amount of registers that two parsetrees will use in code generation
+     * Returns negative if p1 uses more than p2, else positive
+     */
     public int compareWeights(ParseTree p1, ParseTree p2) {
         int w1 = weight(p1);
         int w2 = weight(p2);
         return w1 - w2;
     }
 
+    /*
+     * TODO
+     * Calculates how many registers [tree] will use in code generation
+     */
     public int weight(ParseTree tree) {
         return 0;
     }
@@ -44,6 +64,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Void> {
     @Override
     public Void visitFunc(FuncContext ctx) {
         String ident = ctx.ident().getText();
+        state.addFunction(ident);
         return null;
     }
 
@@ -217,11 +238,11 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Void> {
         return super.visitComment(ctx);
     }
 
+
     @Override
     public Void visitFuncCall(FuncCallContext ctx) {
         return super.visitFuncCall(ctx);
     }
-
 
     @Override
     public Void visitPrintlnStat(PrintlnStatContext ctx) {

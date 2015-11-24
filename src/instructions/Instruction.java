@@ -3,6 +3,6 @@ package instructions;
 public abstract class Instruction {
 
     public String toCode() {
-        return "INSTRUCTION NOT IMPLEMENTED";
+        return this.getClass().getSimpleName() + ".toCode() not implemented";
     }
 }

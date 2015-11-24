@@ -1,5 +1,6 @@
 import instructions.Instruction;
 import instructions.LabelInstruction;
+import instructions.PushInstruction;
 
 import java.util.LinkedList;
 import java.util.List;
