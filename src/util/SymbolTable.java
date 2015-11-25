@@ -1,7 +1,6 @@
 package util;
 
 import org.antlr.v4.runtime.misc.Pair;
-import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.*;
 
@@ -132,6 +131,7 @@ public class SymbolTable {
         return functions.get(funcIdent);
     }
 
+
     /*
      * Given the identifier of a function, return it's result type, or null if it doesn't exist
      */
@@ -186,18 +186,58 @@ public class SymbolTable {
         return getSymbol(ident) instanceof FunctionSymbol;
     }
 
+    /*
+     * For locating where variable are stored in code generation
+     */
+    public void setRegister(String ident, Register register) {
+        if (getSymbol(ident) != null) {
+            getSymbol(ident).setRegister(register);
+        }
+    }
+
+    public void setAddress(String ident, int address) {
+        if (getSymbol(ident) != null) {
+            getSymbol(ident).setAddress(address);
+        }
+    }
     ///////////// INNER CLASSES /////////////
 
     private abstract class Symbol {
         private WaccType type;
 
+        // for code gen - location of variables
+        private Register register;
+        private int address; //
+        private boolean isStoredInReg;
+
         public WaccType getType() {
             return type;
+        }
+
+        public Register getRegister() {
+            return register;
+        }
+
+        public int getAddress() {
+            return address;
+        }
+
+        public void setRegister(Register register) {
+            this.register = register;
+        }
+
+        public void setAddress(int address) {
+            this.address = address;
+        }
+
+        public boolean isStoredInReg() {
+            return isStoredInReg;
         }
 
         public Symbol(WaccType type) {
             this.type = type;
         }
+
     }
 
     private class FunctionSymbol extends Symbol {

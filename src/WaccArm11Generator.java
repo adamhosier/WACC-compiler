@@ -232,6 +232,15 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitStat(StatContext ctx) {
+        if (ctx.varDeclaration() != null) {
+            Register dst = registers.getRegister();
+            ExprContext expr = ctx.varDeclaration().assignRhs().expr();
+            if (expr != null) {
+                Register src = visit(expr);
+                state.add(new MoveInstruction(dst, src));
+                st.setRegister(ctx.varDeclaration().ident().getText(), dst);
+            }
+        }
         return super.visitStat(ctx);
     }
 
