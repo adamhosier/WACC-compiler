@@ -9,6 +9,18 @@ public class Register {
         this.name = name;
     }
 
+    public boolean isInUse() {
+        return inUse;
+    }
+
+    public void use() {
+        inUse = true;
+    }
+
+    public void free() {
+        inUse = false;
+    }
+
     public void setName(String name) {
         this.name = name;
     }

@@ -1,7 +1,9 @@
 import antlr.WaccParserBaseVisitor;
+import instructions.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.RuleNode;
 import util.Arm11Program;
+import util.Registers;
 import util.SymbolTable;
 
 import java.util.PriorityQueue;
@@ -11,6 +13,7 @@ import static antlr.WaccParser.*;
 public class WaccArm11Generator extends WaccParserBaseVisitor<Void> {
 
     private Arm11Program state = new Arm11Program();
+    private Registers registers = new Registers();
     private SymbolTable st;
 
     public String generate() {
@@ -75,7 +78,18 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Void> {
 
     @Override
     public Void visitExitStat(ExitStatContext ctx) {
-        return super.visitExitStat(ctx);
+        visit(ctx.expr());
+        state.add(new BranchLinkInstruction("exit"));
+        state.add(new LoadInstruction(registers.getReturnRegister(), 0));
+        return null;
+    }
+
+    @Override
+    public Void visitExpr(ExprContext ctx) {
+        if(ctx.INT_LIT() != null) {
+            System.out.println(ctx);
+            state.add(new LoadInstruction(registers.getRegister(), 0));
+        }
     }
 
     @Override
@@ -106,11 +120,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Void> {
     @Override
     public Void visitParamList(ParamListContext ctx) {
         return super.visitParamList(ctx);
-    }
-
-    @Override
-    public Void visitExpr(ExprContext ctx) {
-        return super.visitExpr(ctx);
     }
 
     @Override
@@ -242,7 +251,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Void> {
     public Void visitComment(CommentContext ctx) {
         return super.visitComment(ctx);
     }
-
 
     @Override
     public Void visitFuncCall(FuncCallContext ctx) {
