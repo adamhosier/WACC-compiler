@@ -90,6 +90,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Void> {
             System.out.println(ctx);
             state.add(new LoadInstruction(registers.getRegister(), 0));
         }
+        return null;
     }
 
     @Override
