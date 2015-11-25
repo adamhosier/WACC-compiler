@@ -1,9 +1,6 @@
 package util;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Registers {
 
@@ -37,6 +34,7 @@ public class Registers {
     public static Register pc  = new Register("pc");
 
     private Map<String, Register> regs = new HashMap<>();
+    private Set<Register> inUse = new HashSet<>();
 
     public Registers() {
         //general purpose
@@ -85,12 +83,28 @@ public class Registers {
     private Register getReg(int from, int to) {
         for(int i = from; i < to; i++) {
             Register r = regs.get(intToName(i));
-            if(!r.isInUse()) {
-                r.use();
+            if(!inUse.contains(r)) {
+                inUse.add(r);
                 return r;
             }
         }
         //TODO: No free registers
         return null;
+    }
+
+    /*
+     * Marks all return registers as not in use
+     */
+    public void freeReturnRegisters() {
+        for(int i = MIN_RETURN_REG_ID; i < MAX_RETURN_REG_ID; i++) {
+            free(regs.get(intToName(i)));
+        }
+    }
+
+    /*
+     * Marks a register as not in use
+     */
+    public void free(Register r) {
+        inUse.remove(r);
     }
 }

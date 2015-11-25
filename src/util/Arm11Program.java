@@ -1,9 +1,6 @@
 package util;
 
-import instructions.Instruction;
-import instructions.LabelInstruction;
-import instructions.PopInstruction;
-import instructions.PushInstruction;
+import instructions.*;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -31,6 +28,7 @@ public class Arm11Program {
 
     public void endFunction() {
         instructions.add(new PopInstruction(Registers.pc));
+        instructions.add(new LtorgDirective());
     }
 
     public String toCode() {

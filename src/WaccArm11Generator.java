@@ -3,6 +3,7 @@ import instructions.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.RuleNode;
 import util.Arm11Program;
+import util.Register;
 import util.Registers;
 import util.SymbolTable;
 
@@ -10,7 +11,7 @@ import java.util.PriorityQueue;
 
 import static antlr.WaccParser.*;
 
-public class WaccArm11Generator extends WaccParserBaseVisitor<Void> {
+public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     private Arm11Program state = new Arm11Program();
     private Registers registers = new Registers();
@@ -29,7 +30,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Void> {
      * Then visits each of these children starting at the one which uses the most registers for optimal register usage
      */
     @Override
-    public Void visitChildren(RuleNode tree) {
+    public Register visitChildren(RuleNode tree) {
         PriorityQueue<ParseTree> children = new PriorityQueue<>(this::compareWeights);
         for(int i = 0; i < tree.getChildCount(); i++) {
             children.add(tree.getChild(i));
@@ -59,7 +60,9 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Void> {
     ////////////// VISITOR METHODS /////////////
 
     @Override
-    public Void visitProg(ProgContext ctx) {
+    public Register visitProg(ProgContext ctx) {
+        state.add(new TextDirective());
+        state.add(new GlobalDirective("main"));
         state.startFunction("main");
         visitChildren(ctx);
         state.endFunction();
@@ -67,7 +70,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Void> {
     }
 
     @Override
-    public Void visitFunc(FuncContext ctx) {
+    public Register visitFunc(FuncContext ctx) {
         String ident = ctx.ident().getText();
         state.startFunction(ident);
         //TODO: param list
@@ -77,189 +80,196 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Void> {
     }
 
     @Override
-    public Void visitExitStat(ExitStatContext ctx) {
-        visit(ctx.expr());
+    public Register visitExitStat(ExitStatContext ctx) {
+        Register result = visit(ctx.expr());
+
+        state.add(new MoveInstruction(registers.getReturnRegister(), result));
         state.add(new BranchLinkInstruction("exit"));
+
+        registers.freeReturnRegisters();
+
         state.add(new LoadInstruction(registers.getReturnRegister(), 0));
         return null;
     }
 
     @Override
-    public Void visitExpr(ExprContext ctx) {
+    public Register visitExpr(ExprContext ctx) {
         if(ctx.INT_LIT() != null) {
-            System.out.println(ctx);
-            state.add(new LoadInstruction(registers.getRegister(), 0));
+            int i = Integer.parseInt(ctx.INT_LIT().getSymbol().getText());
+            Register nextRegister = registers.getRegister();
+            state.add(new LoadInstruction(nextRegister, i));
+            return nextRegister;
         }
         return null;
     }
 
     @Override
-    public Void visitIntSign(IntSignContext ctx) {
+    public Register visitIntSign(IntSignContext ctx) {
         return super.visitIntSign(ctx);
     }
 
     @Override
-    public Void visitAssignRhs(AssignRhsContext ctx) {
+    public Register visitAssignRhs(AssignRhsContext ctx) {
         return super.visitAssignRhs(ctx);
     }
 
     @Override
-    public Void visitArgList(ArgListContext ctx) {
+    public Register visitArgList(ArgListContext ctx) {
         return super.visitArgList(ctx);
     }
 
     @Override
-    public Void visitParam(ParamContext ctx) {
+    public Register visitParam(ParamContext ctx) {
         return super.visitParam(ctx);
     }
 
     @Override
-    public Void visitVarAssignment(VarAssignmentContext ctx) {
+    public Register visitVarAssignment(VarAssignmentContext ctx) {
         return super.visitVarAssignment(ctx);
     }
 
     @Override
-    public Void visitParamList(ParamListContext ctx) {
+    public Register visitParamList(ParamListContext ctx) {
         return super.visitParamList(ctx);
     }
 
     @Override
-    public Void visitType(TypeContext ctx) {
+    public Register visitType(TypeContext ctx) {
         return super.visitType(ctx);
     }
 
     @Override
-    public Void visitOtherBinaryOper(OtherBinaryOperContext ctx) {
+    public Register visitOtherBinaryOper(OtherBinaryOperContext ctx) {
         return super.visitOtherBinaryOper(ctx);
     }
 
     @Override
-    public Void visitCharacter(CharacterContext ctx) {
+    public Register visitCharacter(CharacterContext ctx) {
         return super.visitCharacter(ctx);
     }
 
     @Override
-    public Void visitNewPair(NewPairContext ctx) {
+    public Register visitNewPair(NewPairContext ctx) {
         return super.visitNewPair(ctx);
     }
 
     @Override
-    public Void visitBoolBinaryOper(BoolBinaryOperContext ctx) {
+    public Register visitBoolBinaryOper(BoolBinaryOperContext ctx) {
         return super.visitBoolBinaryOper(ctx);
     }
 
     @Override
-    public Void visitIdent(IdentContext ctx) {
+    public Register visitIdent(IdentContext ctx) {
         return super.visitIdent(ctx);
     }
 
     @Override
-    public Void visitBaseType(BaseTypeContext ctx) {
+    public Register visitBaseType(BaseTypeContext ctx) {
         return super.visitBaseType(ctx);
     }
 
     @Override
-    public Void visitScopeStat(ScopeStatContext ctx) {
+    public Register visitScopeStat(ScopeStatContext ctx) {
         return super.visitScopeStat(ctx);
     }
 
     @Override
-    public Void visitPairLiter(PairLiterContext ctx) {
+    public Register visitPairLiter(PairLiterContext ctx) {
         return super.visitPairLiter(ctx);
     }
 
     @Override
-    public Void visitReadStat(ReadStatContext ctx) {
+    public Register visitReadStat(ReadStatContext ctx) {
         return super.visitReadStat(ctx);
     }
 
     @Override
-    public Void visitPairElemType(PairElemTypeContext ctx) {
+    public Register visitPairElemType(PairElemTypeContext ctx) {
         return super.visitPairElemType(ctx);
     }
 
     @Override
-    public Void visitVarDeclaration(VarDeclarationContext ctx) {
+    public Register visitVarDeclaration(VarDeclarationContext ctx) {
         return super.visitVarDeclaration(ctx);
     }
 
     @Override
-    public Void visitReturnStat(ReturnStatContext ctx) {
+    public Register visitReturnStat(ReturnStatContext ctx) {
         return super.visitReturnStat(ctx);
     }
 
     @Override
-    public Void visitPrintStat(PrintStatContext ctx) {
+    public Register visitPrintStat(PrintStatContext ctx) {
         return super.visitPrintStat(ctx);
     }
 
     @Override
-    public Void visitPairElem(PairElemContext ctx) {
+    public Register visitPairElem(PairElemContext ctx) {
         return super.visitPairElem(ctx);
     }
 
     @Override
-    public Void visitArrayElem(ArrayElemContext ctx) {
+    public Register visitArrayElem(ArrayElemContext ctx) {
         return super.visitArrayElem(ctx);
     }
 
     @Override
-    public Void visitEscapedChar(EscapedCharContext ctx) {
+    public Register visitEscapedChar(EscapedCharContext ctx) {
         return super.visitEscapedChar(ctx);
     }
 
     @Override
-    public Void visitStat(StatContext ctx) {
+    public Register visitStat(StatContext ctx) {
         return super.visitStat(ctx);
     }
 
     @Override
-    public Void visitFreeStat(FreeStatContext ctx) {
+    public Register visitFreeStat(FreeStatContext ctx) {
         return super.visitFreeStat(ctx);
     }
 
     @Override
-    public Void visitWhileStat(WhileStatContext ctx) {
+    public Register visitWhileStat(WhileStatContext ctx) {
         return super.visitWhileStat(ctx);
     }
 
     @Override
-    public Void visitUnaryOper(UnaryOperContext ctx) {
+    public Register visitUnaryOper(UnaryOperContext ctx) {
         return super.visitUnaryOper(ctx);
     }
 
     @Override
-    public Void visitIfStat(IfStatContext ctx) {
+    public Register visitIfStat(IfStatContext ctx) {
         return super.visitIfStat(ctx);
     }
 
     @Override
-    public Void visitPairType(PairTypeContext ctx) {
+    public Register visitPairType(PairTypeContext ctx) {
         return super.visitPairType(ctx);
     }
 
     @Override
-    public Void visitArrayLiter(ArrayLiterContext ctx) {
+    public Register visitArrayLiter(ArrayLiterContext ctx) {
         return super.visitArrayLiter(ctx);
     }
 
     @Override
-    public Void visitAssignLhs(AssignLhsContext ctx) {
+    public Register visitAssignLhs(AssignLhsContext ctx) {
         return super.visitAssignLhs(ctx);
     }
 
     @Override
-    public Void visitComment(CommentContext ctx) {
+    public Register visitComment(CommentContext ctx) {
         return super.visitComment(ctx);
     }
 
     @Override
-    public Void visitFuncCall(FuncCallContext ctx) {
+    public Register visitFuncCall(FuncCallContext ctx) {
         return super.visitFuncCall(ctx);
     }
 
     @Override
-    public Void visitPrintlnStat(PrintlnStatContext ctx) {
+    public Register visitPrintlnStat(PrintlnStatContext ctx) {
         return super.visitPrintlnStat(ctx);
     }
 }
