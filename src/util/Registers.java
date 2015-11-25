@@ -9,7 +9,7 @@ public class Registers {
     private static final int MIN_RETURN_REG_ID = MIN_REG_ID;
     private static final int MAX_RETURN_REG_ID = 3;
     private static final int MIN_GENERAL_REG_ID = MAX_RETURN_REG_ID + 1;
-    private static final int MAX_GENERAL_REG_ID = 12;
+    private static final int MAX_GENERAL_REG_ID = 10;
     private static final int MIN_SPECIAL_REG_ID = MAX_GENERAL_REG_ID + 1;
     private static final int MAX_SPECIAL_REG_ID = MAX_REG_ID;
 
