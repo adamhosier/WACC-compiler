@@ -12,7 +12,7 @@ public class Main {
     public static void main(String[] args) throws Exception {
 
         if(args.length == 0) {
-            System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/valid/basic/exit/exitBasic.wacc"));
+            System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/valid/basic/exit/exit-1.wacc"));
             //System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/valid/advanced/ticTacToe.wacc"));
         }
 
@@ -35,7 +35,7 @@ public class Main {
         generator.setSymbolTable(analyser.getSymbolTable());
         generator.visit(tree);
 
-        System.out.println(generator.generate());
+        System.out.print(generator.generate());
 
     }
 }

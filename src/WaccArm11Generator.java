@@ -7,6 +7,7 @@ import util.Register;
 import util.Registers;
 import util.SymbolTable;
 
+import java.util.Comparator;
 import java.util.PriorityQueue;
 
 import static antlr.WaccParser.*;
@@ -31,12 +32,23 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
      */
     @Override
     public Register visitChildren(RuleNode tree) {
-        PriorityQueue<ParseTree> children = new PriorityQueue<>(this::compareWeights);
+        PriorityQueue<ParseTree> children = new PriorityQueue<ParseTree>(1, new Comparator<ParseTree>() {
+            @Override
+            public int compare(ParseTree p1, ParseTree p2) {
+                return compareWeights(p1, p2);
+            }
+        });
+
         for(int i = 0; i < tree.getChildCount(); i++) {
             children.add(tree.getChild(i));
         }
-        children.forEach(this::visit);
-        return null;
+
+        Register result = null;
+        for(ParseTree child : children) {
+            result = visit(child);
+        }
+
+        return result;
     }
 
     /*

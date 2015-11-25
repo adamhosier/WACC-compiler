@@ -20,7 +20,10 @@ if not os.path.isfile(path):
 
 # navigate to bin, and build path
 path = os.path.abspath(path)
+fname = os.path.splitext(os.path.basename(path))[0]
+
 os.chdir("bin")
+
 
 # open file as readable buffer
 with open(path, 'rb') as f:
@@ -29,14 +32,22 @@ with open(path, 'rb') as f:
                  "Main", "run"], stdin=PIPE, stdout=PIPE, stderr=STDOUT);
 
     output, err = cmd.communicate(f.read())
-    exit = cmd.returncode
+    output = output.decode("utf-8")
 
-    print(output.decode("utf-8"))
+    exit = cmd.returncode
     
     # error check
     if exit == SYNTAX_ERR_CODE:
         print("#syntax_error#")
+        sys.exit(SYNTAX_ERR_CODE)
     elif exit == SEMANTIC_ERR_CODE:
         print("#semantic_error#")
+        sys.exit(SEMANTIC_ERR_CODE)
+
+# change back to working directory
+os.chdir("../")
     
-    sys.exit(exit)
+# write out to .s file
+with open(fname + ".s", 'w') as f:
+    f.write(output);
+

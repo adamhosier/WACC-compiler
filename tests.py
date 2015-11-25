@@ -4,25 +4,62 @@ import os
 numtests = 0
 numpasses = 0
 
-def run_test(path, expectedErrorCode):
+def run_test(path, expectedOutput, expectedExit):
     global numtests, numpasses 
-    print("Testing: {0}".format(path))
-    p = Popen(["./compile", path], stdin=PIPE, stdout=PIPE, stderr=STDOUT);
-          
-    output, err = p.communicate()
-    exit = p.returncode
 
     numtests += 1
-    if exit == expectedErrorCode or exit == expectedErrorCode - 100:
+
+    fname = os.path.splitext(os.path.basename(path))[0]
+
+    print("Testing: {0}".format(path))
+    
+    # compile
+    p = Popen(["./compile", path], stdin=PIPE, stdout=PIPE, stderr=STDOUT);
+    p.communicate()
+    if(p.returncode != 0):
+        print("TEST {0} FAILED: COULD NOT COMPILE")
+        return
+
+    # assemble
+    p = Popen(["arm-linux-gnueabi-gcc", "-o", fname, "-mcpu=arm1176jzf-s",
+        "-mtune=arm1176jzf-s", fname + ".s"], stdin=PIPE, stdout=PIPE, 
+        stderr=STDOUT)
+    p.communicate() 
+    if(p.returncode != 0):
+        print("TEST {0} FAILED: COULD NOT ASSEMBLE")
+        os.remove(fname + ".s")
+        return
+
+    # run
+    p = Popen(["qemu-arm", "-L", "/usr/arm-linux-gnueabi/", fname], stdin=PIPE,
+            stdout=PIPE, stderr=STDOUT) 
+    output, err = p.communicate()
+
+    # format output
+    output = output.decode("utf-8")
+    output = "#empty#" if output == "" else output
+
+    exit = p.returncode
+
+    if ((exit == expectedExit or expectedExit == "#n/a#") and
+            (output == expectedOutput or expectedOutput == "#n/a#")):
         numpasses += 1
     else:
-        print(output.decode("utf-8"))
-        print("======== TEST {0} {1} ========".format(
-            numtests, "PASSED" if exit == 0 else "FAILED"))
+        print("======== TEST {0} FAILED ========".format(numtests))
         print()
-        print("Return code: {0}".format(p.returncode))
+        if(output != expectedOutput):
+          print("Expected output: ")
+          print(expectedOutput)
+          print("But got: ")
+          print(output)
+        if(exit != expectedExit):
+          print("Expected exit:\t{0}".format(expectedExit))
+          print("But got:\t{0}".format(exit))
         print()
-        print()
+
+    # clean up
+    os.remove(fname)
+    os.remove(fname + ".s")
 
 
 # compile
@@ -34,25 +71,31 @@ if r != 0:
     print("Make failed")
     sys.exit(-1)
 
-validtestdir = "examples/valid"
-invalidtestdir = "examples/invalid"
+testdir = "examples/valid"
 
-print("========== VALID TESTS ==========")
-for subdir, dirs, files in os.walk(validtestdir):
+print("========== RUNNING TESTS ==========")
+for subdir, dirs, files in os.walk(testdir):
     for f in files:
         path = os.path.join(subdir, f)
         _, extension = os.path.splitext(path)
         if(extension == ".wacc"):
-            run_test(path, 0)
-
-print("========== INVALID TESTS ==========")
-for subdir, dirs, files in os.walk(invalidtestdir):
-    for f in files:
-        path = os.path.join(subdir, f)
-        _, extension = os.path.splitext(path)
-        if(extension == ".wacc"):
-            run_test(path, 200)
-
+            expectedOutput = "#n/a#"
+            expectedExit = "#n/a#"
+            with open(path, "r") as fi:
+                readOutput = False
+                readExit = False
+                for i, line in enumerate(fi):
+                    line = line.strip()
+                    if line == "begin": break
+                    if readOutput: 
+                        expectedOutput = line[2:].strip()
+                        readOutput = False
+                    if readExit:
+                        expectedExit = int(line[2:])
+                        readExit = False
+                    if line == "# Output:": readOutput = True
+                    if line == "# Exit:": readExit = True
+            run_test(path, expectedOutput, expectedExit)
 
 print()
 print("========== TEST RESULTS ==========")
