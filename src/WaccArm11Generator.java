@@ -8,6 +8,8 @@ import util.Registers;
 import util.SymbolTable;
 
 import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.PriorityQueue;
 
 import static antlr.WaccParser.*;
@@ -17,6 +19,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     private Arm11Program state = new Arm11Program();
     private Registers registers = new Registers();
     private SymbolTable st;
+    private List<MsgLabel> msgLabels = new LinkedList<>();
 
     public String generate() {
         return state.toCode();
@@ -112,6 +115,28 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new LoadInstruction(nextRegister, i));
             return nextRegister;
         }
+        if(ctx.BOOL_LIT() != null) {
+            int bool = ctx.BOOL_LIT().getSymbol().getText().equals("true") ? 1 : 0;
+            Register nextRegister = registers.getRegister();
+            state.add(new MoveInstruction(nextRegister, bool));
+            return nextRegister;
+        }
+        if(ctx.CHAR_LIT() != null) {
+            char c = ctx.CHAR_LIT().getSymbol().getText().charAt(0);
+            Register nextRegister = registers.getRegister();
+            state.add(new MoveInstruction(nextRegister, c));
+            return nextRegister;
+        }
+        if(ctx.STRING_LIT() != null) {
+            String s = ctx.STRING_LIT().getSymbol().getText();
+            msgLabels.add(new MsgLabel(s, msgLabels.size()));
+            Register nextRegister = registers.getRegister();
+            String label = msgLabels.get(msgLabels.size() - 1).getIdent();
+            state.add(new LoadInstruction(nextRegister, label));
+            return nextRegister;
+        }
+
+
         return null;
     }
 
