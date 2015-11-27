@@ -2,7 +2,7 @@ package instructions;
 
 public abstract class Instruction {
 
-    protected int indentation;
+    public int indentation;
 
     public Instruction() {
         indentation = 1;

@@ -29,6 +29,8 @@ public class Registers {
     public static Register r13 = new Register("sp");
     public static Register r14 = new Register("lr");
     public static Register r15 = new Register("pc");
+    public static Register fp  = new Register("fp");
+    public static Register scr = new Register("src");
     public static Register sp  = new Register("sp");
     public static Register lr  = new Register("lr");
     public static Register pc  = new Register("pc");
@@ -53,6 +55,8 @@ public class Registers {
             return "r" + i;
         }
         switch(i) {
+            case 11: return "fp";
+            case 12: return "scr";
             case 13: return "sp";
             case 14: return "lr";
             case 15: return "pc";
@@ -90,6 +94,10 @@ public class Registers {
         }
         //TODO: No free registers
         return null;
+    }
+
+    public boolean isInUse(String reg) {
+        return inUse.contains(new Register(reg));
     }
 
     /*

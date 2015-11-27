@@ -79,7 +79,13 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         state.add(new TextDirective());
         state.add(new GlobalDirective("main"));
         state.startFunction("main");
+
         visitChildren(ctx);
+
+        // check if return register has been filled
+        if(!registers.isInUse("r0")) {
+            state.add(new LoadInstruction(Registers.r0, 0));
+        }
         state.endFunction();
         return null;
     }
@@ -227,7 +233,14 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitVarDeclaration(VarDeclarationContext ctx) {
-        return super.visitVarDeclaration(ctx);
+        Register dst = registers.getRegister();
+        ExprContext expr = ctx.assignRhs().expr();
+        if (expr != null) {
+            Register src = visit(expr);
+            state.add(new MoveInstruction(dst, src));
+            st.setRegister(ctx.ident().getText(), dst);
+        }
+        return null;
     }
 
     @Override
@@ -257,16 +270,12 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitStat(StatContext ctx) {
-        if (ctx.varDeclaration() != null) {
-            Register dst = registers.getRegister();
-            ExprContext expr = ctx.varDeclaration().assignRhs().expr();
-            if (expr != null) {
-                Register src = visit(expr);
-                state.add(new MoveInstruction(dst, src));
-                st.setRegister(ctx.varDeclaration().ident().getText(), dst);
-            }
+        if(ctx.SEMICOLON() != null) {
+            visit(ctx.stat(0));
+            return visit(ctx.stat(1));
+        } else {
+            return visitChildren(ctx);
         }
-        return super.visitStat(ctx);
     }
 
     @Override
