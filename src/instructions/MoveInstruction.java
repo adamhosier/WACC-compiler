@@ -19,8 +19,14 @@ public class MoveInstruction extends Instruction {
         isImmediate = true;
     }
 
+    public MoveInstruction(Register rDest, char iSrc) {
+        this.rDest = rDest;
+        this.iSrc = iSrc;
+        isImmediate = true;
+    }
+
     @Override
     public String toCode() {
-        return "MOV " + rDest + ", " + rSrc;
+        return "MOV " + rDest + ", " + (isImmediate ? "#" + iSrc :  rDest);
     }
 }

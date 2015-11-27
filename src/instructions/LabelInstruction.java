@@ -2,7 +2,7 @@ package instructions;
 
 public class LabelInstruction extends Instruction {
 
-    private String ident;
+    protected String ident;
 
     public LabelInstruction(String ident) {
         this.indentation = 0;

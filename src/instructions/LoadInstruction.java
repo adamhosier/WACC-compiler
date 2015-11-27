@@ -4,12 +4,18 @@ import util.Register;
 
 public class LoadInstruction extends Instruction {
     private Register rSrc;
-    private int iSrc;
+    private Object iSrc;
 
     private boolean isImmediate = false;
     private Register rDest;
 
     public LoadInstruction(Register rDest, int iSrc) {
+        this.rDest = rDest;
+        this.iSrc = iSrc;
+        isImmediate = true;
+    }
+
+    public LoadInstruction(Register rDest, String iSrc) {
         this.rDest = rDest;
         this.iSrc = iSrc;
         isImmediate = true;
@@ -22,6 +28,6 @@ public class LoadInstruction extends Instruction {
 
     @Override
     public String toCode() {
-        return "LDR " + rDest + ", " + (isImmediate ? "=" + iSrc : "[" + rDest + "]");
+        return "LDR " + rDest + ", " + (isImmediate ? "=" + iSrc : "[" + rSrc + "]");
     }
 }
