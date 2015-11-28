@@ -195,11 +195,26 @@ public class SymbolTable {
         }
     }
 
+    public Register getRegister(String ident) {
+        if (getSymbol(ident) != null) {
+            return getSymbol(ident).getRegister();
+        }
+        return null;
+    }
+
     public void setAddress(String ident, int address) {
         if (getSymbol(ident) != null) {
             getSymbol(ident).setAddress(address);
         }
     }
+
+    public int getAddress(String ident) {
+        if (getSymbol(ident) != null) {
+            return getSymbol(ident).getAddress();
+        }
+        return -1;
+    }
+
     ///////////// INNER CLASSES /////////////
 
     private abstract class Symbol {
