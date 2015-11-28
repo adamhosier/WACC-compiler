@@ -36,7 +36,7 @@ def run_test(path, expectedOutput, expectedExit):
     output, err = p.communicate()
 
     # format output
-    output = output.decode("utf-8")
+    output = output.decode("utf-8").strip()
     output = "#empty#" if output == "" else output
 
     exit = p.returncode
@@ -47,12 +47,12 @@ def run_test(path, expectedOutput, expectedExit):
     else:
         print("======== TEST {0} FAILED ========".format(numtests))
         print()
-        if(output != expectedOutput):
+        if(output != expectedOutput and expectedOutput != "#n/a#"):
           print("Expected output: ")
           print(expectedOutput)
           print("But got: ")
           print(output)
-        if(exit != expectedExit):
+        if(exit != expectedExit and expectedExit != "#n/a#"):
           print("Expected exit:\t{0}".format(expectedExit))
           print("But got:\t{0}".format(exit))
         print()
@@ -71,7 +71,7 @@ if r != 0:
     print("Make failed")
     sys.exit(-1)
 
-testdir = "examples/valid/basic"
+testdir = "examples/valid"
 
 print("========== RUNNING TESTS ==========")
 for subdir, dirs, files in os.walk(testdir):

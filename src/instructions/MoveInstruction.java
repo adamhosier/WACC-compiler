@@ -27,6 +27,6 @@ public class MoveInstruction extends Instruction {
 
     @Override
     public String toCode() {
-        return "MOV " + rDest + ", " + (isImmediate ? "#" + iSrc :  rDest);
+        return "MOV " + rDest + ", " + (isImmediate ? "#" + iSrc :  rSrc);
     }
 }

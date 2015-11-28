@@ -57,7 +57,7 @@ public class Arm11Program {
 
 
     public void addPrintlnFunc() {
-        String label = addMsgLabel("\0");
+        String label = addMsgLabel("\\0");
         printlnFunc = label;
         startFunction(PRINTLN_FUNC_NAME);
         add(new LoadInstruction(Registers.r0, printlnFunc));
