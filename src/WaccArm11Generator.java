@@ -133,13 +133,15 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             return nextRegister;
         }
         if(ctx.STRING_LIT() != null) {
+            // get string and strip quotes
             String s = ctx.STRING_LIT().getSymbol().getText();
+            s = s.substring(1, s.length() - 1);
+
             String label = state.addMsgLabel(s);
             Register nextRegister = registers.getRegister();
             state.add(new LoadInstruction(nextRegister, label));
             return nextRegister;
         }
-
 
         return null;
     }
@@ -258,6 +260,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitPrintStat(PrintStatContext ctx) {
+
         Register msgReg = visit(ctx.expr());
         state.add(new MoveInstruction(Registers.r0, msgReg));
         state.add(new BranchLinkInstruction(Arm11Program.PRINT_FUNC_NAME));
