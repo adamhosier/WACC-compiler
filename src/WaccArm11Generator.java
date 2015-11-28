@@ -261,7 +261,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitVarDeclaration(VarDeclarationContext ctx) {
-        Register dst = registers.getRegister();
         TypeContext type = ctx.type();
         ExprContext expr = ctx.assignRhs().expr();
         int offset;
@@ -276,7 +275,9 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 state.add(new StoreInstruction(src, Registers.sp, offset));
             }
 
+            // src register does not need to hold expr value anymore
             registers.free(src);
+
             st.setAddress(ctx.ident().getText(), offset);
         }
         return null;

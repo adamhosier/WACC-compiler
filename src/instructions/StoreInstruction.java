@@ -14,6 +14,7 @@ public class StoreInstruction extends Instruction {
         this.offset = offset;
     }
 
+    // when isByte is set the store instruction will be STRB
     public StoreInstruction(Register rSrc, Register rDst, int offset, boolean isByte) {
         this.rSrc = rSrc;
         this.rDst = rDst;
@@ -24,6 +25,6 @@ public class StoreInstruction extends Instruction {
     @Override
     public String toCode() {
         return (!isByte ? "STR " : "STRB ") + rSrc + ", "
-                + "[" + rDst + (offset != 0 ? ", " + offset + "]" : "]");
+                + "[" + rDst + (offset != 0 ? ", " + "#" + offset + "]" : "]");
     }
 }
