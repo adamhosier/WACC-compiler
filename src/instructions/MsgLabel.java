@@ -20,7 +20,7 @@ public class MsgLabel extends LabelInstruction {
     public String toCode() {
         return ident + ":\n"
                 + '\t' + ".word " + msg.length() + '\n'
-                + '\t' + ".ascii " + '\"' + msg + '\"' + '\n';
+                + '\t' + ".ascii " + msg + '\n';
     }
 
 }
