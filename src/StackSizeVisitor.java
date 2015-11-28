@@ -1,7 +1,10 @@
 import antlr.WaccParser.ArrayLiterContext;
+import antlr.WaccParser.StatContext;
 import antlr.WaccParser.TypeContext;
 import antlr.WaccParser.VarDeclarationContext;
 import antlr.WaccParserBaseVisitor;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.RuleNode;
 
 public class StackSizeVisitor extends WaccParserBaseVisitor<Void> {
 
@@ -14,8 +17,22 @@ public class StackSizeVisitor extends WaccParserBaseVisitor<Void> {
     private final int STRING_SIZE = 4;
     private final int PAIR_SIZE = 4;
 
-    public int getSize() {
+    public int getSize(ParseTree tree) {
+        visitChildren((RuleNode) tree);
         return size;
+    }
+
+    @Override
+    public Void visitStat(StatContext ctx) {
+        // ignore inner scopes for now
+        if (ctx.whileStat() != null || ctx.ifStat() != null
+                || ctx.scopeStat() != null) {
+            return null;
+        }
+
+        // proceed to calculate size if stat is not new scope
+        visitChildren(ctx);
+        return null;
     }
 
     @Override

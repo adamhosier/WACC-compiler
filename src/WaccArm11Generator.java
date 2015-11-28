@@ -8,8 +8,6 @@ import util.Registers;
 import util.SymbolTable;
 
 import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.PriorityQueue;
 
 import static antlr.WaccParser.*;
@@ -19,6 +17,17 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     private Arm11Program state = new Arm11Program();
     private Registers registers = new Registers();
     private SymbolTable st;
+    private int stackOffset;
+    private int currOffset;
+
+    // size on stack for each type
+    private static final int INT_SIZE = 4;
+    private static final int BOOL_SIZE = 1;
+    private static final int CHAR_SIZE = 1;
+    private static final int STRING_SIZE = 4;
+    private static final int PAIR_SIZE = 4;
+
+    private static final boolean IS_BYTE = true;
 
     public String generate() {
         return state.toCode();
@@ -77,12 +86,21 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     public Register visitProg(ProgContext ctx) {
         state.startFunction("main");
 
+        // visit and calculate offset
+        StackSizeVisitor sizeVisitor = new StackSizeVisitor();
+        stackOffset = sizeVisitor.getSize(ctx);
+
+        state.add(new SubInstruction(Registers.sp, Registers.sp, stackOffset));
+
         visitChildren(ctx);
 
         // check if return register has been filled
         if(!registers.isInUse("r0")) {
             state.add(new LoadInstruction(Registers.r0, 0));
         }
+
+        state.add(new AddInstruction(Registers.sp, Registers.sp, stackOffset));
+
         state.endFunction();
         state.add(new TextDirective());
         state.add(new GlobalDirective("main"));
@@ -244,13 +262,43 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     @Override
     public Register visitVarDeclaration(VarDeclarationContext ctx) {
         Register dst = registers.getRegister();
+        TypeContext type = ctx.type();
         ExprContext expr = ctx.assignRhs().expr();
+        int offset;
         if (expr != null) {
             Register src = visit(expr);
-            state.add(new MoveInstruction(dst, src));
-            st.setRegister(ctx.ident().getText(), dst);
+            currOffset += getSize(type);
+            offset = stackOffset - currOffset;
+
+            if (type.baseType().BOOL() != null || type.baseType().CHAR() != null) {
+                state.add(new StoreInstruction(src, Registers.sp, offset, IS_BYTE));
+            } else {
+                state.add(new StoreInstruction(src, Registers.sp, offset));
+            }
+
+            registers.free(src);
+            st.setAddress(ctx.ident().getText(), offset);
         }
         return null;
+    }
+
+    private int getSize(TypeContext ctx) {
+        if (ctx.baseType().INT() != null) {
+            return INT_SIZE;
+        }
+        if (ctx.baseType().BOOL() != null) {
+            return BOOL_SIZE;
+        }
+        if (ctx.baseType().CHAR() != null) {
+            return CHAR_SIZE;
+        }
+        if (ctx.baseType().STRING() != null) {
+            return STRING_SIZE;
+        }
+        if (ctx.pairType() != null) {
+            return PAIR_SIZE;
+        }
+        return 0;
     }
 
     @Override
