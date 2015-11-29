@@ -11,16 +11,19 @@ import java.util.*;
 
 public class Arm11Program {
 
-    public static final String PRINT_FUNC_NAME = "p_print_string";
-    public static final String PRINTLN_FUNC_NAME = "p_print_ln";
+    public static final String PRINT_STRING_NAME = "p_print_string";
+    public static final String PRINT_BOOL_NAME = "p_print_bool";
+    public static final String PRINTLN_NAME = "p_print_ln";
 
     Map<String, List<Instruction>> functions = new LinkedHashMap<>();
     Stack<List<Instruction>> scope = new Stack<>();
     List<Instruction> currentFunction;
     List<Instruction> globalCode = new LinkedList<>();
     int numMsgLabels = 0;
-    private String printFunc;
+    private String printStringFunc;
     private String printlnFunc;
+    private String printTrueFunc;
+    private String printFalseFunc;
 
     public Arm11Program() {
         functions.put("global", globalCode);
@@ -33,39 +36,48 @@ public class Arm11Program {
         else currentFunction.add(ins);
     }
 
-    public String addMsgLabel(String label) {
+    public String addMsgLabel(String msg) {
         if(numMsgLabels == 0) globalCode.add(new DataLabel());
-        MsgLabel instruction = new MsgLabel(label, numMsgLabels);
+        MsgLabel instruction = new MsgLabel(msg, numMsgLabels);
         globalCode.add(instruction);
         numMsgLabels++;
         return instruction.getIdent();
     }
 
-    public void addPrintFunc() {
-        String label = addMsgLabel("%.*s\\0");
-        printFunc = label;
-        startFunction(PRINT_FUNC_NAME);
+    public String getMsgLabel(String msg) {
+        for(Instruction ins : globalCode) {
+            if(ins instanceof MsgLabel && ((MsgLabel) ins).getMsg().equals(msg)) {
+                return ((MsgLabel) ins).getIdent();
+            }
+        }
+        return addMsgLabel(msg);
+    }
+
+    public void addPrintString() {
+        printStringFunc = getMsgLabel("%.*s\\0");
+        startFunction(PRINT_STRING_NAME);
         add(new LoadInstruction(Registers.r1, Registers.r0));
         add(new AddInstruction(Registers.r2, Registers.r0, 4));
-        add(new LoadInstruction(Registers.r0, printFunc));
-        add(new AddInstruction(Registers.r0, Registers.r0, 4));
-        add(new BranchLinkInstruction("printf"));
-        add(new MoveInstruction(Registers.r0, 0));
-        add(new BranchLinkInstruction("fflush"));
-        endFunction();
+        add(new LoadInstruction(Registers.r0, printStringFunc));
+        endPrintFunction("printf");
     }
 
 
+    public void addPrintBool() {
+        printTrueFunc = getMsgLabel("true");
+        printFalseFunc = getMsgLabel("false");
+        startFunction(PRINT_BOOL_NAME);
+        add(new CompareInstruction(Registers.r0, 0));
+        add(new LoadNotEqualInstruction(Registers.r0, printTrueFunc));
+        add(new LoadEqualInstruction(Registers.r0, printFalseFunc));
+        endPrintFunction("printf");
+    }
+
     public void addPrintlnFunc() {
-        String label = addMsgLabel("\\0");
-        printlnFunc = label;
-        startFunction(PRINTLN_FUNC_NAME);
+        printlnFunc = addMsgLabel("\\0");
+        startFunction(PRINTLN_NAME);
         add(new LoadInstruction(Registers.r0, printlnFunc));
-        add(new AddInstruction(Registers.r0, Registers.r0, 4));
-        add(new BranchLinkInstruction("puts"));
-        add(new MoveInstruction(Registers.r0, 0));
-        add(new BranchLinkInstruction("fflush"));
-        endFunction();
+        endPrintFunction("puts");
     }
 
     public void startFunction(String name) {
@@ -78,17 +90,28 @@ public class Arm11Program {
 
     public void endFunction() {
         currentFunction.add(new PopInstruction(Registers.pc));
+        scope.pop();
+        currentFunction = scope.peek();
+    }
+
+    public void endMainFunction() {
+        currentFunction.add(new PopInstruction(Registers.pc));
         currentFunction.add(new LtorgDirective());
         scope.pop();
         currentFunction = scope.peek();
     }
 
-    public boolean functionDeclared(String name) {
-        return functions.containsKey(name);
+    public void endPrintFunction(String branch) {
+        add(new AddInstruction(Registers.r0, Registers.r0, 4));
+        add(new BranchLinkInstruction(branch));
+        add(new MoveInstruction(Registers.r0, 0));
+        add(new BranchLinkInstruction("fflush"));
+        endFunction();
     }
 
-    public String getPrintFunc() {
-        return printFunc;
+
+    public boolean functionDeclared(String name) {
+        return functions.containsKey(name);
     }
 
     public String toCode() {

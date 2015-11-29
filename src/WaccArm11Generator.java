@@ -2,14 +2,9 @@ import antlr.WaccParserBaseVisitor;
 import instructions.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.RuleNode;
-import util.Arm11Program;
-import util.Register;
-import util.Registers;
-import util.SymbolTable;
+import util.*;
 
 import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.PriorityQueue;
 
 import static antlr.WaccParser.*;
@@ -83,7 +78,8 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         if(!registers.isInUse("r0")) {
             state.add(new LoadInstruction(Registers.r0, 0));
         }
-        state.endFunction();
+        state.endMainFunction();
+
         state.add(new TextDirective());
         state.add(new GlobalDirective("main"));
         return null;
@@ -260,35 +256,55 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitPrintStat(PrintStatContext ctx) {
-
-        Register msgReg = visit(ctx.expr());
-        state.add(new MoveInstruction(Registers.r0, msgReg));
-        state.add(new BranchLinkInstruction(Arm11Program.PRINT_FUNC_NAME));
-
-        if(!state.functionDeclared(Arm11Program.PRINT_FUNC_NAME)) {
-            state.addPrintFunc();
-        }
-
+        visitPrint(ctx.expr(), false);
         return null;
     }
 
     @Override
     public Register visitPrintlnStat(PrintlnStatContext ctx) {
+        visitPrint(ctx.expr(), true);
+        return null;
+    }
 
-        Register msgReg = visit(ctx.expr());
-        state.add(new MoveInstruction(Registers.r0, msgReg));
-        state.add(new BranchLinkInstruction(Arm11Program.PRINT_FUNC_NAME));
-        state.add(new BranchLinkInstruction(Arm11Program.PRINTLN_FUNC_NAME));
+    private void visitPrint(ExprContext expr, boolean ln) {
+        Register msgReg = visit(expr);
 
-        if(!state.functionDeclared(Arm11Program.PRINT_FUNC_NAME)) {
-            state.addPrintFunc();
+        WaccType identType = null;
+        if(expr.ident() != null) identType = st.lookupType(expr.ident().getText());
+
+        // print string
+        if(expr.STRING_LIT() != null || new WaccType(STRING).equals(identType)) {
+            state.add(new MoveInstruction(Registers.r0, msgReg));
+            state.add(new BranchLinkInstruction(Arm11Program.PRINT_STRING_NAME));
+
+            if (!state.functionDeclared(Arm11Program.PRINT_STRING_NAME)) {
+                state.addPrintString();
+            }
+
         }
 
-        if(!state.functionDeclared(Arm11Program.PRINTLN_FUNC_NAME)) {
+        // print bool
+        if(expr.BOOL_LIT() != null || new WaccType(BOOL).equals(identType)) {
+            int val;
+            if(expr.BOOL_LIT() != null) val = expr.BOOL_LIT().getSymbol().getText().equals("true") ? 1 : 0;
+            if(identType != null) val = 1; //TODO: if the param is an expression?
+
+            state.add(new MoveInstruction(Registers.r0, msgReg));
+            state.add(new BranchLinkInstruction(Arm11Program.PRINT_BOOL_NAME));
+
+            if (!state.functionDeclared(Arm11Program.PRINT_BOOL_NAME)) {
+                state.addPrintBool();
+            }
+        }
+
+        // print ln
+        if(ln) state.add(new BranchLinkInstruction(Arm11Program.PRINTLN_NAME));
+
+        if(ln && !state.functionDeclared(Arm11Program.PRINTLN_NAME)) {
             state.addPrintlnFunc();
         }
 
-        return null;
+        registers.free(msgReg);
     }
 
     @Override
