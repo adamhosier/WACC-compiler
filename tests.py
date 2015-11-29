@@ -4,7 +4,7 @@ import os
 numtests = 0
 numpasses = 0
 
-def run_test(path, expectedOutput, expectedExit):
+def run_test(path, expectedExit):
     global numtests, numpasses 
 
     numtests += 1
@@ -17,7 +17,7 @@ def run_test(path, expectedOutput, expectedExit):
     p = Popen(["./compile", path], stdin=PIPE, stdout=PIPE, stderr=STDOUT);
     p.communicate()
     if(p.returncode != 0):
-        print("TEST {0} FAILED: COULD NOT COMPILE")
+        print("TEST {0} FAILED: COULD NOT COMPILE".format(numtests))
         return
 
     # assemble
@@ -36,25 +36,20 @@ def run_test(path, expectedOutput, expectedExit):
     output, err = p.communicate()
 
     # format output
-    output = output.decode("utf-8").strip()
+    output = output.decode("utf-8")
     output = "#empty#" if output == "" else output
 
     exit = p.returncode
 
-    if ((exit == expectedExit or expectedExit == "#n/a#") and
-            (output == expectedOutput or expectedOutput == "#n/a#")):
+    if exit == expectedExit or expectedExit == "#n/a#":
         numpasses += 1
     else:
         print("======== TEST {0} FAILED ========".format(numtests))
         print()
-        if(output != expectedOutput and expectedOutput != "#n/a#"):
-          print("Expected output: ")
-          print(expectedOutput)
-          print("But got: ")
-          print(output)
-        if(exit != expectedExit and expectedExit != "#n/a#"):
-          print("Expected exit:\t{0}".format(expectedExit))
-          print("But got:\t{0}".format(exit))
+        print("Output: ")
+        print(output)
+        print("Expected exit:\t{0}".format(expectedExit))
+        print("But got:\t{0}".format(exit))
         print()
 
     # clean up
@@ -79,23 +74,17 @@ for subdir, dirs, files in os.walk(testdir):
         path = os.path.join(subdir, f)
         _, extension = os.path.splitext(path)
         if(extension == ".wacc"):
-            expectedOutput = "#n/a#"
             expectedExit = "#n/a#"
             with open(path, "r") as fi:
-                readOutput = False
                 readExit = False
                 for i, line in enumerate(fi):
                     line = line.strip()
                     if line == "begin": break
-                    if readOutput: 
-                        expectedOutput = line[2:].strip()
-                        readOutput = False
                     if readExit:
                         expectedExit = int(line[2:])
                         readExit = False
-                    if line == "# Output:": readOutput = True
                     if line == "# Exit:": readExit = True
-            run_test(path, expectedOutput, expectedExit)
+            run_test(path, expectedExit)
 
 print()
 print("========== TEST RESULTS ==========")
