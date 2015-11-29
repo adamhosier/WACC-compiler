@@ -13,7 +13,9 @@ public class Arm11Program {
 
     public static final String PRINT_STRING_NAME = "p_print_string";
     public static final String PRINT_BOOL_NAME = "p_print_bool";
+    public static final String PRINT_INT_NAME = "p_print_int";
     public static final String PRINTLN_NAME = "p_print_ln";
+    public static final String PRINT_CHAR_NAME = "putchar";
 
     Map<String, List<Instruction>> functions = new LinkedHashMap<>();
     Stack<List<Instruction>> scope = new Stack<>();
@@ -24,6 +26,7 @@ public class Arm11Program {
     private String printlnFunc;
     private String printTrueFunc;
     private String printFalseFunc;
+    private String printIntFunc;
 
     public Arm11Program() {
         functions.put("global", globalCode);
@@ -73,6 +76,14 @@ public class Arm11Program {
         endPrintFunction("printf");
     }
 
+    public void addPrintInt() {
+        printIntFunc = getMsgLabel("%d\\0");
+        startFunction(PRINT_INT_NAME);
+        add(new MoveInstruction(Registers.r1, Registers.r0));
+        add(new LoadInstruction(Registers.r0, printIntFunc));
+        endPrintFunction("printf");
+    }
+
     public void addPrintlnFunc() {
         printlnFunc = addMsgLabel("\\0");
         startFunction(PRINTLN_NAME);
@@ -101,6 +112,7 @@ public class Arm11Program {
         currentFunction = scope.peek();
     }
 
+
     public void endPrintFunction(String branch) {
         add(new AddInstruction(Registers.r0, Registers.r0, 4));
         add(new BranchLinkInstruction(branch));
@@ -108,7 +120,6 @@ public class Arm11Program {
         add(new BranchLinkInstruction("fflush"));
         endFunction();
     }
-
 
     public boolean functionDeclared(String name) {
         return functions.containsKey(name);
@@ -128,4 +139,5 @@ public class Arm11Program {
 
         return program.toString();
     }
+
 }

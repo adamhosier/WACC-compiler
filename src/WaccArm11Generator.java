@@ -87,7 +87,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         StackSizeVisitor sizeVisitor = new StackSizeVisitor();
         stackOffset = sizeVisitor.getSize(ctx);
 
-        state.add(new SubInstruction(Registers.sp, Registers.sp, stackOffset));
+        if(stackOffset != 0) state.add(new SubInstruction(Registers.sp, Registers.sp, stackOffset));
 
         visitChildren(ctx);
 
@@ -96,7 +96,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new LoadInstruction(Registers.r0, 0));
         }
 
-        state.add(new AddInstruction(Registers.sp, Registers.sp, stackOffset));
+        if(stackOffset != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, stackOffset));
 
         state.endMainFunction();
         state.add(new TextDirective());
@@ -334,16 +334,28 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
         // print bool
         if(expr.BOOL_LIT() != null || new WaccType(BOOL).equals(identType)) {
-            int val;
-            if(expr.BOOL_LIT() != null) val = expr.BOOL_LIT().getSymbol().getText().equals("true") ? 1 : 0;
-            if(identType != null) val = 1; //TODO: if the param is an expression?
-
             state.add(new MoveInstruction(Registers.r0, msgReg));
             state.add(new BranchLinkInstruction(Arm11Program.PRINT_BOOL_NAME));
 
             if (!state.functionDeclared(Arm11Program.PRINT_BOOL_NAME)) {
                 state.addPrintBool();
             }
+        }
+
+        // print int
+        if(expr.INT_LIT() != null || new WaccType(INT).equals(identType)) {
+            state.add(new MoveInstruction(Registers.r0, msgReg));
+            state.add(new BranchLinkInstruction(Arm11Program.PRINT_INT_NAME));
+
+            if (!state.functionDeclared(Arm11Program.PRINT_INT_NAME)) {
+                state.addPrintInt();
+            }
+        }
+
+        // print char
+        if(expr.CHAR_LIT() != null || new WaccType(CHAR).equals(identType)) {
+            state.add(new MoveInstruction(Registers.r0, msgReg));
+            state.add(new BranchLinkInstruction(Arm11Program.PRINT_CHAR_NAME));
         }
 
         // print ln
