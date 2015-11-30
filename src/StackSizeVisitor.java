@@ -1,4 +1,3 @@
-import antlr.WaccParser.ArrayLiterContext;
 import antlr.WaccParser.StatContext;
 import antlr.WaccParser.TypeContext;
 import antlr.WaccParser.VarDeclarationContext;
@@ -16,6 +15,7 @@ public class StackSizeVisitor extends WaccParserBaseVisitor<Void> {
     private final int CHAR_SIZE = 1;
     private final int STRING_SIZE = 4;
     private final int PAIR_SIZE = 4;
+    private final int ARRAY_SIZE = 4;
 
     public int getSize(ParseTree tree) {
         visitChildren((RuleNode) tree);
@@ -36,32 +36,59 @@ public class StackSizeVisitor extends WaccParserBaseVisitor<Void> {
     }
 
     @Override
-    public Void visitType(TypeContext ctx) {
-        // varDeclaration
-        if (ctx.getParent() instanceof VarDeclarationContext) {
-            if (ctx.baseType().INT() != null) {
-                size += INT_SIZE;
-            }
-            if (ctx.baseType().BOOL() != null) {
-                size += BOOL_SIZE;
-            }
-            if (ctx.baseType().CHAR() != null) {
-                size += CHAR_SIZE;
-            }
-            if (ctx.baseType().STRING() != null) {
-                size += STRING_SIZE;
-            }
-            if (ctx.pairType() != null) {
-                size += PAIR_SIZE;
-            }
+    public Void visitVarDeclaration(VarDeclarationContext ctx) {
+        TypeContext type = ctx.type();
+        if (type.baseType().INT() != null) {
+            size += INT_SIZE;
+        }
+        if (type.baseType().BOOL() != null) {
+            size += BOOL_SIZE;
+        }
+        if (type.baseType().CHAR() != null) {
+            size += CHAR_SIZE;
+        }
+        if (type.baseType().STRING() != null) {
+            size += STRING_SIZE;
+        }
+        if (type.pairType() != null) {
+            size += PAIR_SIZE;
+        }
+        if (ctx.assignRhs().arrayLiter() != null) {
+            size += ARRAY_SIZE;
         }
         return null;
     }
 
-    @Override
-    public Void visitArrayLiter(ArrayLiterContext ctx) {
-        // do declaration
-        // do assignment
-        return null;
-    }
+//    @Override
+//    public Void visitType(TypeContext ctx) {
+//        // varDeclaration
+//        if (ctx.getParent() instanceof VarDeclarationContext) {
+//            if (ctx.baseType().INT() != null) {
+//                size += INT_SIZE;
+//            }
+//            if (ctx.baseType().BOOL() != null) {
+//                size += BOOL_SIZE;
+//            }
+//            if (ctx.baseType().CHAR() != null) {
+//                size += CHAR_SIZE;
+//            }
+//            if (ctx.baseType().STRING() != null) {
+//                size += STRING_SIZE;
+//            }
+//            if (ctx.pairType() != null) {
+//                size += PAIR_SIZE;
+//            }
+//        }
+//        return null;
+//    }
+//
+//    @Override
+//    public Void visitArrayLiter(ArrayLiterContext ctx) {
+//        // do declaration
+//        if (ctx.getParent().getParent().getChildCount() == 4) {
+//
+//        }
+//        // do assignment
+//        return null;
+//    }
 }
