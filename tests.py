@@ -66,7 +66,7 @@ if r != 0:
     print("Make failed")
     sys.exit(-1)
 
-testdir = "examples/valid"
+testdir = "examples/valid/IO"
 
 print("========== RUNNING TESTS ==========")
 for subdir, dirs, files in os.walk(testdir):
