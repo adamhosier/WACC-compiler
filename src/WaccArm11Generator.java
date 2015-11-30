@@ -23,6 +23,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     private static final int CHAR_SIZE = 1;
     private static final int STRING_SIZE = 4;
     private static final int PAIR_SIZE = 4;
+    private static final int REG_SIZE = 4;
 
     private static final boolean IS_BYTE = true;
 
@@ -161,7 +162,16 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new LoadInstruction(nextRegister, label));
             return nextRegister;
         }
-
+        if(ctx.unaryOper().LEN() != null) {
+            String ident = ctx.expr(0).ident().getText();
+            int offset = st.getAddress(ident);
+            Register nextRegister = registers.getRegister();
+            // array info stored on stack
+            state.add(new LoadInstruction(nextRegister, Registers.sp, offset));
+            // array length is in first address
+            state.add(new LoadInstruction(nextRegister, nextRegister, 0));
+            return nextRegister;
+        }
         return null;
     }
 
@@ -264,7 +274,8 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     public Register visitVarDeclaration(VarDeclarationContext ctx) {
         TypeContext type = ctx.type();
         ExprContext expr = ctx.assignRhs().expr();
-        int offset;
+        ArrayLiterContext arrayLiter = ctx.assignRhs().arrayLiter();
+        int offset = 0;
         if (expr != null) {
             Register src = visit(expr);
             currOffset += getSize(type);
@@ -279,34 +290,55 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             // src register does not need to hold expr value anymore
             registers.free(src);
 
-            st.setAddress(ctx.ident().getText(), offset);
+            // st.setAddress(ctx.ident().getText(), offset);
         }
         // array declaration
-        if (ctx.assignRhs().arrayLiter() != null) {
-            int arrLength = ctx.assignRhs().arrayLiter().expr().size();
-            int heapSize = arrLength * getSize(type) + INT_SIZE; // INT_SIZE IS TO STORE LENGTH OF ARRAY
+        if (arrayLiter != null) {
+            int arrLength = arrayLiter.expr().size();
+            int typeSize = getSize(type);
+            int heapSize = arrLength * typeSize + INT_SIZE; // INT_SIZE IS TO STORE LENGTH OF ARRAY
+
+            // set up heap memory allocation
             state.add(new LoadInstruction(Registers.r0, heapSize));
             state.add(new BranchLinkInstruction(MALLOC));
-            state.add(new MoveInstruction(registers.getRegister(), Registers.r0));
+            Register heapPtr = registers.getRegister();
+            state.add(new MoveInstruction(heapPtr, Registers.r0));
+
+            // process each array elem
             for (int i = 0; i < arrLength; i++) {
-                Register src = visit(ctx.assignRhs().arrayLiter().expr(i));
+                Register src = visit(arrayLiter.expr(i));
+                state.add(new StoreInstruction(src, heapPtr, INT_SIZE + i * typeSize));
+                registers.free(src);
             }
+            // process length
+            Register lengthReg = registers.getRegister();
+            state.add(new LoadInstruction(lengthReg, arrLength));
+            state.add(new StoreInstruction(lengthReg, heapPtr, 0));
+            registers.free(lengthReg);
+
+            currOffset += REG_SIZE;
+            offset = stackOffset - currOffset;
+            state.add(new StoreInstruction(heapPtr, Registers.sp, offset));
+            registers.free(heapPtr);
         }
+        st.setAddress(ctx.ident().getText(), offset);
         return null;
     }
 
     private int getSize(TypeContext ctx) {
-        if (ctx.baseType().INT() != null) {
-            return INT_SIZE;
-        }
-        if (ctx.baseType().BOOL() != null) {
-            return BOOL_SIZE;
-        }
-        if (ctx.baseType().CHAR() != null) {
-            return CHAR_SIZE;
-        }
-        if (ctx.baseType().STRING() != null) {
-            return STRING_SIZE;
+        if (ctx.baseType() != null) {
+            if (ctx.baseType().INT() != null) {
+                return INT_SIZE;
+            }
+            if (ctx.baseType().BOOL() != null) {
+                return BOOL_SIZE;
+            }
+            if (ctx.baseType().CHAR() != null) {
+                return CHAR_SIZE;
+            }
+            if (ctx.baseType().STRING() != null) {
+                return STRING_SIZE;
+            }
         }
         if (ctx.pairType() != null) {
             return PAIR_SIZE;

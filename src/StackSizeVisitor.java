@@ -38,17 +38,19 @@ public class StackSizeVisitor extends WaccParserBaseVisitor<Void> {
     @Override
     public Void visitVarDeclaration(VarDeclarationContext ctx) {
         TypeContext type = ctx.type();
-        if (type.baseType().INT() != null) {
-            size += INT_SIZE;
-        }
-        if (type.baseType().BOOL() != null) {
-            size += BOOL_SIZE;
-        }
-        if (type.baseType().CHAR() != null) {
-            size += CHAR_SIZE;
-        }
-        if (type.baseType().STRING() != null) {
-            size += STRING_SIZE;
+        if (type.baseType() != null) {
+            if (type.baseType().INT() != null) {
+                size += INT_SIZE;
+            }
+            if (type.baseType().BOOL() != null) {
+                size += BOOL_SIZE;
+            }
+            if (type.baseType().CHAR() != null) {
+                size += CHAR_SIZE;
+            }
+            if (type.baseType().STRING() != null) {
+                size += STRING_SIZE;
+            }
         }
         if (type.pairType() != null) {
             size += PAIR_SIZE;

@@ -8,6 +8,7 @@ public class LoadInstruction extends Instruction {
 
     private boolean isImmediate = false;
     private Register rDest;
+    private int offset;
 
     public LoadInstruction(Register rDest, int iSrc) {
         this.rDest = rDest;
@@ -26,8 +27,14 @@ public class LoadInstruction extends Instruction {
         this.rSrc = rSrc;
     }
 
+    public LoadInstruction(Register rDest, Register rSrc, int offset) {
+        this(rDest, rSrc);
+        this.offset = offset;
+    }
+
     @Override
     public String toCode() {
-        return "LDR " + rDest + ", " + (isImmediate ? "=" + iSrc : "[" + rSrc + "]");
+        return "LDR " + rDest + ", " + (isImmediate ? "=" + iSrc
+                : "[" + rSrc + (offset != 0 ? ", " + "#" + offset + "]" : "]"));
     }
 }
