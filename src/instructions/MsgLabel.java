@@ -20,6 +20,10 @@ public class MsgLabel extends LabelInstruction {
         return ident;
     }
 
+    public String getMsg() {
+        return msg;
+    }
+
     @Override
     public String toCode() {
         return ident + ":\n"

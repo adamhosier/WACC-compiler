@@ -2,10 +2,7 @@ import antlr.WaccParserBaseVisitor;
 import instructions.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.RuleNode;
-import util.Arm11Program;
-import util.Register;
-import util.Registers;
-import util.SymbolTable;
+import util.*;
 
 import java.util.Comparator;
 import java.util.PriorityQueue;
@@ -90,7 +87,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         StackSizeVisitor sizeVisitor = new StackSizeVisitor();
         stackOffset = sizeVisitor.getSize(ctx);
 
-        state.add(new SubInstruction(Registers.sp, Registers.sp, stackOffset));
+        if(stackOffset != 0) state.add(new SubInstruction(Registers.sp, Registers.sp, stackOffset));
 
         visitChildren(ctx);
 
@@ -99,9 +96,9 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new LoadInstruction(Registers.r0, 0));
         }
 
-        state.add(new AddInstruction(Registers.sp, Registers.sp, stackOffset));
+        if(stackOffset != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, stackOffset));
 
-        state.endFunction();
+        state.endMainFunction();
         state.add(new TextDirective());
         state.add(new GlobalDirective("main"));
         return null;
@@ -309,35 +306,67 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitPrintStat(PrintStatContext ctx) {
-
-        Register msgReg = visit(ctx.expr());
-        state.add(new MoveInstruction(Registers.r0, msgReg));
-        state.add(new BranchLinkInstruction(Arm11Program.PRINT_FUNC_NAME));
-
-        if(!state.functionDeclared(Arm11Program.PRINT_FUNC_NAME)) {
-            state.addPrintFunc();
-        }
-
+        visitPrint(ctx.expr(), false);
         return null;
     }
 
     @Override
     public Register visitPrintlnStat(PrintlnStatContext ctx) {
+        visitPrint(ctx.expr(), true);
+        return null;
+    }
 
-        Register msgReg = visit(ctx.expr());
-        state.add(new MoveInstruction(Registers.r0, msgReg));
-        state.add(new BranchLinkInstruction(Arm11Program.PRINT_FUNC_NAME));
-        state.add(new BranchLinkInstruction(Arm11Program.PRINTLN_FUNC_NAME));
+    private void visitPrint(ExprContext expr, boolean ln) {
+        Register msgReg = visit(expr);
 
-        if(!state.functionDeclared(Arm11Program.PRINT_FUNC_NAME)) {
-            state.addPrintFunc();
+        WaccType identType = null;
+        if(expr.ident() != null) identType = st.lookupType(expr.ident().getText());
+
+        // print string
+        if(expr.STRING_LIT() != null || new WaccType(STRING).equals(identType)) {
+            state.add(new MoveInstruction(Registers.r0, msgReg));
+            state.add(new BranchLinkInstruction(Arm11Program.PRINT_STRING_NAME));
+
+            if (!state.functionDeclared(Arm11Program.PRINT_STRING_NAME)) {
+                state.addPrintString();
+            }
+
         }
 
-        if(!state.functionDeclared(Arm11Program.PRINTLN_FUNC_NAME)) {
+        // print bool
+        if(expr.BOOL_LIT() != null || new WaccType(BOOL).equals(identType)) {
+            state.add(new MoveInstruction(Registers.r0, msgReg));
+            state.add(new BranchLinkInstruction(Arm11Program.PRINT_BOOL_NAME));
+
+            if (!state.functionDeclared(Arm11Program.PRINT_BOOL_NAME)) {
+                state.addPrintBool();
+            }
+        }
+
+        // print int
+        if(expr.INT_LIT() != null || new WaccType(INT).equals(identType)) {
+            state.add(new MoveInstruction(Registers.r0, msgReg));
+            state.add(new BranchLinkInstruction(Arm11Program.PRINT_INT_NAME));
+
+            if (!state.functionDeclared(Arm11Program.PRINT_INT_NAME)) {
+                state.addPrintInt();
+            }
+        }
+
+        // print char
+        if(expr.CHAR_LIT() != null || new WaccType(CHAR).equals(identType)) {
+            state.add(new MoveInstruction(Registers.r0, msgReg));
+            state.add(new BranchLinkInstruction(Arm11Program.PRINT_CHAR_NAME));
+        }
+
+        // print ln
+        if(ln) state.add(new BranchLinkInstruction(Arm11Program.PRINTLN_NAME));
+
+        if(ln && !state.functionDeclared(Arm11Program.PRINTLN_NAME)) {
             state.addPrintlnFunc();
         }
 
-        return null;
+        registers.free(msgReg);
     }
 
     @Override
