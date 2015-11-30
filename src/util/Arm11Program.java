@@ -16,6 +16,8 @@ public class Arm11Program {
     public static final String PRINT_INT_NAME = "p_print_int";
     public static final String PRINTLN_NAME = "p_print_ln";
     public static final String PRINT_CHAR_NAME = "putchar";
+    public static final String READ_INT_NAME = "p_read_int";
+    public static final String READ_CHAR_NAME = "p_read_char";
 
     Map<String, List<Instruction>> functions = new LinkedHashMap<>();
     Stack<List<Instruction>> scope = new Stack<>();
@@ -27,6 +29,8 @@ public class Arm11Program {
     private String printTrueFunc;
     private String printFalseFunc;
     private String printIntFunc;
+    private String readIntFunc;
+    private String readCharFunc;
 
     public Arm11Program() {
         functions.put("global", globalCode);
@@ -91,6 +95,22 @@ public class Arm11Program {
         endPrintFunction("puts");
     }
 
+    public void addReadInt() {
+        readIntFunc = getMsgLabel("%d\\0");
+        startFunction(READ_INT_NAME);
+        add(new MoveInstruction(Registers.r1, Registers.r0));
+        add(new LoadInstruction(Registers.r0, readIntFunc));
+        endReadFunction();
+    }
+
+    public void addReadChar() {
+        readCharFunc = getMsgLabel(" %c\\0");
+        startFunction(READ_CHAR_NAME);
+        add(new MoveInstruction(Registers.r1, Registers.r0));
+        add(new LoadInstruction(Registers.r0, readCharFunc));
+        endReadFunction();
+    }
+
     public void startFunction(String name) {
         currentFunction = new LinkedList<>();
         functions.put(name, currentFunction);
@@ -121,6 +141,12 @@ public class Arm11Program {
         endFunction();
     }
 
+    private void endReadFunction() {
+        add(new AddInstruction(Registers.r0, Registers.r0, 4));
+        add(new BranchLinkInstruction("scanf"));
+        endFunction();
+    }
+
     public boolean functionDeclared(String name) {
         return functions.containsKey(name);
     }
@@ -139,5 +165,4 @@ public class Arm11Program {
 
         return program.toString();
     }
-
 }
