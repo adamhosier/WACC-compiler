@@ -144,11 +144,14 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             return nextRegister;
         }
         if(ctx.CHAR_LIT() != null) {
+            Register nextRegister = registers.getRegister();
             String text = ctx.CHAR_LIT().getSymbol().getText();
             char c = text.charAt(1);
-            if (c == '\\') c += text.charAt(2); // handles escaped chars
-            Register nextRegister = registers.getRegister();
-            state.add(new MoveInstruction(nextRegister, c));
+            if (text.equals("'\\0'")) {
+                state.add(new MoveInstruction(nextRegister, 0));
+            } else {
+                state.add(new MoveInstruction(nextRegister, c));
+            }
             return nextRegister;
         }
         if(ctx.STRING_LIT() != null) {
