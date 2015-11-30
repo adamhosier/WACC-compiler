@@ -145,7 +145,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             return nextRegister;
         }
         if(ctx.CHAR_LIT() != null) {
-            char c = ctx.CHAR_LIT().getSymbol().getText().charAt(0);
+            char c = ctx.CHAR_LIT().getSymbol().getText().charAt(1);
             Register nextRegister = registers.getRegister();
             state.add(new MoveInstruction(nextRegister, c));
             return nextRegister;
