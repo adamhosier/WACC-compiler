@@ -26,6 +26,8 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     private static final boolean IS_BYTE = true;
 
+    private static final String MALLOC = "malloc";
+
     public String generate() {
         return state.toCode();
     }
@@ -142,7 +144,9 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             return nextRegister;
         }
         if(ctx.CHAR_LIT() != null) {
-            char c = ctx.CHAR_LIT().getSymbol().getText().charAt(1);
+            String text = ctx.CHAR_LIT().getSymbol().getText();
+            char c = text.charAt(1);
+            if (c == '\\') c += text.charAt(2); // handles escaped chars
             Register nextRegister = registers.getRegister();
             state.add(new MoveInstruction(nextRegister, c));
             return nextRegister;
@@ -274,6 +278,17 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
             st.setAddress(ctx.ident().getText(), offset);
         }
+        // array declaration
+        if (ctx.assignRhs().arrayLiter() != null) {
+            int arrLength = ctx.assignRhs().arrayLiter().expr().size();
+            int heapSize = arrLength * getSize(type) + INT_SIZE; // INT_SIZE IS TO STORE LENGTH OF ARRAY
+            state.add(new LoadInstruction(Registers.r0, heapSize));
+            state.add(new BranchLinkInstruction(MALLOC));
+            state.add(new MoveInstruction(registers.getRegister(), Registers.r0));
+            for (int i = 0; i < arrLength; i++) {
+                Register src = visit(ctx.assignRhs().arrayLiter().expr(i));
+            }
+        }
         return null;
     }
 
@@ -292,6 +307,9 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         }
         if (ctx.pairType() != null) {
             return PAIR_SIZE;
+        }
+        if (ctx.type() != null) {
+            return getSize(ctx.type());
         }
         return 0;
     }
