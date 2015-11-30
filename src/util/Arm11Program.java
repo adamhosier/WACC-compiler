@@ -19,6 +19,10 @@ public class Arm11Program {
     public static final String READ_INT_NAME = "p_read_int";
     public static final String READ_CHAR_NAME = "p_read_char";
 
+    public static String decode(String input) {
+        return input.replace("\\0", "\0").replace("\\b", "\b").replace("\\n", "\n").replace("\\f", "\f").replace("\\r", "\r").replace("\\\"", "\"").replace("\\'", "'").replace("\\\\", "\\");
+    }
+
     Map<String, List<Instruction>> functions = new LinkedHashMap<>();
     Stack<List<Instruction>> scope = new Stack<>();
     List<Instruction> currentFunction;

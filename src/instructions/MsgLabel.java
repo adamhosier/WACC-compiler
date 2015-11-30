@@ -1,19 +1,20 @@
 package instructions;
 
+import util.Arm11Program;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 
-public class MsgLabel extends LabelInstruction {
+public class
+MsgLabel extends LabelInstruction {
 
     private String msg;
-    private String decodedMsg;
     private int length;
 
     public MsgLabel(String msg, int index) {
         super("msg_" + index);
         this.msg = msg;
-        decodedMsg = msg.replace("\\0", "\0").replace("\\b", "\b").replace("\\n", "\n").replace("\\f", "\f").replace("\\r", "\r").replace("\\\"", "\"").replace("\\'", "'").replace("\\\\", "\\");
-        length = decodedMsg.length();
+        length = Arm11Program.decode(msg).length();
     }
 
     public String getIdent() {

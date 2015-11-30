@@ -16,7 +16,6 @@ public class MoveInstruction extends Instruction {
     }
 
     public MoveInstruction(Register rDest, char cSrc) {
-        System.out.println(cSrc);
         this.rDest = rDest;
         this.cSrc = cSrc;
         isImmediate = true;

@@ -146,7 +146,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         if(ctx.CHAR_LIT() != null) {
             Register nextRegister = registers.getRegister();
             String text = ctx.CHAR_LIT().getSymbol().getText();
-            char c = text.charAt(1);
+            char c = Arm11Program.decode(text).charAt(1);
             if (text.equals("'\\0'")) {
                 state.add(new MoveInstruction(nextRegister, 0));
             } else {
