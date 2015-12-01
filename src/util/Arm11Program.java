@@ -75,8 +75,8 @@ public class Arm11Program {
 
 
     public void addPrintBool() {
-        printTrueFunc = getMsgLabel("true");
-        printFalseFunc = getMsgLabel("false");
+        printTrueFunc = getMsgLabel("true\\0");
+        printFalseFunc = getMsgLabel("false\\0");
         startFunction(PRINT_BOOL_NAME);
         add(new CompareInstruction(Registers.r0, 0));
         add(new LoadNotEqualInstruction(Registers.r0, printTrueFunc));
