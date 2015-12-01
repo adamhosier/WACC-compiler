@@ -73,7 +73,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     }
 
     /*
-     * TODO
+     * TODO for optimisation
      * Calculates how many registers [tree] will use in code generation
      */
     public int weight(ParseTree tree) {
@@ -101,7 +101,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
         if(stackOffset != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, stackOffset));
 
-        state.endMainFunction();
+        state.endUserFunction();
         state.add(new TextDirective());
         state.add(new GlobalDirective("main"));
         return null;
@@ -109,11 +109,56 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitFunc(FuncContext ctx) {
+        // save stack size for this scope
+        StackSizeVisitor sizeVisitor = new StackSizeVisitor();
+        int size = sizeVisitor.getSize(ctx);
+        st.setStackSize(ctx.ident().getText(), size);
+
         String ident = ctx.ident().getText();
-        state.startFunction(ident);
-        //TODO: param list
+        state.startFunction("f_" + ident);
+        visit(ctx.paramList());
         visit(ctx.stat());
-        state.endFunction();
+        state.endUserFunction();
+        return null;
+    }
+
+    @Override
+    public Register visitParamList(ParamListContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    @Override
+    public Register visitParam(ParamContext ctx) {
+        // only do this when the param is needed
+        //Register next = registers.getRegister();
+        //state.add(new LoadInstruction(next, Registers.sp, 4));
+        //st.setRegister(ctx.ident().getText(), next);
+        //return next;
+        return null;
+    }
+
+    @Override
+    public Register visitFuncCall(FuncCallContext ctx) {
+        visit(ctx.argList());
+
+        state.add(new BranchLinkInstruction("f_" + ctx.ident().getText()));
+
+        state.add(new AddInstruction(Registers.sp, Registers.sp, st.getStackSize(ctx.ident().getText())));
+
+        return null;
+    }
+
+    @Override
+    public Register visitArgList(ArgListContext ctx) {
+        for(ExprContext expr : ctx.expr()) {
+            Register exprReg = visit(expr);
+
+            StoreInstruction ins = new StoreInstruction(exprReg, Registers.sp, -4);
+            ins.preIndex = true;
+            state.add(ins);
+
+            registers.free(exprReg);
+        }
         return null;
     }
 
@@ -185,27 +230,12 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitAssignRhs(AssignRhsContext ctx) {
-        return super.visitAssignRhs(ctx);
-    }
-
-    @Override
-    public Register visitArgList(ArgListContext ctx) {
-        return super.visitArgList(ctx);
-    }
-
-    @Override
-    public Register visitParam(ParamContext ctx) {
-        return super.visitParam(ctx);
+        return visitChildren(ctx);
     }
 
     @Override
     public Register visitVarAssignment(VarAssignmentContext ctx) {
         return super.visitVarAssignment(ctx);
-    }
-
-    @Override
-    public Register visitParamList(ParamListContext ctx) {
-        return super.visitParamList(ctx);
     }
 
     @Override
@@ -321,6 +351,11 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new StoreInstruction(heapPtr, Registers.sp, offset));
             registers.free(heapPtr);
         }
+        if(ctx.assignRhs().funcCall() != null) {
+            visit(ctx.assignRhs().funcCall());
+        }
+
+
         st.setAddress(ctx.ident().getText(), offset);
         return null;
     }
@@ -351,7 +386,11 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitReturnStat(ReturnStatContext ctx) {
-        return super.visitReturnStat(ctx);
+        Register returnReg = visit(ctx.expr());
+        state.add(new MoveInstruction(Registers.r0, returnReg));
+        state.add(new PopInstruction(Registers.pc));
+        registers.free(returnReg);
+        return null;
     }
 
     @Override
@@ -527,10 +566,5 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     @Override
     public Register visitComment(CommentContext ctx) {
         return super.visitComment(ctx);
-    }
-
-    @Override
-    public Register visitFuncCall(FuncCallContext ctx) {
-        return super.visitFuncCall(ctx);
     }
 }

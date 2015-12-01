@@ -1,5 +1,6 @@
 package util;
 
+import antlr.WaccParser;
 import org.antlr.v4.runtime.misc.Pair;
 
 import java.util.*;
@@ -190,27 +191,46 @@ public class SymbolTable {
      * For locating where variable are stored in code generation
      */
     public void setRegister(String ident, Register register) {
-        if (getSymbol(ident) != null) {
-            getSymbol(ident).setRegister(register);
+        Symbol symbol = getSymbol(ident);
+        if (symbol != null) {
+            symbol.setRegister(register);
         }
     }
 
     public Register getRegister(String ident) {
-        if (getSymbol(ident) != null) {
-            return getSymbol(ident).getRegister();
+        Symbol symbol = getSymbol(ident);
+        if (symbol != null) {
+            return symbol.getRegister();
         }
         return null;
     }
 
     public void setAddress(String ident, int address) {
-        if (getSymbol(ident) != null) {
-            getSymbol(ident).setAddress(address);
+        Symbol symbol = getSymbol(ident);
+        if (symbol != null) {
+            symbol.setAddress(address);
         }
     }
 
     public int getAddress(String ident) {
-        if (getSymbol(ident) != null) {
-            return getSymbol(ident).getAddress();
+        Symbol symbol = getSymbol(ident);
+        if (symbol != null) {
+            return symbol.getAddress();
+        }
+        return -1;
+    }
+
+    public void setStackSize(String ident, int size) {
+        Symbol symbol = getSymbol(ident);
+        if(symbol != null) {
+            symbol.setSize(size);
+        }
+    }
+
+    public int getStackSize(String ident) {
+        Symbol symbol = getSymbol(ident);
+        if(symbol != null) {
+            return symbol.getSize();
         }
         return -1;
     }
@@ -224,6 +244,8 @@ public class SymbolTable {
         private Register register;
         private int address; //
         private boolean isStoredInReg;
+
+        private int size;
 
         public WaccType getType() {
             return type;
@@ -253,6 +275,13 @@ public class SymbolTable {
             this.type = type;
         }
 
+        public void setSize(int size) {
+            this.size = size;
+        }
+
+        public int getSize() {
+            return size;
+        }
     }
 
     private class FunctionSymbol extends Symbol {

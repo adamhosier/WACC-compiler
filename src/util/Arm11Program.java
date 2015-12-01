@@ -129,7 +129,7 @@ public class Arm11Program {
         currentFunction = scope.peek();
     }
 
-    public void endMainFunction() {
+    public void endUserFunction() {
         currentFunction.add(new PopInstruction(Registers.pc));
         currentFunction.add(new LtorgDirective());
         scope.pop();

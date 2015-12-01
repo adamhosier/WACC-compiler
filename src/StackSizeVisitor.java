@@ -1,6 +1,5 @@
-import antlr.WaccParser.StatContext;
-import antlr.WaccParser.TypeContext;
-import antlr.WaccParser.VarDeclarationContext;
+import antlr.WaccParser;
+import antlr.WaccParser.*;
 import antlr.WaccParserBaseVisitor;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.RuleNode;
@@ -61,7 +60,13 @@ public class StackSizeVisitor extends WaccParserBaseVisitor<Void> {
         return null;
     }
 
-//    @Override
+    @Override
+    public Void visitParam(ParamContext ctx) {
+        //TODO
+        return null;
+    }
+
+    //    @Override
 //    public Void visitType(TypeContext ctx) {
 //        // varDeclaration
 //        if (ctx.getParent() instanceof VarDeclarationContext) {
