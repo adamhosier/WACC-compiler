@@ -165,7 +165,14 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new LoadInstruction(nextRegister, label));
             return nextRegister;
         }
-        if(ctx.unaryOper().LEN() != null) {
+        if (ctx.ident() != null) {
+            String ident = ctx.ident().getText();
+            int offset = st.getAddress(ident);
+            Register nextRegister = registers.getRegister();
+            state.add(new LoadInstruction(nextRegister, Registers.sp, offset));
+            return nextRegister;
+        }
+        if(ctx.unaryOper() != null && ctx.unaryOper().LEN() != null) {
             String ident = ctx.expr(0).ident().getText();
             int offset = st.getAddress(ident);
             Register nextRegister = registers.getRegister();
@@ -175,6 +182,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new LoadInstruction(nextRegister, nextRegister, 0));
             return nextRegister;
         }
+
         return null;
     }
 
@@ -200,7 +208,18 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitVarAssignment(VarAssignmentContext ctx) {
-        return super.visitVarAssignment(ctx);
+        IdentContext ctxi = ctx.assignLhs().ident();
+        if (ctxi != null) {
+            String ident = ctxi.getText();
+            int offset = st.getAddress(ident);
+            ExprContext ctxe = ctx.assignRhs().expr();
+            if (ctxe !=  null) {
+                Register src = visit(ctxe);
+                state.add(new StoreInstruction(src, Registers.sp, offset));
+                registers.free(src);
+            }
+        }
+        return null;
     }
 
     @Override
@@ -290,7 +309,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             // src register does not need to hold expr value anymore
             registers.free(src);
 
-            // st.setAddress(ctx.ident().getText(), offset);
         }
         // array declaration
         if (arrayLiter != null) {
