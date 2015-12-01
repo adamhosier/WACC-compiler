@@ -142,8 +142,11 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         visit(ctx.argList());
 
         state.add(new BranchLinkInstruction("f_" + ctx.ident().getText()));
-
         state.add(new AddInstruction(Registers.sp, Registers.sp, st.getStackSize(ctx.ident().getText())));
+        Register next = registers.getRegister();
+        state.add(new MoveInstruction(next, Registers.r0));
+        state.add(new StoreInstruction(next, Registers.sp, 0));
+        registers.free(next);
 
         return null;
     }
@@ -166,12 +169,12 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     public Register visitExitStat(ExitStatContext ctx) {
         Register result = visit(ctx.expr());
 
-        state.add(new MoveInstruction(registers.getReturnRegister(), result));
+        state.add(new MoveInstruction(Registers.r0, result));
         state.add(new BranchLinkInstruction("exit"));
 
         registers.freeReturnRegisters();
 
-        state.add(new LoadInstruction(registers.getReturnRegister(), 0));
+        state.add(new LoadInstruction(Registers.r0, 0));
         return null;
     }
 
@@ -460,7 +463,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     }
 
     private void visitPrint(ExprContext expr, boolean ln) {
-        Register msgReg = visit(expr);
+        Register msgReg;
 
         WaccType identType = null;
         Instruction loadIns = null;
@@ -469,6 +472,8 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             int offset = st.getAddress(expr.ident().getText());
             msgReg = registers.getRegister();
             loadIns = new LoadInstruction(msgReg, Registers.sp, offset);
+        } else {
+            msgReg = visitExpr(expr);
         }
 
         // print string

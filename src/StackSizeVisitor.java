@@ -1,6 +1,7 @@
 import antlr.WaccParser;
 import antlr.WaccParser.*;
 import antlr.WaccParserBaseVisitor;
+import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.RuleNode;
 
@@ -21,22 +22,7 @@ public class StackSizeVisitor extends WaccParserBaseVisitor<Void> {
         return size;
     }
 
-    @Override
-    public Void visitStat(StatContext ctx) {
-        // ignore inner scopes for now
-        if (ctx.whileStat() != null || ctx.ifStat() != null
-                || ctx.scopeStat() != null) {
-            return null;
-        }
-
-        // proceed to calculate size if stat is not new scope
-        visitChildren(ctx);
-        return null;
-    }
-
-    @Override
-    public Void visitVarDeclaration(VarDeclarationContext ctx) {
-        TypeContext type = ctx.type();
+    private void getSizeOfType(TypeContext type) {
         if (type.baseType() != null) {
             if (type.baseType().INT() != null) {
                 size += INT_SIZE;
@@ -54,15 +40,41 @@ public class StackSizeVisitor extends WaccParserBaseVisitor<Void> {
         if (type.pairType() != null) {
             size += PAIR_SIZE;
         }
+    }
+
+    @Override
+    public Void visitStat(StatContext ctx) {
+        // ignore inner scopes for now
+        if (ctx.whileStat() != null || ctx.ifStat() != null
+                || ctx.scopeStat() != null) {
+            return null;
+        }
+
+        // proceed to calculate size if stat is not new scope
+        visitChildren(ctx);
+        return null;
+    }
+
+    @Override
+    public Void visitVarDeclaration(VarDeclarationContext ctx) {
+        getSizeOfType(ctx.type());
+
         if (ctx.assignRhs().arrayLiter() != null) {
             size += ARRAY_SIZE;
         }
+
+        return null;
+    }
+
+    @Override
+    public Void visitFunc(@NotNull FuncContext ctx) {
+        // skip functions when visiting global scope
         return null;
     }
 
     @Override
     public Void visitParam(ParamContext ctx) {
-        //TODO
+        getSizeOfType(ctx.type());
         return null;
     }
 
