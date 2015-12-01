@@ -165,7 +165,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new LoadInstruction(nextRegister, label));
             return nextRegister;
         }
-        if (ctx.ident() != null) {
+        if(ctx.ident() != null) {
             String ident = ctx.ident().getText();
             int offset = st.getAddress(ident);
             Register nextRegister = registers.getRegister();
@@ -182,7 +182,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new LoadInstruction(nextRegister, nextRegister, 0));
             return nextRegister;
         }
-
         return null;
     }
 
@@ -309,6 +308,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             // src register does not need to hold expr value anymore
             registers.free(src);
 
+            // st.setAddress(ctx.ident().getText(), offset);
         }
         // array declaration
         if (arrayLiter != null) {
@@ -424,14 +424,18 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         Register msgReg = visit(expr);
 
         WaccType identType = null;
-        if(expr.ident() != null) identType = st.lookupType(expr.ident().getText());
+        Instruction loadIns = null;
+        if(expr.ident() != null) {
+            identType = st.lookupType(expr.ident().getText());
+            int offset = st.getAddress(expr.ident().getText());
+            msgReg = registers.getRegister();
+            loadIns = new LoadInstruction(msgReg, Registers.sp, offset);
+        }
 
         // print string
         if(expr.STRING_LIT() != null || new WaccType(STRING).equals(identType)) {
             if(new WaccType(STRING).equals(identType)) {
-                Register next = registers.getRegister();
-                msgReg = next;
-                state.add(new LoadInstruction(next, Registers.sp));
+                state.add(loadIns);
             }
             state.add(new MoveInstruction(Registers.r0, msgReg));
 
@@ -446,9 +450,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         // print bool
         if(expr.BOOL_LIT() != null || new WaccType(BOOL).equals(identType)) {
             if(new WaccType(BOOL).equals(identType)) {
-                Register next = registers.getRegister();
-                msgReg = next;
-                state.add(new LoadInstruction(next, Registers.sp));
+                state.add(loadIns);
             }
             state.add(new MoveInstruction(Registers.r0, msgReg));
             state.add(new BranchLinkInstruction(Arm11Program.PRINT_BOOL_NAME));
@@ -461,9 +463,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         // print int
         if(expr.INT_LIT() != null || new WaccType(INT).equals(identType)) {
             if(new WaccType(INT).equals(identType)) {
-                Register next = registers.getRegister();
-                msgReg = next;
-                state.add(new LoadInstruction(next, Registers.sp));
+                state.add(loadIns);
             }
             state.add(new MoveInstruction(Registers.r0, msgReg));
             state.add(new BranchLinkInstruction(Arm11Program.PRINT_INT_NAME));
@@ -476,9 +476,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         // print char
         if(expr.CHAR_LIT() != null || new WaccType(CHAR).equals(identType)) {
             if(new WaccType(CHAR).equals(identType)) {
-                Register next = registers.getRegister();
-                msgReg = next;
-                state.add(new LoadSignedByteInstruction(next, Registers.sp));
+                state.add(loadIns);
             }
             state.add(new MoveInstruction(Registers.r0, msgReg));
             state.add(new BranchLinkInstruction(Arm11Program.PRINT_CHAR_NAME));
