@@ -237,6 +237,32 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new LoadInstruction(nextRegister, new Operand2(Registers.sp, offset)));
             return nextRegister;
         }
+        if(ctx.arrayElem() != null) {
+            int offset = st.getAddress(ctx.arrayElem().ident().getText());
+
+            Register arrayRegister = registers.getRegister();
+            state.add(new AddInstruction(arrayRegister, Registers.sp, new Operand2(offset)));
+
+            Register exprRegister = visit(ctx.arrayElem().expr(0)); // get index of arrayElem
+            state.add(new LoadInstruction(arrayRegister, new Operand2(arrayRegister, 0))); // get length of array
+
+            state.add(new MoveInstruction(registers.getReturnRegister(), exprRegister));
+            state.add(new MoveInstruction(registers.getReturnRegister(), arrayRegister));
+            // TODO: check array bounds and do for nested array
+
+            state.add(new AddInstruction(arrayRegister, arrayRegister, new Operand2(INT_SIZE))); // indexes start after length
+
+            /* gets the correct index, takes index expr
+                and multiplies by 4 (LSL #2) since reg indexes are 4 long
+             */
+            state.add(new AddInstruction(arrayRegister, arrayRegister, new Operand2(exprRegister), 2));
+            state.add(new LoadInstruction(arrayRegister, new Operand2(arrayRegister, true)));
+
+            registers.free(exprRegister);
+            registers.free(Registers.r0);
+            registers.free(Registers.r1);
+            return arrayRegister;
+        }
         //TODO: MOVE THIS TO visitUnaryOper ???
         if(ctx.unaryOper() != null && ctx.unaryOper().LEN() != null) {
             String ident = ctx.expr(0).ident().getText();
@@ -311,14 +337,17 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     @Override
     public Register visitVarAssignment(VarAssignmentContext ctx) {
         IdentContext id = ctx.assignLhs().ident();
+        ExprContext expr = ctx.assignRhs().expr();
         if (id != null) {
             String ident = id.getText();
             int offset = st.getAddress(ident);
-            ExprContext expr = ctx.assignRhs().expr();
+
             if (expr !=  null) {
                 Register src = visit(expr);
-                if(expr.BOOL_LIT() != null) state.add(new StoreInstruction(src, Registers.sp, offset, true));
-                else state.add(new StoreInstruction(src, Registers.sp, offset, true));
+                if(expr.BOOL_LIT() != null || expr.CHAR_LIT() != null) {
+                    state.add(new StoreInstruction(src, Registers.sp, offset, true));
+                }
+                else state.add(new StoreInstruction(src, Registers.sp, offset));
                 registers.free(src);
             }
 
@@ -329,7 +358,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 int heapSize = arrLength * typeSize + INT_SIZE; // INT_SIZE IS TO STORE LENGTH OF ARRAY
 
                 // set up heap memory allocation
-                state.add(new LoadInstruction(Registers.r0, heapSize));
+                state.add(new LoadInstruction(Registers.r0, new Operand2(heapSize)));
                 state.add(new BranchLinkInstruction(MALLOC));
                 Register heapPtr = registers.getRegister();
                 state.add(new MoveInstruction(heapPtr, Registers.r0));
@@ -342,12 +371,19 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 }
                 // process length
                 Register lengthReg = registers.getRegister();
-                state.add(new LoadInstruction(lengthReg, arrLength));
+                state.add(new LoadInstruction(lengthReg, new Operand2(arrLength)));
                 state.add(new StoreInstruction(lengthReg, heapPtr, 0));
                 registers.free(lengthReg);
 
                 state.add(new StoreInstruction(heapPtr, Registers.sp, offset));
                 registers.free(heapPtr);
+            }
+        }
+
+        ArrayElemContext arrayElem = ctx.assignLhs().arrayElem();
+        if (arrayElem != null) {
+            if (expr != null) {
+                Register nextRegister = visit(expr);
             }
         }
         return null;
@@ -366,19 +402,10 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         return 0;
     }
 
-    @Override
-    public Register visitParamList(ParamListContext ctx) {
-        return super.visitParamList(ctx);
-    }
 
     @Override
     public Register visitType(TypeContext ctx) {
         return super.visitType(ctx);
-    }
-
-    @Override
-    public Register visitOtherBinaryOper(OtherBinaryOperContext ctx) {
-        return super.visitOtherBinaryOper(ctx);
     }
 
     @Override
