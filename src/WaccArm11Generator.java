@@ -317,7 +317,8 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             ExprContext ctxe = ctx.assignRhs().expr();
             if (ctxe !=  null) {
                 Register src = visit(ctxe);
-                state.add(new StoreInstruction(src, Registers.sp, offset));
+                if(ctxe.BOOL_LIT() != null) state.add(new StoreInstruction(src, Registers.sp, offset, true));
+                else state.add(new StoreInstruction(src, Registers.sp, offset, true));
                 registers.free(src);
             }
         }

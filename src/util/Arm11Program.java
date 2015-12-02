@@ -68,7 +68,7 @@ public class Arm11Program {
     public void addPrintString() {
         printStringFunc = getMsgLabel("%.*s\\0");
         startFunction(PRINT_STRING_NAME);
-        add(new LoadInstruction(Registers.r1, new Operand2(Registers.r0)));
+        add(new LoadInstruction(Registers.r1, new Operand2(Registers.r0, true)));
         add(new AddInstruction(Registers.r2, Registers.r0, new Operand2('#', 4)));
         add(new LoadInstruction(Registers.r0, new Operand2(printStringFunc)));
         endPrintFunction("printf");
