@@ -13,7 +13,7 @@ public class Main {
 
         if(args.length == 0) {
             //System.setIn(new FileInputStream("/Users/cyrusvahidi/wacc_examples/valid/variables/charDeclaration.wacc"));
-            System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/valid/expressions/equalsExpr.wacc"));
+            System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/valid/expressions/greaterEqExpr.wacc"));
         }
 
         // create a lexer that feeds off of input from System.in

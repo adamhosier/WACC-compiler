@@ -11,7 +11,6 @@ public class CompareInstruction extends Instruction {
         this.op = op;
     }
 
-
     @Override
     public String toCode() {
         return "CMP " + reg + ", " + op;

@@ -93,7 +93,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         StackSizeVisitor sizeVisitor = new StackSizeVisitor();
         stackOffset = sizeVisitor.getSize(ctx);
 
-        if(stackOffset != 0) state.add(new SubInstruction(Registers.sp, Registers.sp, stackOffset));
+        if(stackOffset != 0) state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2(stackOffset)));
 
         visitChildren(ctx);
 
@@ -289,9 +289,17 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 state.add(new AndInstruction(dest, lhs, new Operand2(rhs)));
                 return dest;
             case OR:
-                break;
+                state.add(new OrInstruction(dest, lhs, new Operand2(rhs)));
+                return dest;
             case MULT:
-                break;
+                Register overflow = registers.getRegister();
+                state.add(new MultiplyInstruction(dest, overflow, lhs, rhs));
+                Operand2 op2 = new Operand2(dest);
+                op2.setAsr(31);
+                state.add(new CompareInstruction(overflow, op2));
+                state.add(new BranchLinkNotEqual(Arm11Program.OVERFLOW_NAME));
+                if(!state.functionDeclared(Arm11Program.OVERFLOW_NAME)) state.addOverflowError();
+                return dest;
             case DIV:
                 state.add(new MoveInstruction(Registers.r0, lhs));
                 state.add(new MoveInstruction(Registers.r1, rhs));
@@ -301,35 +309,60 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 state.add(new MoveInstruction(dest, Registers.r0));
                 return dest;
             case MOD:
-                break;
+                state.add(new MoveInstruction(Registers.r0, lhs));
+                state.add(new MoveInstruction(Registers.r1, rhs));
+                state.add(new BranchLinkInstruction(Arm11Program.DIVIDE_BY_ZERO_NAME));
+                state.addDivideByZeroError();
+                state.add(new BranchLinkInstruction("__aeabi_idivmod"));
+                state.add(new MoveInstruction(dest, Registers.r1));
+                return dest;
             case PLUS:
                 AddInstruction adds = new AddInstruction(dest, lhs, new Operand2(rhs));
                 adds.setFlags = true;
                 state.add(adds);
                 state.add(new BranchLinkOverflow(Arm11Program.OVERFLOW_NAME));
-                state.addOverflowError();
+                if(!state.functionDeclared(Arm11Program.OVERFLOW_NAME)) state.addOverflowError();
                 return dest;
             case MINUS:
-                break;
+                SubInstruction subs = new SubInstruction(dest, lhs, new Operand2(rhs));
+                subs.setFlags = true;
+                state.add(subs);
+                state.add(new BranchLinkOverflow(Arm11Program.OVERFLOW_NAME));
+                if(!state.functionDeclared(Arm11Program.OVERFLOW_NAME)) state.addOverflowError();
+                return dest;
             case GREATER_THAN:
-                break;
+                state.add(new CompareInstruction(lhs, new Operand2(rhs)));
+                state.add(new MoveGreaterThanInstruction(dest, new Operand2('#', 1)));
+                state.add(new MoveLessThanEqualInstruction(dest, new Operand2('#', 0)));
+                return dest;
             case GREATER_THAN_EQ:
-                break;
+                state.add(new CompareInstruction(lhs, new Operand2(rhs)));
+                state.add(new MoveGreaterThanEqualInstruction(dest, new Operand2('#', 1)));
+                state.add(new MoveLessThanInstruction(dest, new Operand2('#', 0)));
+                return dest;
             case LESS_THAN:
-                break;
+                state.add(new CompareInstruction(lhs, new Operand2(rhs)));
+                state.add(new MoveLessThanInstruction(dest, new Operand2('#', 1)));
+                state.add(new MoveGreaterThanEqualInstruction(dest, new Operand2('#', 0)));
+                return dest;
             case LESS_THAN_EQ:
-                break;
+                state.add(new CompareInstruction(lhs, new Operand2(rhs)));
+                state.add(new MoveLessThanEqualInstruction(dest, new Operand2('#', 1)));
+                state.add(new MoveGreaterThanInstruction(dest, new Operand2('#', 0)));
+                return dest;
             case EQ:
                 state.add(new CompareInstruction(lhs, new Operand2(rhs)));
                 state.add(new MoveEqualInstruction(dest, new Operand2('#', 1)));
                 state.add(new MoveNotEqualInstruction(dest, new Operand2('#', 0)));
                 return dest;
             case NOT_EQ:
-                break;
+                state.add(new CompareInstruction(lhs, new Operand2(rhs)));
+                state.add(new MoveNotEqualInstruction(dest, new Operand2('#', 1)));
+                state.add(new MoveEqualInstruction(dest, new Operand2('#', 0)));
+                return dest;
             default:
                 return null;
         }
-        return null;
     }
 
     @Override
@@ -503,7 +536,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         if(ctx.assignRhs().funcCall() != null) {
             visit(ctx.assignRhs().funcCall());
         }
-
 
         st.setAddress(ctx.ident().getText(), offset);
         return null;
