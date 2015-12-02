@@ -84,7 +84,7 @@ public class Arm11Program {
         printTrueFunc = getMsgLabel("true\\0");
         printFalseFunc = getMsgLabel("false\\0");
         startFunction(PRINT_BOOL_NAME);
-        add(new CompareInstruction(Registers.r0, new Operand2(0)));
+        add(new CompareInstruction(Registers.r0, new Operand2('#', 0)));
         add(new LoadNotEqualInstruction(Registers.r0, new Operand2(printTrueFunc)));
         add(new LoadEqualInstruction(Registers.r0, new Operand2(printFalseFunc)));
         endPrintFunction("printf");

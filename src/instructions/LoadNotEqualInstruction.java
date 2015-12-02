@@ -13,6 +13,6 @@ public class LoadNotEqualInstruction extends Instruction {
 
     @Override
     public String toCode() {
-        return "LDRNE " + reg + ", =" + op;
+        return "LDRNE " + reg + ", " + op;
     }
 }
