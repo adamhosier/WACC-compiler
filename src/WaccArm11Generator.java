@@ -207,18 +207,60 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitVarAssignment(VarAssignmentContext ctx) {
-        IdentContext ctxi = ctx.assignLhs().ident();
-        if (ctxi != null) {
-            String ident = ctxi.getText();
+        IdentContext id = ctx.assignLhs().ident();
+        if (id != null) {
+            String ident = id.getText();
             int offset = st.getAddress(ident);
-            ExprContext ctxe = ctx.assignRhs().expr();
-            if (ctxe !=  null) {
-                Register src = visit(ctxe);
+
+            ExprContext expr = ctx.assignRhs().expr();
+            if (expr !=  null) {
+                Register src = visit(expr);
                 state.add(new StoreInstruction(src, Registers.sp, offset));
                 registers.free(src);
             }
+
+            ArrayLiterContext arrayLiter = ctx.assignRhs().arrayLiter();
+            if (arrayLiter != null) {
+                int arrLength = arrayLiter.expr().size();
+                int typeSize = getIdentTypeSize(ident);
+                int heapSize = arrLength * typeSize + INT_SIZE; // INT_SIZE IS TO STORE LENGTH OF ARRAY
+
+                // set up heap memory allocation
+                state.add(new LoadInstruction(Registers.r0, heapSize));
+                state.add(new BranchLinkInstruction(MALLOC));
+                Register heapPtr = registers.getRegister();
+                state.add(new MoveInstruction(heapPtr, Registers.r0));
+
+                // process each array elem
+                for (int i = 0; i < arrLength; i++) {
+                    Register src = visit(arrayLiter.expr(i));
+                    state.add(new StoreInstruction(src, heapPtr, INT_SIZE + i * typeSize));
+                    registers.free(src);
+                }
+                // process length
+                Register lengthReg = registers.getRegister();
+                state.add(new LoadInstruction(lengthReg, arrLength));
+                state.add(new StoreInstruction(lengthReg, heapPtr, 0));
+                registers.free(lengthReg);
+
+                state.add(new StoreInstruction(heapPtr, Registers.sp, offset));
+                registers.free(heapPtr);
+            }
         }
         return null;
+    }
+
+    private int getIdentTypeSize(String ident) {
+        WaccType type = st.lookupType(ident);
+        int id = type.getId();
+        switch (id) {
+            case INT: return INT_SIZE;
+            case BOOL: return BOOL_SIZE;
+            case CHAR: return CHAR_SIZE;
+            case STRING: return STRING_SIZE;
+            case PAIR: return PAIR_SIZE;
+        }
+        return 0;
     }
 
     @Override
@@ -296,7 +338,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         int offset = 0;
         if (expr != null) {
             Register src = visit(expr);
-            currOffset += getSize(type);
+            currOffset += getTypeSize(type);
             offset = stackOffset - currOffset;
 
             if (type.baseType().BOOL() != null || type.baseType().CHAR() != null) {
@@ -307,13 +349,9 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
             // src register does not need to hold expr value anymore
             registers.free(src);
-
-            // st.setAddress(ctx.ident().getText(), offset);
-        }
-        // array declaration
-        if (arrayLiter != null) {
+        } else if (arrayLiter != null) { // array declaration
             int arrLength = arrayLiter.expr().size();
-            int typeSize = getSize(type);
+            int typeSize = getTypeSize(type);
             int heapSize = arrLength * typeSize + INT_SIZE; // INT_SIZE IS TO STORE LENGTH OF ARRAY
 
             // set up heap memory allocation
@@ -343,7 +381,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         return null;
     }
 
-    private int getSize(TypeContext ctx) {
+    private int getTypeSize(TypeContext ctx) {
         if (ctx.baseType() != null) {
             if (ctx.baseType().INT() != null) {
                 return INT_SIZE;
@@ -362,7 +400,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             return PAIR_SIZE;
         }
         if (ctx.type() != null) {
-            return getSize(ctx.type());
+            return getTypeSize(ctx.type());
         }
         return 0;
     }
