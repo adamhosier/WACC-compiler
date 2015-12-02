@@ -93,7 +93,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         StackSizeVisitor sizeVisitor = new StackSizeVisitor();
         stackOffset = sizeVisitor.getSize(ctx);
 
-        if(stackOffset != 0) state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2(stackOffset)));
+        if(stackOffset != 0) state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset)));
 
         visitChildren(ctx);
 
