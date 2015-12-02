@@ -234,7 +234,12 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             String ident = ctx.ident().getText();
             int offset = st.getAddress(ident);
             Register nextRegister = registers.getRegister();
-            state.add(new LoadInstruction(nextRegister, new Operand2(Registers.sp, offset)));
+            WaccType type = st.lookupType(ident);
+            if(type.equals(new WaccType(BOOL))) {
+                state.add(new LoadSignedByteInstruction(nextRegister, new Operand2(Registers.sp, offset)));
+            } else {
+                state.add(new LoadInstruction(nextRegister, new Operand2(Registers.sp, offset)));
+            }
             return nextRegister;
         }
         //TODO: MOVE THIS TO visitUnaryOper ???
@@ -260,24 +265,50 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitOtherBinaryOper(OtherBinaryOperContext ctx) {
+        return visitBinOp(ctx);
+    }
+
+    @Override
+    public Register visitBoolBinaryOper(BoolBinaryOperContext ctx) {
+        return visitBinOp(ctx);
+    }
+
+    private Register visitBinOp(ParseTree ctx) {
         int tokenIndex = ((TerminalNode) ctx.getChild(0)).getSymbol().getType();
 
         Register lhs = visit(((ExprContext) ctx.getParent()).expr(0));
         Register rhs = visit(((ExprContext) ctx.getParent()).expr(1));
 
+        registers.free(lhs);
+        registers.free(rhs);
+
+        Register dest = registers.getRegister();
+
         switch(tokenIndex) {
+            case AND:
+                state.add(new AndInstruction(dest, lhs, new Operand2(rhs)));
+                return dest;
+            case OR:
+                break;
             case MULT:
                 break;
             case DIV:
-                break;
+                state.add(new MoveInstruction(Registers.r0, lhs));
+                state.add(new MoveInstruction(Registers.r1, rhs));
+                state.add(new BranchLinkInstruction(Arm11Program.DIVIDE_BY_ZERO_NAME));
+                state.addDivideByZeroError();
+                state.add(new BranchLinkInstruction("__aeabi_idiv"));
+                state.add(new MoveInstruction(dest, Registers.r0));
+                return dest;
             case MOD:
                 break;
             case PLUS:
-                AddInstruction adds = new AddInstruction(lhs, lhs, new Operand2(rhs));
+                AddInstruction adds = new AddInstruction(dest, lhs, new Operand2(rhs));
                 adds.setFlags = true;
                 state.add(adds);
                 state.add(new BranchLinkOverflow(Arm11Program.OVERFLOW_NAME));
-                return lhs;
+                state.addOverflowError();
+                return dest;
             case MINUS:
                 break;
             case GREATER_THAN:
@@ -289,7 +320,10 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             case LESS_THAN_EQ:
                 break;
             case EQ:
-                break;
+                state.add(new CompareInstruction(lhs, new Operand2(rhs)));
+                state.add(new MoveEqualInstruction(dest, new Operand2('#', 1)));
+                state.add(new MoveNotEqualInstruction(dest, new Operand2('#', 0)));
+                return dest;
             case NOT_EQ:
                 break;
             default:
@@ -338,11 +372,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     @Override
     public Register visitNewPair(NewPairContext ctx) {
         return super.visitNewPair(ctx);
-    }
-
-    @Override
-    public Register visitBoolBinaryOper(BoolBinaryOperContext ctx) {
-        return super.visitBoolBinaryOper(ctx);
     }
 
     @Override
@@ -531,7 +560,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         if(expr.ident() != null) {
             exprType = st.lookupType(expr.ident().getText());
             int offset = st.getAddress(expr.ident().getText());
-            msgReg = registers.getRegister();
             loadIns = new LoadInstruction(msgReg, new Operand2(Registers.sp, offset));
         } else if(expr.otherBinaryOper() != null) {
             exprType = WaccType.fromBinaryOp(((TerminalNode) expr.otherBinaryOper().getChild(0)).getSymbol().getType());
@@ -559,7 +587,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         // print bool
         if(expr.BOOL_LIT() != null || new WaccType(BOOL).equals(exprType)) {
             if(new WaccType(BOOL).equals(exprType)) {
-                state.add(loadIns);
+                //state.add(loadIns);
             }
             state.add(new MoveInstruction(Registers.r0, msgReg));
             state.add(new BranchLinkInstruction(Arm11Program.PRINT_BOOL_NAME));
