@@ -5,16 +5,19 @@ import util.Register;
 public class AddInstruction extends Instruction {
     private final Register rDest;
     private final Register rSrc;
-    private final int amt;
+    private final Operand2 op;
 
-    public AddInstruction(Register rDest, Register rSrc, int amt) {
+    public boolean setFlags = false;
+
+    public AddInstruction(Register rDest, Register rSrc, Operand2 op) {
         this.rDest = rDest;
         this.rSrc = rSrc;
-        this.amt = amt;
+        this.op = op;
     }
+
 
     @Override
     public String toCode() {
-        return "ADD " + rDest + ", " + rSrc + ", #" + amt;
+        return "ADD" + (setFlags ? "S " : " ") + rDest + ", " + rSrc + ", " + op;
     }
 }

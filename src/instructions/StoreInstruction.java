@@ -6,7 +6,8 @@ public class StoreInstruction extends Instruction {
     private final Register rSrc;
     private final Register rDst;
     private final int offset;
-    private boolean isByte;
+    private boolean isByte = false;
+    public boolean preIndex = false;
 
     public StoreInstruction(Register rSrc, Register rDst, int offset) {
         this.rSrc = rSrc;
@@ -25,6 +26,6 @@ public class StoreInstruction extends Instruction {
     @Override
     public String toCode() {
         return (!isByte ? "STR " : "STRB ") + rSrc + ", "
-                + "[" + rDst + (offset != 0 ? ", " + "#" + offset + "]" : "]");
+                + "[" + rDst + (offset != 0 ? ", " + "#" + offset + "]" : "]") + (preIndex ? "!" : "");
     }
 }

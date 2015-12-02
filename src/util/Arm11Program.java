@@ -18,6 +18,7 @@ public class Arm11Program {
     public static final String PRINT_CHAR_NAME = "putchar";
     public static final String READ_INT_NAME = "p_read_int";
     public static final String READ_CHAR_NAME = "p_read_char";
+    public static final String OVERFLOW_NAME = "p_throw_overflow_error";
 
     public static String decode(String input) {
         return input.replace("\\0", "\0").replace("\\b", "\b").replace("\\n", "\n").replace("\\f", "\f").replace("\\r", "\r").replace("\\\"", "\"").replace("\\'", "'").replace("\\\\", "\\");
@@ -43,6 +44,7 @@ public class Arm11Program {
     }
 
     public void add(Instruction ins) {
+        if(ins == null) return;
         if(currentFunction == null) globalCode.add(ins);
         else currentFunction.add(ins);
     }
@@ -67,9 +69,9 @@ public class Arm11Program {
     public void addPrintString() {
         printStringFunc = getMsgLabel("%.*s\\0");
         startFunction(PRINT_STRING_NAME);
-        add(new LoadInstruction(Registers.r1, Registers.r0));
-        add(new AddInstruction(Registers.r2, Registers.r0, 4));
-        add(new LoadInstruction(Registers.r0, printStringFunc));
+        add(new LoadInstruction(Registers.r1, new Operand2(Registers.r0, true)));
+        add(new AddInstruction(Registers.r2, Registers.r0, new Operand2('#', 4)));
+        add(new LoadInstruction(Registers.r0, new Operand2(printStringFunc)));
         endPrintFunction("printf");
     }
 
@@ -79,8 +81,8 @@ public class Arm11Program {
         printFalseFunc = getMsgLabel("false\\0");
         startFunction(PRINT_BOOL_NAME);
         add(new CompareInstruction(Registers.r0, 0));
-        add(new LoadNotEqualInstruction(Registers.r0, printTrueFunc));
-        add(new LoadEqualInstruction(Registers.r0, printFalseFunc));
+        add(new LoadNotEqualInstruction(Registers.r0, new Operand2(printTrueFunc)));
+        add(new LoadEqualInstruction(Registers.r0, new Operand2(printFalseFunc)));
         endPrintFunction("printf");
     }
 
@@ -88,14 +90,14 @@ public class Arm11Program {
         printIntFunc = getMsgLabel("%d\\0");
         startFunction(PRINT_INT_NAME);
         add(new MoveInstruction(Registers.r1, Registers.r0));
-        add(new LoadInstruction(Registers.r0, printIntFunc));
+        add(new LoadInstruction(Registers.r0, new Operand2(printIntFunc)));
         endPrintFunction("printf");
     }
 
     public void addPrintlnFunc() {
         printlnFunc = addMsgLabel("\\0");
         startFunction(PRINTLN_NAME);
-        add(new LoadInstruction(Registers.r0, printlnFunc));
+        add(new LoadInstruction(Registers.r0, new Operand2(printlnFunc)));
         endPrintFunction("puts");
     }
 
@@ -103,7 +105,7 @@ public class Arm11Program {
         readIntFunc = getMsgLabel("%d\\0");
         startFunction(READ_INT_NAME);
         add(new MoveInstruction(Registers.r1, Registers.r0));
-        add(new LoadInstruction(Registers.r0, readIntFunc));
+        add(new LoadInstruction(Registers.r0, new Operand2(readIntFunc)));
         endReadFunction();
     }
 
@@ -111,7 +113,7 @@ public class Arm11Program {
         readCharFunc = getMsgLabel(" %c\\0");
         startFunction(READ_CHAR_NAME);
         add(new MoveInstruction(Registers.r1, Registers.r0));
-        add(new LoadInstruction(Registers.r0, readCharFunc));
+        add(new LoadInstruction(Registers.r0, new Operand2(readCharFunc)));
         endReadFunction();
     }
 
@@ -129,7 +131,7 @@ public class Arm11Program {
         currentFunction = scope.peek();
     }
 
-    public void endMainFunction() {
+    public void endUserFunction() {
         currentFunction.add(new PopInstruction(Registers.pc));
         currentFunction.add(new LtorgDirective());
         scope.pop();
@@ -138,7 +140,7 @@ public class Arm11Program {
 
 
     public void endPrintFunction(String branch) {
-        add(new AddInstruction(Registers.r0, Registers.r0, 4));
+        add(new AddInstruction(Registers.r0, Registers.r0, new Operand2('#', 4)));
         add(new BranchLinkInstruction(branch));
         add(new MoveInstruction(Registers.r0, 0));
         add(new BranchLinkInstruction("fflush"));
@@ -146,7 +148,7 @@ public class Arm11Program {
     }
 
     private void endReadFunction() {
-        add(new AddInstruction(Registers.r0, Registers.r0, 4));
+        add(new AddInstruction(Registers.r0, Registers.r0, new Operand2('#', 4)));
         add(new BranchLinkInstruction("scanf"));
         endFunction();
     }

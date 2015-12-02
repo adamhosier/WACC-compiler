@@ -32,6 +32,27 @@ public class WaccType {
         isPair = true;
     }
 
+    public static WaccType fromBinaryOp(int bop) {
+        switch(bop) {
+            case WaccParser.AND:
+            case WaccParser.OR:
+            case WaccParser.GREATER_THAN:
+            case WaccParser.GREATER_THAN_EQ:
+            case WaccParser.LESS_THAN:
+            case WaccParser.LESS_THAN_EQ:
+            case WaccParser.EQ:
+            case WaccParser.NOT_EQ:
+                return new WaccType(WaccParser.BOOL);
+            case WaccParser.MULT:
+            case WaccParser.DIV:
+            case WaccParser.MOD:
+            case WaccParser.PLUS:
+            case WaccParser.MINUS:
+                return new WaccType(WaccParser.INT);
+        }
+        return INVALID;
+    }
+
     public boolean isValid() {
         return id != INVALID_ID;
     }
