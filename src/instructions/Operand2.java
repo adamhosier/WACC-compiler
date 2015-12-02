@@ -7,6 +7,7 @@ public class Operand2 {
     private boolean isReg = false;
     private boolean isImm = false;
     private Register reg;
+    int offset = 0;
 
     private boolean isInt = false;
     private int i;
@@ -24,6 +25,11 @@ public class Operand2 {
         this.isImm = isImm;
     }
 
+    public Operand2(Register reg, int offset) {
+        this(reg, true);
+        this.offset = offset;
+    }
+
     public Operand2(int i) {
         this.i = i;
         isInt = true;
@@ -36,7 +42,7 @@ public class Operand2 {
 
     @Override
     public String toString() {
-        if(isReg) return (isImm ? "[" : "") + reg + (isImm ? "]" : "");
+        if(isReg) return (isImm ? "[" : "") + reg + (offset != 0 ? ", #" + offset : "") + (isImm ? "]" : "");
         if(isInt) return "#" + i;
         if(isStr) return "=" + s;
         return null;

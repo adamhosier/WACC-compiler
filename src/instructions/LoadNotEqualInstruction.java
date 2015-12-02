@@ -4,15 +4,15 @@ import util.Register;
 
 public class LoadNotEqualInstruction extends Instruction {
     private final Register reg;
-    private final String func;
+    private Operand2 op;
 
-    public LoadNotEqualInstruction(Register reg, String func) {
+    public LoadNotEqualInstruction(Register reg, Operand2 op) {
         this.reg = reg;
-        this.func = func;
+        this.op = op;
     }
 
     @Override
     public String toCode() {
-        return "LDRNE " + reg + ", =" + func;
+        return "LDRNE " + reg + ", =" + op;
     }
 }

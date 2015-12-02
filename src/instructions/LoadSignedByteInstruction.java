@@ -4,15 +4,15 @@ import util.Register;
 
 public class LoadSignedByteInstruction extends Instruction {
     private final Register rDest;
-    private final Register rSrc;
+    private Operand2 op;
 
-    public LoadSignedByteInstruction(Register rDest, Register rSrc) {
+    public LoadSignedByteInstruction(Register rDest, Operand2 op) {
         this.rDest = rDest;
-        this.rSrc = rSrc;
+        this.op = op;
     }
 
     @Override
     public String toCode() {
-        return "LDRSB " + rDest + ", [" + rSrc + "]";
+        return "LDRSB " + rDest + ", " + op;
     }
 }

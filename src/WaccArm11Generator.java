@@ -99,7 +99,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
         // check if return register has been filled
         if(!registers.isInUse("r0")) {
-            state.add(new LoadInstruction(Registers.r0, 0));
+            state.add(new LoadInstruction(Registers.r0, new Operand2(0)));
         }
 
         if(stackOffset != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2(stackOffset)));
@@ -191,7 +191,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
         registers.freeReturnRegisters();
 
-        state.add(new LoadInstruction(Registers.r0, 0));
+        state.add(new LoadInstruction(Registers.r0, new Operand2(0)));
         return null;
     }
 
@@ -200,7 +200,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         if(ctx.INT_LIT() != null) {
             int i = Integer.parseInt(ctx.INT_LIT().getSymbol().getText());
             Register nextRegister = registers.getRegister();
-            state.add(new LoadInstruction(nextRegister, i));
+            state.add(new LoadInstruction(nextRegister, new Operand2(i)));
             return nextRegister;
         }
         if(ctx.BOOL_LIT() != null) {
@@ -227,14 +227,14 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
             String label = state.addMsgLabel(s);
             Register nextRegister = registers.getRegister();
-            state.add(new LoadInstruction(nextRegister, label));
+            state.add(new LoadInstruction(nextRegister, new Operand2(label)));
             return nextRegister;
         }
         if(ctx.ident() != null) {
             String ident = ctx.ident().getText();
             int offset = st.getAddress(ident);
             Register nextRegister = registers.getRegister();
-            state.add(new LoadInstruction(nextRegister, Registers.sp, offset));
+            state.add(new LoadInstruction(nextRegister, new Operand2(Registers.sp, offset)));
             return nextRegister;
         }
         //TODO: MOVE THIS TO visitUnaryOper ???
@@ -243,9 +243,9 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             int offset = st.getAddress(ident);
             Register nextRegister = registers.getRegister();
             // array info stored on stack
-            state.add(new LoadInstruction(nextRegister, Registers.sp, offset));
+            state.add(new LoadInstruction(nextRegister, new Operand2(Registers.sp, offset)));
             // array length is in first address
-            state.add(new LoadInstruction(nextRegister, nextRegister, 0));
+            state.add(new LoadInstruction(nextRegister, new Operand2(nextRegister)));
             return nextRegister;
         }
 
@@ -410,7 +410,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             int heapSize = arrLength * typeSize + INT_SIZE; // INT_SIZE IS TO STORE LENGTH OF ARRAY
 
             // set up heap memory allocation
-            state.add(new LoadInstruction(Registers.r0, heapSize));
+            state.add(new LoadInstruction(Registers.r0, new Operand2(heapSize)));
             state.add(new BranchLinkInstruction(MALLOC));
             Register heapPtr = registers.getRegister();
             state.add(new MoveInstruction(heapPtr, Registers.r0));
@@ -423,7 +423,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             }
             // process length
             Register lengthReg = registers.getRegister();
-            state.add(new LoadInstruction(lengthReg, arrLength));
+            state.add(new LoadInstruction(lengthReg, new Operand2(arrLength)));
             state.add(new StoreInstruction(lengthReg, heapPtr, 0));
             registers.free(lengthReg);
 
@@ -531,7 +531,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             identType = st.lookupType(expr.ident().getText());
             int offset = st.getAddress(expr.ident().getText());
             msgReg = registers.getRegister();
-            loadIns = new LoadInstruction(msgReg, Registers.sp, offset);
+            loadIns = new LoadInstruction(msgReg, new Operand2(Registers.sp, offset));
         } else {
             msgReg = visitExpr(expr);
         }
