@@ -363,7 +363,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 int heapSize = arrLength * typeSize + INT_SIZE; // INT_SIZE IS TO STORE LENGTH OF ARRAY
 
                 // set up heap memory allocation
-                state.add(new LoadInstruction(Registers.r0, heapSize));
+                state.add(new LoadInstruction(Registers.r0, new Operand2(heapSize)));
                 state.add(new BranchLinkInstruction(MALLOC));
                 Register heapPtr = registers.getRegister();
                 state.add(new MoveInstruction(heapPtr, Registers.r0));
@@ -376,7 +376,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 }
                 // process length
                 Register lengthReg = registers.getRegister();
-                state.add(new LoadInstruction(lengthReg, arrLength));
+                state.add(new LoadInstruction(lengthReg, new Operand2(arrLength)));
                 state.add(new StoreInstruction(lengthReg, heapPtr, 0));
                 registers.free(lengthReg);
 
@@ -401,19 +401,10 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     }
 
     @Override
-    public Register visitParamList(ParamListContext ctx) {
-        return super.visitParamList(ctx);
-    }
-
-    @Override
     public Register visitType(TypeContext ctx) {
         return super.visitType(ctx);
     }
 
-    @Override
-    public Register visitOtherBinaryOper(OtherBinaryOperContext ctx) {
-        return super.visitOtherBinaryOper(ctx);
-    }
 
     @Override
     public Register visitCharacter(CharacterContext ctx) {
