@@ -19,13 +19,15 @@ public class Arm11Program {
     public static final String READ_INT_NAME = "p_read_int";
     public static final String READ_CHAR_NAME = "p_read_char";
     public static final String OVERFLOW_NAME = "p_throw_overflow_error";
-
+    public static final String DIVIDE_BY_ZERO_NAME = "p_check_divide_by_zero";
     public static String decode(String input) {
         return input.replace("\\0", "\0").replace("\\b", "\b").replace("\\n", "\n").replace("\\f", "\f").replace("\\r", "\r").replace("\\\"", "\"").replace("\\'", "'").replace("\\\\", "\\");
     }
 
     Map<String, List<Instruction>> functions = new LinkedHashMap<>();
+
     Stack<List<Instruction>> scope = new Stack<>();
+
     List<Instruction> currentFunction;
     List<Instruction> globalCode = new LinkedList<>();
     int numMsgLabels = 0;
@@ -36,6 +38,8 @@ public class Arm11Program {
     private String printIntFunc;
     private String readIntFunc;
     private String readCharFunc;
+    private String overflowFunc;
+    private String divideByZeroFunc;
 
     public Arm11Program() {
         functions.put("global", globalCode);
@@ -80,7 +84,7 @@ public class Arm11Program {
         printTrueFunc = getMsgLabel("true\\0");
         printFalseFunc = getMsgLabel("false\\0");
         startFunction(PRINT_BOOL_NAME);
-        add(new CompareInstruction(Registers.r0, 0));
+        add(new CompareInstruction(Registers.r0, new Operand2('#', 0)));
         add(new LoadNotEqualInstruction(Registers.r0, new Operand2(printTrueFunc)));
         add(new LoadEqualInstruction(Registers.r0, new Operand2(printFalseFunc)));
         endPrintFunction("printf");
@@ -117,6 +121,20 @@ public class Arm11Program {
         endReadFunction();
     }
 
+    public void addOverflowError() {
+        overflowFunc = getMsgLabel("OverflowError: the result is too small/large to store in a 4-byte signed-integer.\\n");
+        startFunction(OVERFLOW_NAME);
+        add(new Comment("TODO: OVERFLOW"));
+        endFunction();
+    }
+
+    public void addDivideByZeroError() {
+        divideByZeroFunc = getMsgLabel("DivideByZeroError: divide or modulo by zero\\n\\0");
+        startFunction(DIVIDE_BY_ZERO_NAME);
+        add(new Comment("TODO: DIVIDE BY ZERO"));
+        endFunction();
+    }
+
     public void startFunction(String name) {
         currentFunction = new LinkedList<>();
         functions.put(name, currentFunction);
@@ -124,6 +142,7 @@ public class Arm11Program {
         currentFunction.add(new PushInstruction(Registers.lr));
         scope.push(currentFunction);
     }
+
 
     public void endFunction() {
         currentFunction.add(new PopInstruction(Registers.pc));
@@ -137,7 +156,6 @@ public class Arm11Program {
         scope.pop();
         currentFunction = scope.peek();
     }
-
 
     public void endPrintFunction(String branch) {
         add(new AddInstruction(Registers.r0, Registers.r0, new Operand2('#', 4)));

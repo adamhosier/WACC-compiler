@@ -2,14 +2,12 @@ package instructions;
 
 import util.Register;
 
-public class SubInstruction extends Instruction {
+public class OrInstruction extends Instruction {
     private final Register rDest;
     private final Register lhs;
     private final Operand2 rhs;
-    public boolean setFlags;
 
-
-    public SubInstruction(Register rDest, Register lhs, Operand2 rhs) {
+    public OrInstruction(Register rDest, Register lhs, Operand2 rhs) {
         this.rDest = rDest;
         this.lhs = lhs;
         this.rhs = rhs;
@@ -17,6 +15,6 @@ public class SubInstruction extends Instruction {
 
     @Override
     public String toCode() {
-        return "SUB" + (setFlags ? "S " : " ") + rDest + ", " + lhs + ", " + rhs;
+        return "ORR " + rDest + ", " + lhs + ", " + rhs;
     }
 }

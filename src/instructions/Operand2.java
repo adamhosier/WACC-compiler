@@ -15,6 +15,9 @@ public class Operand2 {
 
     private boolean isStr = false;
     private String s;
+    
+    private boolean asr;
+    private int asrVal;
 
     public Operand2(Register reg) {
         this.reg = reg;
@@ -46,9 +49,18 @@ public class Operand2 {
         isStr = true;
     }
 
+    public void setAsr(int asr) {
+        this.asr = true;
+        this.asrVal = asr;
+    }
+
     @Override
     public String toString() {
-        if(isReg) return (isImm ? "[" : "") + reg + (offset != 0 ? ", #" + offset : "") + (isImm ? "]" : "");
+        if(isReg) {
+            if(isImm) return "[" + reg + (offset != 0 ? ", #" + offset : "") + "]";
+            if(asr) return reg + ", ASR #" + asrVal;
+            return reg.toString();
+        }
         if(isInt) return iChar + "" + i;
         if(isStr) return "=" + s;
         return null;
