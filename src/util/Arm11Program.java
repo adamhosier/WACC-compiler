@@ -69,7 +69,7 @@ public class Arm11Program {
         printStringFunc = getMsgLabel("%.*s\\0");
         startFunction(PRINT_STRING_NAME);
         add(new LoadInstruction(Registers.r1, new Operand2(Registers.r0)));
-        add(new AddInstruction(Registers.r2, Registers.r0, new Operand2(4)));
+        add(new AddInstruction(Registers.r2, Registers.r0, new Operand2('#', 4)));
         add(new LoadInstruction(Registers.r0, new Operand2(printStringFunc)));
         endPrintFunction("printf");
     }
@@ -139,7 +139,7 @@ public class Arm11Program {
 
 
     public void endPrintFunction(String branch) {
-        add(new AddInstruction(Registers.r0, Registers.r0, new Operand2(4)));
+        add(new AddInstruction(Registers.r0, Registers.r0, new Operand2('#', 4)));
         add(new BranchLinkInstruction(branch));
         add(new MoveInstruction(Registers.r0, 0));
         add(new BranchLinkInstruction("fflush"));
@@ -147,7 +147,7 @@ public class Arm11Program {
     }
 
     private void endReadFunction() {
-        add(new AddInstruction(Registers.r0, Registers.r0, new Operand2(4)));
+        add(new AddInstruction(Registers.r0, Registers.r0, new Operand2('#', 4)));
         add(new BranchLinkInstruction("scanf"));
         endFunction();
     }

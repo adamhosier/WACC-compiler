@@ -10,6 +10,7 @@ public class Operand2 {
     int offset = 0;
 
     private boolean isInt = false;
+    private char iChar = '=';
     private int i;
 
     private boolean isStr = false;
@@ -35,6 +36,11 @@ public class Operand2 {
         isInt = true;
     }
 
+    public Operand2(char iChar, int i) {
+        this(i);
+        this.iChar = iChar;
+    }
+
     public Operand2(String s) {
         this.s = s;
         isStr = true;
@@ -43,7 +49,7 @@ public class Operand2 {
     @Override
     public String toString() {
         if(isReg) return (isImm ? "[" : "") + reg + (offset != 0 ? ", #" + offset : "") + (isImm ? "]" : "");
-        if(isInt) return "=" + i;
+        if(isInt) return iChar + "" + i;
         if(isStr) return "=" + s;
         return null;
     }

@@ -102,7 +102,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new LoadInstruction(Registers.r0, new Operand2(0)));
         }
 
-        if(stackOffset != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2(stackOffset)));
+        if(stackOffset != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset)));
 
         state.endUserFunction();
         state.add(new TextDirective());
@@ -155,7 +155,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
         state.add(new BranchLinkInstruction("f_" + ctx.ident().getText()));
         int stackSize = st.getStackSize(ctx.ident().getText());
-        if(stackSize != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2(stackSize)));
+        if(stackSize != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', stackSize)));
         Register next = registers.getRegister();
         state.add(new MoveInstruction(next, Registers.r0));
         state.add(new StoreInstruction(next, Registers.sp, 0));
@@ -347,7 +347,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     @Override
     public Register visitIdent(IdentContext ctx) {
         Register next = registers.getRegister();
-        state.add(new AddInstruction(next, Registers.sp, new Operand2(st.getAddress(ctx.getText()))));
+        state.add(new AddInstruction(next, Registers.sp, new Operand2('#', st.getAddress(ctx.getText()))));
         return next;
     }
 
