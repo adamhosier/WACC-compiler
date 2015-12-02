@@ -43,7 +43,7 @@ public class Operand2 {
     @Override
     public String toString() {
         if(isReg) return (isImm ? "[" : "") + reg + (offset != 0 ? ", #" + offset : "") + (isImm ? "]" : "");
-        if(isInt) return "#" + i;
+        if(isInt) return "=" + i;
         if(isStr) return "=" + s;
         return null;
     }
