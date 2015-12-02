@@ -44,6 +44,7 @@ public class Arm11Program {
     }
 
     public void add(Instruction ins) {
+        if(ins == null) return;
         if(currentFunction == null) globalCode.add(ins);
         else currentFunction.add(ins);
     }
