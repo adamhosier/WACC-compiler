@@ -1,10 +1,12 @@
 import antlr.WaccParserBaseVisitor;
 import instructions.*;
+import org.antlr.v4.runtime.misc.Pair;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.RuleNode;
 import util.*;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.PriorityQueue;
 
 import static antlr.WaccParser.*;
@@ -116,7 +118,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
         String ident = ctx.ident().getText();
         state.startFunction("f_" + ident);
-        visit(ctx.paramList());
+        if(ctx.paramList() != null) visit(ctx.paramList());
         visit(ctx.stat());
         state.endUserFunction();
         return null;
@@ -124,7 +126,16 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitParamList(ParamListContext ctx) {
-        return visitChildren(ctx);
+        String funcName = ((FuncContext) ctx.getParent()).ident().getText();
+        List<Pair<WaccType, String>> params = st.getParamList(funcName);
+
+        int offset = 0;
+        for(Pair<WaccType, String> param : params) {
+            offset += 4; // TODO: find size of type param.b
+            st.setAddress(param.b, offset);
+        }
+
+        return null;
     }
 
     @Override
@@ -139,10 +150,11 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitFuncCall(FuncCallContext ctx) {
-        visit(ctx.argList());
+        if(ctx.argList() != null) visit(ctx.argList());
 
         state.add(new BranchLinkInstruction("f_" + ctx.ident().getText()));
-        state.add(new AddInstruction(Registers.sp, Registers.sp, st.getStackSize(ctx.ident().getText())));
+        int stackSize = st.getStackSize(ctx.ident().getText());
+        if(stackSize != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, stackSize));
         Register next = registers.getRegister();
         state.add(new MoveInstruction(next, Registers.r0));
         state.add(new StoreInstruction(next, Registers.sp, 0));
@@ -153,10 +165,14 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitArgList(ArgListContext ctx) {
-        for(ExprContext expr : ctx.expr()) {
-            Register exprReg = visit(expr);
+        String funcName = ((FuncCallContext) ctx.getParent()).ident().getText();
+        List<Pair<WaccType, String>> params = st.getParamList(funcName);
 
-            StoreInstruction ins = new StoreInstruction(exprReg, Registers.sp, -4);
+        for(int i = 0; i < params.size(); i++) {
+            String paramName = params.get(i).b;
+            Register exprReg = visit(ctx.expr(i));
+
+            StoreInstruction ins = new StoreInstruction(exprReg, Registers.sp, -1 * st.getAddress(paramName));
             ins.preIndex = true;
             state.add(ins);
 
@@ -220,6 +236,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new LoadInstruction(nextRegister, Registers.sp, offset));
             return nextRegister;
         }
+        //TODO: MOVE THIS TO visitUnaryOper ???
         if(ctx.unaryOper() != null && ctx.unaryOper().LEN() != null) {
             String ident = ctx.expr(0).ident().getText();
             int offset = st.getAddress(ident);

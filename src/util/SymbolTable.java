@@ -235,6 +235,12 @@ public class SymbolTable {
         return -1;
     }
 
+    public int getParamAddress(String funcName, String paramName) {
+        FunctionSymbol sym = getFunctionSymbol(funcName);
+        if(sym == null) return -1;
+        return sym.getParamAddress(paramName);
+    }
+
     ///////////// INNER CLASSES /////////////
 
     private abstract class Symbol {
@@ -311,6 +317,10 @@ public class SymbolTable {
 
         public int getNumerParams() {
             return params.size();
+        }
+
+        public int getParamAddress(String paramName) {
+            return 0; //TODO
         }
     }
 
