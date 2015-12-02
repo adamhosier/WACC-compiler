@@ -246,7 +246,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             int offset = st.getAddress(ctx.arrayElem().ident().getText());
 
             Register arrayRegister = registers.getRegister();
-            state.add(new AddInstruction(arrayRegister, Registers.sp, new Operand2(offset)));
+            state.add(new AddInstruction(arrayRegister, Registers.sp, new Operand2('#', offset)));
 
             Register exprRegister = visit(ctx.arrayElem().expr(0)); // get index of arrayElem
             state.add(new LoadInstruction(arrayRegister, new Operand2(arrayRegister, 0))); // get length of array
@@ -255,7 +255,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new MoveInstruction(registers.getReturnRegister(), arrayRegister));
             // TODO: check array bounds and do for nested array
 
-            state.add(new AddInstruction(arrayRegister, arrayRegister, new Operand2(INT_SIZE))); // indexes start after length
+            state.add(new AddInstruction(arrayRegister, arrayRegister, new Operand2('#', INT_SIZE))); // indexes start after length
 
             /* gets the correct index, takes index expr
                 and multiplies by 4 (LSL #2) since reg indexes are 4 long

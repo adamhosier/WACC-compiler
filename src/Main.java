@@ -12,7 +12,7 @@ public class Main {
     public static void main(String[] args) throws Exception {
 
         if(args.length == 0) {
-            System.setIn(new FileInputStream("/Users/cyrusvahidi/wacc_examples/valid/array/arrayEmpty.wacc"));
+            System.setIn(new FileInputStream("/Users/cyrusvahidi/wacc_examples/valid/array/arraySimple.wacc"));
             //System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/valid/advanced/ticTacToe.wacc"));
         }
 

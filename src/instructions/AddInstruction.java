@@ -27,6 +27,6 @@ public class AddInstruction extends Instruction {
     @Override
     public String toCode() {
         return "ADD" + (setFlags ? "S " : " ")
-                + rDest + ", " + rSrc + ", " + op + (lslVal != 0 ? ", #" + lslVal : "");
+                + rDest + ", " + rSrc + ", " + op + (lslVal != 0 ? ", LSL #" + lslVal : "");
     }
 }
