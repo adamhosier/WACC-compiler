@@ -18,6 +18,7 @@ public class Arm11Program {
     public static final String PRINT_CHAR_NAME = "putchar";
     public static final String READ_INT_NAME = "p_read_int";
     public static final String READ_CHAR_NAME = "p_read_char";
+    public static final String OVERFLOW_NAME = "p_throw_overflow_error";
 
     public static String decode(String input) {
         return input.replace("\\0", "\0").replace("\\b", "\b").replace("\\n", "\n").replace("\\f", "\f").replace("\\r", "\r").replace("\\\"", "\"").replace("\\'", "'").replace("\\\\", "\\");
@@ -68,7 +69,7 @@ public class Arm11Program {
         printStringFunc = getMsgLabel("%.*s\\0");
         startFunction(PRINT_STRING_NAME);
         add(new LoadInstruction(Registers.r1, Registers.r0));
-        add(new AddInstruction(Registers.r2, Registers.r0, 4));
+        add(new AddInstruction(Registers.r2, Registers.r0, new Operand2(4)));
         add(new LoadInstruction(Registers.r0, printStringFunc));
         endPrintFunction("printf");
     }
@@ -138,7 +139,7 @@ public class Arm11Program {
 
 
     public void endPrintFunction(String branch) {
-        add(new AddInstruction(Registers.r0, Registers.r0, 4));
+        add(new AddInstruction(Registers.r0, Registers.r0, new Operand2(4)));
         add(new BranchLinkInstruction(branch));
         add(new MoveInstruction(Registers.r0, 0));
         add(new BranchLinkInstruction("fflush"));
@@ -146,7 +147,7 @@ public class Arm11Program {
     }
 
     private void endReadFunction() {
-        add(new AddInstruction(Registers.r0, Registers.r0, 4));
+        add(new AddInstruction(Registers.r0, Registers.r0, new Operand2(4)));
         add(new BranchLinkInstruction("scanf"));
         endFunction();
     }

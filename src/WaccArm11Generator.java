@@ -3,6 +3,7 @@ import instructions.*;
 import org.antlr.v4.runtime.misc.Pair;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.RuleNode;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import util.*;
 
 import java.util.Comparator;
@@ -101,7 +102,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new LoadInstruction(Registers.r0, 0));
         }
 
-        if(stackOffset != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, stackOffset));
+        if(stackOffset != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2(stackOffset)));
 
         state.endUserFunction();
         state.add(new TextDirective());
@@ -154,7 +155,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
         state.add(new BranchLinkInstruction("f_" + ctx.ident().getText()));
         int stackSize = st.getStackSize(ctx.ident().getText());
-        if(stackSize != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, stackSize));
+        if(stackSize != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2(stackSize)));
         Register next = registers.getRegister();
         state.add(new MoveInstruction(next, Registers.r0));
         state.add(new StoreInstruction(next, Registers.sp, 0));
@@ -247,6 +248,53 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new LoadInstruction(nextRegister, nextRegister, 0));
             return nextRegister;
         }
+
+        if(ctx.boolBinaryOper() != null) {
+            return visit(ctx.boolBinaryOper());
+        }
+        if(ctx.otherBinaryOper() != null) {
+            return visit(ctx.otherBinaryOper());
+        }
+        return null;
+    }
+
+    @Override
+    public Register visitOtherBinaryOper(OtherBinaryOperContext ctx) {
+        int tokenIndex = ((TerminalNode) ctx.getChild(0)).getSymbol().getType();
+
+        Register lhs = visit(((ExprContext) ctx.getParent()).expr(0));
+        Register rhs = visit(((ExprContext) ctx.getParent()).expr(1));
+
+        switch(tokenIndex) {
+            case MULT:
+                break;
+            case DIV:
+                break;
+            case MOD:
+                break;
+            case PLUS:
+                AddInstruction adds = new AddInstruction(lhs, lhs, new Operand2(rhs));
+                adds.setFlags = true;
+                state.add(adds);
+                state.add(new BranchLinkOverflow(Arm11Program.OVERFLOW_NAME));
+                return lhs;
+            case MINUS:
+                break;
+            case GREATER_THAN:
+                break;
+            case GREATER_THAN_EQ:
+                break;
+            case LESS_THAN:
+                break;
+            case LESS_THAN_EQ:
+                break;
+            case EQ:
+                break;
+            case NOT_EQ:
+                break;
+            default:
+                return null;
+        }
         return null;
     }
 
@@ -282,11 +330,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     }
 
     @Override
-    public Register visitOtherBinaryOper(OtherBinaryOperContext ctx) {
-        return super.visitOtherBinaryOper(ctx);
-    }
-
-    @Override
     public Register visitCharacter(CharacterContext ctx) {
         return super.visitCharacter(ctx);
     }
@@ -304,7 +347,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     @Override
     public Register visitIdent(IdentContext ctx) {
         Register next = registers.getRegister();
-        state.add(new AddInstruction(next, Registers.sp, st.getAddress(ctx.getText())));
+        state.add(new AddInstruction(next, Registers.sp, new Operand2(st.getAddress(ctx.getText()))));
         return next;
     }
 
