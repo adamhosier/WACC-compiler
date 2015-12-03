@@ -482,7 +482,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 registers.free(indexRegister);
                 registers.freeReturnRegisters();
             }
-            
+
             state.add(new StoreInstruction(rhsRegister, arrayReg, 0, isBoolOrChar)); // store assigned value at index
             registers.free(arrayReg);
             registers.free(rhsRegister);
@@ -584,11 +584,13 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             registers.free(src);
         } else if (arrayLiter != null) { // array declaration
             int arrLength = arrayLiter.expr().size();
-            int typeSize;
-            if (arrayLiter.expr(0).ident() != null) { // nested arrays
-                typeSize = ARRAY_SIZE;
-            } else {
-                typeSize = getTypeSize(type);
+            int typeSize = 0;
+            if (arrayLiter.expr().size() > 0) {
+                if (arrayLiter.expr(0).ident() != null) { // nested arrays
+                    typeSize = ARRAY_SIZE;
+                } else {
+                    typeSize = getTypeSize(type);
+                }
             }
             int heapSize = arrLength * typeSize + INT_SIZE; // INT_SIZE IS TO STORE LENGTH OF ARRAY
             boolean isBoolOrChar = typeSize == BOOL_CHAR_SIZE;
