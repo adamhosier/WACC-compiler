@@ -55,8 +55,14 @@ public class WaccType {
 
     public static WaccType fromUnaryOp(int uop) {
         switch(uop) {
+            case WaccParser.NOT:
+                return new WaccType(WaccParser.BOOL);
+            case WaccParser.MINUS:
             case WaccParser.LEN:
+            case WaccParser.ORD:
                 return new WaccType(WaccParser.INT);
+            case WaccParser.CHR:
+                return new WaccType(WaccParser.CHAR);
         }
         return INVALID;
     }

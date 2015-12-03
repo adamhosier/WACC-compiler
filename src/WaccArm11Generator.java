@@ -721,6 +721,36 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             exprType = WaccType.fromUnaryOp(((TerminalNode) expr.unaryOper().getChild(0)).getSymbol().getType());
         }
 
+        if(expr.arrayElem() != null) {
+            System.out.println("here");
+            state.add(new MoveInstruction(Registers.r0, msgReg));
+            String ident = expr.arrayElem().ident().getText();
+            WaccType arrayType = st.lookupType(ident);
+            int id = arrayType.getId();
+            switch (id) {
+                case STRING:
+                    state.add(new BranchLinkInstruction(Arm11Program.PRINT_STRING_NAME));
+                    if (!state.functionDeclared(Arm11Program.PRINT_STRING_NAME)) {
+                        state.addPrintString();
+                    }
+                    break;
+                case BOOL:
+                    state.add(new BranchLinkInstruction(Arm11Program.PRINT_BOOL_NAME));
+                    if (!state.functionDeclared(Arm11Program.PRINT_BOOL_NAME)) {
+                        state.addPrintBool();
+                    }
+                    break;
+                case INT:
+                    state.add(new BranchLinkInstruction(Arm11Program.PRINT_INT_NAME));
+                    if (!state.functionDeclared(Arm11Program.PRINT_INT_NAME)) {
+                        state.addPrintInt();
+                    }
+                    break;
+                case CHAR:
+                    state.add(new BranchLinkInstruction(Arm11Program.PRINT_CHAR_NAME));
+            }
+        }
+
         // print string
         if(expr.STRING_LIT() != null || new WaccType(STRING).equals(exprType)) {
             state.add(new MoveInstruction(Registers.r0, msgReg));
