@@ -26,6 +26,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     private static final int CHAR_SIZE = 1;
     private static final int STRING_SIZE = 4;
     private static final int PAIR_SIZE = 4;
+    private static final int ARRAY_SIZE = 4;
     private static final int REG_SIZE = 4;
     private static final int BOOL_CHAR_SIZE = 1;
 
@@ -256,7 +257,8 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
                 state.add(new MoveInstruction(registers.getReturnRegister(), indexRegister));
                 state.add(new MoveInstruction(registers.getReturnRegister(), arrayRegister));
-                // TODO: check array bounds and do for nested array
+
+                state.add(new BranchLinkInstruction(Arm11Program.ARRAY_BOUND_NAME));
                 state.addArrayBoundError();
 
                 // indexes start after length at offset 0
@@ -275,7 +277,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 registers.freeReturnRegisters();
             }
 
-            state.add(new LoadInstruction(arrayRegister, new Operand2(arrayRegister, true)));
+            state.add(new LoadInstruction(arrayRegister, new Operand2(arrayRegister, true), getIdentTypeSize(ident) == BOOL_CHAR_SIZE));
             return arrayRegister;
         }
         //TODO: MOVE THIS TO visitUnaryOper ???
@@ -421,10 +423,9 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
             if (expr !=  null) {
                 Register src = visit(expr);
-                if(expr.BOOL_LIT() != null || expr.CHAR_LIT() != null) {
-                    state.add(new StoreInstruction(src, Registers.sp, offset, true));
-                }
-                else state.add(new StoreInstruction(src, Registers.sp, offset));
+                boolean isBoolOrChar = expr.BOOL_LIT() != null
+                                        || expr.CHAR_LIT() != null;
+                state.add(new StoreInstruction(src, Registers.sp, offset, isBoolOrChar));
                 registers.free(src);
             }
 
@@ -433,6 +434,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 int arrLength = arrayLiter.expr().size();
                 int typeSize = getIdentTypeSize(ident);
                 int heapSize = arrLength * typeSize + INT_SIZE; // INT_SIZE IS TO STORE LENGTH OF ARRAY
+                boolean isBoolOrChar = typeSize == BOOL_CHAR_SIZE;
 
                 // set up heap memory allocation
                 state.add(new LoadInstruction(Registers.r0, new Operand2(heapSize)));
@@ -443,7 +445,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 // process each array elem
                 for (int i = 0; i < arrLength; i++) {
                     Register src = visit(arrayLiter.expr(i));
-                    state.add(new StoreInstruction(src, heapPtr, INT_SIZE + i * typeSize));
+                    state.add(new StoreInstruction(src, heapPtr, INT_SIZE + i * typeSize, isBoolOrChar));
                     registers.free(src);
                 }
                 // process length
@@ -553,8 +555,14 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             registers.free(src);
         } else if (arrayLiter != null) { // array declaration
             int arrLength = arrayLiter.expr().size();
-            int typeSize = getTypeSize(type);
+            int typeSize;
+            if (arrayLiter.expr(0).ident() != null) { // nested arrays
+                typeSize = ARRAY_SIZE;
+            } else {
+                typeSize = getTypeSize(type);
+            }
             int heapSize = arrLength * typeSize + INT_SIZE; // INT_SIZE IS TO STORE LENGTH OF ARRAY
+            boolean isBoolOrChar = typeSize == BOOL_CHAR_SIZE;
 
             // set up heap memory allocation
             state.add(new LoadInstruction(Registers.r0, new Operand2(heapSize)));
@@ -565,7 +573,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             // process each array elem
             for (int i = 0; i < arrLength; i++) {
                 Register src = visit(arrayLiter.expr(i));
-                state.add(new StoreInstruction(src, heapPtr, INT_SIZE + i * typeSize));
+                state.add(new StoreInstruction(src, heapPtr, INT_SIZE + i * typeSize, isBoolOrChar));
                 registers.free(src);
             }
             // process length

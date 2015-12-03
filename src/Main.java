@@ -1,19 +1,22 @@
 // import ANTLR's runtime libraries
-import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.tree.*;
 
-// import antlr package (your code)
-import antlr.*;
+import antlr.WaccLexer;
+import antlr.WaccParser;
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.io.FileInputStream;
+
+// import antlr package (your code)
 
 public class Main {
 
     public static void main(String[] args) throws Exception {
 
         if(args.length == 0) {
-            //System.setIn(new FileInputStream("/Users/cyrusvahidi/wacc_examples/valid/variables/charDeclaration.wacc"));
-            System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/valid/runtimeErr/arrayOutOfBounds/arrayOutOfBounds.wacc"));
+            System.setIn(new FileInputStream("/Users/cyrusvahidi/wacc_examples/valid/array/arraySimple.wacc"));
+            //System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/valid/runtimeErr/arrayOutOfBounds/arrayOutOfBounds.wacc"));
         }
 
         // create a lexer that feeds off of input from System.in
