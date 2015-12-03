@@ -53,6 +53,14 @@ public class WaccType {
         return INVALID;
     }
 
+    public static WaccType fromUnaryOp(int uop) {
+        switch(uop) {
+            case WaccParser.LEN:
+                return new WaccType(WaccParser.INT);
+        }
+        return INVALID;
+    }
+
     public boolean isValid() {
         return id != INVALID_ID;
     }

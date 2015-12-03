@@ -285,7 +285,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             // array info stored on stack
             state.add(new LoadInstruction(nextRegister, new Operand2(Registers.sp, offset)));
             // array length is in first address
-            state.add(new LoadInstruction(nextRegister, new Operand2(nextRegister)));
+            state.add(new LoadInstruction(nextRegister, new Operand2(nextRegister, 0)));
             return nextRegister;
         }
 
@@ -585,7 +585,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         } else if (arrayLiter != null) { // array declaration
             int arrLength = arrayLiter.expr().size();
             int typeSize = 0;
-            if (arrayLiter.expr().size() > 0) {
+            if (arrLength > 0) {
                 if (arrayLiter.expr(0).ident() != null) { // nested arrays
                     typeSize = ARRAY_SIZE;
                 } else {
@@ -717,6 +717,8 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             exprType = WaccType.fromBinaryOp(((TerminalNode) expr.otherBinaryOper().getChild(0)).getSymbol().getType());
         } else if(expr.boolBinaryOper() != null) {
             exprType = WaccType.fromBinaryOp(((TerminalNode) expr.boolBinaryOper().getChild(0)).getSymbol().getType());
+        } else if(expr.unaryOper() != null) {
+            exprType = WaccType.fromUnaryOp(((TerminalNode) expr.unaryOper().getChild(0)).getSymbol().getType());
         }
 
         // print string
