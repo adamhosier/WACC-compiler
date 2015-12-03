@@ -793,12 +793,16 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
       Register reg = visitExpr(condition);
       state.add(new CompareInstruction(reg, new Operand2('#',0)));
       state.add(new BranchLinkEqualInstruction("LO"));
+      st.newScope();
       StatContext L0 = (StatContext) ctx.getChild(3);
       StatContext False = (StatContext) ctx.getChild(5);
       visitStat(False);
       state.add(new BranchLinkInstruction("L1"));
+      st.endScope();
+      st.newScope();
       state.add(new LabelInstruction("LO"));
       visitStat(L0);
+      st.endScope();
       state.add(new LabelInstruction("L1"));
       
      
