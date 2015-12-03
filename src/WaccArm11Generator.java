@@ -23,6 +23,8 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     private SymbolTable st;
     private int stackOffset;
     private int currOffset;
+    private int ifStatementCounter = 0;
+    private int WhileStatementCounter = 0;
 
     // size on stack for each type
     private static final int INT_SIZE = 4;
@@ -792,19 +794,19 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
       ExprContext condition = (ExprContext) ctx.getChild(1);
       Register reg = visitExpr(condition);
       state.add(new CompareInstruction(reg, new Operand2('#',0)));
-      state.add(new BranchLinkEqualInstruction("LO"));
+      state.add(new BranchLinkEqualInstruction("L" + (ifStatementCounter * 2)));
       st.newScope();
-      StatContext L0 = (StatContext) ctx.getChild(3);
-      StatContext False = (StatContext) ctx.getChild(5);
-      visitStat(False);
-      state.add(new BranchLinkInstruction("L1"));
+      StatContext trueStats = (StatContext) ctx.getChild(3);
+      StatContext falseStats = (StatContext) ctx.getChild(5);
+      visitStat(trueStats);
+      state.add(new BranchLinkInstruction("L" + (ifStatementCounter * 2 + 1)));
       st.endScope();
       st.newScope();
-      state.add(new LabelInstruction("LO"));
-      visitStat(L0);
+      state.add(new LabelInstruction("L" + (ifStatementCounter * 2)));
+      visitStat(falseStats);
       st.endScope();
-      state.add(new LabelInstruction("L1"));
-      
+      state.add(new LabelInstruction("L" + (ifStatementCounter * 2 + 1)));
+      ifStatementCounter++;
      
       return null;
     }
