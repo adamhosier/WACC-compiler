@@ -9,6 +9,6 @@ public class BranchLinkEqualInstruction extends Instruction {
 
     @Override
     public String toCode() {
-        return "BLEQ " + funcName;
+        return "BEQ " + funcName;
     }
 }

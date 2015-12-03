@@ -89,7 +89,7 @@ public class SymbolTable {
      * Destroy top most scope
      */
     public boolean endScope() {
-        outputln("> CURRENT SCOPE DESTROYED: amount " + (tables.size() - 1));
+        outputln("> CURRENT SCOPE ENDED: amount " + (tables.size() - 1));
         if(tables.size() > 1) {
             tables.removeFirst();
             return true;

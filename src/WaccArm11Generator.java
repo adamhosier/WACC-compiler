@@ -1,9 +1,13 @@
+import antlr.WaccParser.ExprContext;
+import antlr.WaccParser.StatContext;
 import antlr.WaccParserBaseVisitor;
 import instructions.*;
+
 import org.antlr.v4.runtime.misc.Pair;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.RuleNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
+
 import util.*;
 
 import java.util.Comparator;
@@ -19,6 +23,8 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     private SymbolTable st;
     private int stackOffset;
     private int currOffset;
+    private int ifStatementCounter = 0;
+    private int WhileStatementCounter = 0;
 
     // size on stack for each type
     private static final int INT_SIZE = 4;
@@ -808,8 +814,29 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitIfStat(IfStatContext ctx) {
-        return super.visitIfStat(ctx);
+      ExprContext condition = (ExprContext) ctx.getChild(1);
+      Register reg = visitExpr(condition);
+      state.add(new CompareInstruction(reg, new Operand2('#',0)));
+      state.add(new BranchLinkEqualInstruction("L" + (ifStatementCounter * 2)));
+      
+      registers.free(reg);
+      st.newScope();
+      reg = visitStat(ctx.stat(0));
+      state.add(new BranchLinkInstruction("L" + (ifStatementCounter * 2 + 1)));
+      st.endScope();
+      
+      registers.free(reg);
+      st.newScope();
+      state.add(new LabelInstruction("L" + (ifStatementCounter * 2)));
+      visit(ctx.stat(1));
+      st.endScope();
+      
+      state.add(new LabelInstruction("L" + (ifStatementCounter * 2 + 1)));
+      ifStatementCounter++;
+     
+      return null;
     }
+
 
     @Override
     public Register visitPairType(PairTypeContext ctx) {
