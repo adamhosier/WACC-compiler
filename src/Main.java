@@ -16,8 +16,8 @@ public class Main {
 
         if(args.length == 0) {
             //System.setIn(new FileInputStream("/Users/cyrusvahidi/wacc_examples/valid/array/arraySimple.wacc"));
-            //System.setIn(new FileInputStream("/homes/ah3114/work/wacc/examples/valid/runtimeErr/arrayOutOfBounds/arrayOutOfBounds.wacc"));
-            System.setIn(new FileInputStream("/Users/Dyl/Documents/workspace/WACC-compiler/examples/valid/if/if1.wacc"));
+            System.setIn(new FileInputStream("/home/adam/labs/wacclab/examples/valid/if/if1.wacc"));
+            //System.setIn(new FileInputStream("/Users/Dyl/Documents/workspace/WACC-compiler/examples/valid/if/if1.wacc"));
         }
 
         // create a lexer that feeds off of input from System.in
