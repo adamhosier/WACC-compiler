@@ -1,9 +1,9 @@
 package instructions;
 
-public class BranchLinkNotEqual extends Instruction {
+public class BranchLinkNotEqualInstruction extends Instruction {
     private String branchFunc;
 
-    public BranchLinkNotEqual(String branchFunc) {
+    public BranchLinkNotEqualInstruction(String branchFunc) {
 
         this.branchFunc = branchFunc;
     }
