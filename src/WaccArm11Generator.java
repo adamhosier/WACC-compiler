@@ -482,7 +482,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 registers.free(indexRegister);
                 registers.freeReturnRegisters();
             }
-
             state.add(new StoreInstruction(rhsRegister, arrayReg, 0, isBoolOrChar)); // store assigned value at index
             registers.free(arrayReg);
             registers.free(rhsRegister);
