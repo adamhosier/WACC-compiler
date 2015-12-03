@@ -1,9 +1,9 @@
 package instructions;
 
-public class BranchLinkOverflow extends Instruction {
+public class BranchLinkOverflowInstruction extends Instruction {
     private String overflowFunc;
 
-    public BranchLinkOverflow(String overflowFunc) {
+    public BranchLinkOverflowInstruction(String overflowFunc) {
 
         this.overflowFunc = overflowFunc;
     }

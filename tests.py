@@ -1,6 +1,7 @@
 from subprocess import Popen, call, PIPE, STDOUT
 import os
 
+testdir = "examples/valid/runtimeErr"
 numtests = 0
 numpasses = 0
 
@@ -24,9 +25,10 @@ def run_test(path, expectedExit):
     p = Popen(["arm-linux-gnueabi-gcc", "-o", fname, "-mcpu=arm1176jzf-s",
         "-mtune=arm1176jzf-s", fname + ".s"], stdin=PIPE, stdout=PIPE, 
         stderr=STDOUT)
-    p.communicate() 
+    output, err = p.communicate() 
     if(p.returncode != 0):
         print("TEST {0} FAILED: COULD NOT ASSEMBLE")
+        print(output.decode("utf-8"))
         os.remove(fname + ".s")
         return
 
@@ -66,7 +68,6 @@ if r != 0:
     print("Make failed")
     sys.exit(-1)
 
-testdir = "examples/valid/expressions"
 
 print("========== RUNNING TESTS ==========")
 for subdir, dirs, files in os.walk(testdir):

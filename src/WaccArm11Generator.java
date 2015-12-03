@@ -333,7 +333,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 Operand2 op2 = new Operand2(dest);
                 op2.setAsr(31);
                 state.add(new CompareInstruction(overflow, op2));
-                state.add(new BranchLinkNotEqual(Arm11Program.OVERFLOW_NAME));
+                state.add(new BranchLinkNotEqualInstruction(Arm11Program.OVERFLOW_NAME));
                 if(!state.functionDeclared(Arm11Program.OVERFLOW_NAME)) state.addOverflowError();
                 return dest;
             case DIV:
@@ -356,14 +356,14 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 AddInstruction adds = new AddInstruction(dest, lhs, new Operand2(rhs));
                 adds.setFlags = true;
                 state.add(adds);
-                state.add(new BranchLinkOverflow(Arm11Program.OVERFLOW_NAME));
+                state.add(new BranchLinkOverflowInstruction(Arm11Program.OVERFLOW_NAME));
                 if(!state.functionDeclared(Arm11Program.OVERFLOW_NAME)) state.addOverflowError();
                 return dest;
             case MINUS:
                 SubInstruction subs = new SubInstruction(dest, lhs, new Operand2(rhs));
                 subs.setFlags = true;
                 state.add(subs);
-                state.add(new BranchLinkOverflow(Arm11Program.OVERFLOW_NAME));
+                state.add(new BranchLinkOverflowInstruction(Arm11Program.OVERFLOW_NAME));
                 if(!state.functionDeclared(Arm11Program.OVERFLOW_NAME)) state.addOverflowError();
                 return dest;
             case GREATER_THAN:
