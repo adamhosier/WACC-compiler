@@ -27,6 +27,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     private static final int STRING_SIZE = 4;
     private static final int PAIR_SIZE = 4;
     private static final int REG_SIZE = 4;
+    private static final int BOOL_CHAR_SIZE = 1;
 
     private static final boolean IS_BYTE = true;
 
@@ -243,29 +244,38 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             return nextRegister;
         }
         if(ctx.arrayElem() != null) {
-            int offset = st.getAddress(ctx.arrayElem().ident().getText());
+            String ident = ctx.arrayElem().ident().getText();
+            int offset = st.getAddress(ident);
 
             Register arrayRegister = registers.getRegister();
             state.add(new AddInstruction(arrayRegister, Registers.sp, new Operand2('#', offset)));
 
-            Register exprRegister = visit(ctx.arrayElem().expr(0)); // get index of arrayElem
-            state.add(new LoadInstruction(arrayRegister, new Operand2(arrayRegister, 0))); // get length of array
+            for(int i = 0; i < ctx.arrayElem().expr().size(); i += 3) {
+                Register indexRegister = visit(ctx.arrayElem().expr(i)); // get index of arrayElem
+                state.add(new LoadInstruction(arrayRegister, new Operand2(arrayRegister, 0))); // get length of array
 
-            state.add(new MoveInstruction(registers.getReturnRegister(), exprRegister));
-            state.add(new MoveInstruction(registers.getReturnRegister(), arrayRegister));
-            // TODO: check array bounds and do for nested array
+                state.add(new MoveInstruction(registers.getReturnRegister(), indexRegister));
+                state.add(new MoveInstruction(registers.getReturnRegister(), arrayRegister));
+                // TODO: check array bounds and do for nested array
+                state.addArrayBoundError();
 
-            state.add(new AddInstruction(arrayRegister, arrayRegister, new Operand2('#', INT_SIZE))); // indexes start after length
+                // indexes start after length at offset 0
+                state.add(new AddInstruction(arrayRegister, arrayRegister, new Operand2('#', INT_SIZE)));
 
-            /* gets the correct index, takes index expr
-                and multiplies by 4 (LSL #2) since reg indexes are 4 long
-             */
-            state.add(new AddInstruction(arrayRegister, arrayRegister, new Operand2(exprRegister), 2));
+                if (getIdentTypeSize(ident) == BOOL_CHAR_SIZE) {
+                    state.add(new AddInstruction(arrayRegister, arrayRegister, new Operand2(indexRegister)));
+                } else {
+                    /* gets the correct index, takes index expr
+                       and multiplies by 4 (LSL #2) since reg indexes are 4 long
+                    */
+                    state.add(new AddInstruction(arrayRegister, arrayRegister, new Operand2(indexRegister), 2));
+                }
+
+                registers.free(indexRegister);
+                registers.freeReturnRegisters();
+            }
+
             state.add(new LoadInstruction(arrayRegister, new Operand2(arrayRegister, true)));
-
-            registers.free(exprRegister);
-            registers.free(Registers.r0);
-            registers.free(Registers.r1);
             return arrayRegister;
         }
         //TODO: MOVE THIS TO visitUnaryOper ???
