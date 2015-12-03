@@ -1,9 +1,13 @@
+import antlr.WaccParser.ExprContext;
+import antlr.WaccParser.StatContext;
 import antlr.WaccParserBaseVisitor;
 import instructions.*;
+
 import org.antlr.v4.runtime.misc.Pair;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.RuleNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
+
 import util.*;
 
 import java.util.Comparator;
@@ -785,8 +789,22 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitIfStat(IfStatContext ctx) {
-        return super.visitIfStat(ctx);
+      ExprContext condition = (ExprContext) ctx.getChild(1);
+      Register reg = visitExpr(condition);
+      state.add(new CompareInstruction(reg, new Operand2('#',0)));
+      state.add(new BranchLinkEqualInstruction("LO"));
+      StatContext L0 = (StatContext) ctx.getChild(3);
+      StatContext False = (StatContext) ctx.getChild(5);
+      visitStat(False);
+      state.add(new BranchLinkInstruction("L1"));
+      state.add(new LabelInstruction("LO"));
+      visitStat(L0);
+      state.add(new LabelInstruction("L1"));
+      
+     
+      return null;
     }
+
 
     @Override
     public Register visitPairType(PairTypeContext ctx) {
