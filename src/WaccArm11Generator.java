@@ -251,19 +251,12 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             Register arrayRegister = registers.getRegister();
             state.add(new AddInstruction(arrayRegister, Registers.sp, new Operand2('#', offset)));
 
-            for(int i = 0; i < ctx.arrayElem().expr().size(); i += 3) {
+            for(int i = 0; i < ctx.arrayElem().expr().size(); i++) {
                 Register indexRegister = visit(ctx.arrayElem().expr(i)); // get index of arrayElem
                 state.add(new LoadInstruction(arrayRegister, new Operand2(arrayRegister, 0))); // get length of array
-
-                state.add(new MoveInstruction(registers.getReturnRegister(), indexRegister));
-                state.add(new MoveInstruction(registers.getReturnRegister(), arrayRegister));
-
-                state.add(new BranchLinkInstruction(Arm11Program.ARRAY_BOUND_NAME));
-                state.addArrayBoundError();
-
+                addArrayBoundsCheck(indexRegister, arrayRegister);
                 // indexes start after length at offset 0
                 state.add(new AddInstruction(arrayRegister, arrayRegister, new Operand2('#', INT_SIZE)));
-
                 if (getIdentTypeSize(ident) == BOOL_CHAR_SIZE) {
                     state.add(new AddInstruction(arrayRegister, arrayRegister, new Operand2(indexRegister)));
                 } else {
@@ -272,11 +265,9 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                     */
                     state.add(new AddInstruction(arrayRegister, arrayRegister, new Operand2(indexRegister), 2));
                 }
-
                 registers.free(indexRegister);
                 registers.freeReturnRegisters();
             }
-
             state.add(new LoadInstruction(arrayRegister, new Operand2(arrayRegister, true), getIdentTypeSize(ident) == BOOL_CHAR_SIZE));
             return arrayRegister;
         }
@@ -461,11 +452,43 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
         ArrayElemContext arrayElem = ctx.assignLhs().arrayElem();
         if (arrayElem != null) {
-            if (expr != null) {
-                Register nextRegister = visit(expr);
+            String ident = arrayElem.ident().getText();
+            int offset = st.getAddress(ident);
+            boolean isBoolOrChar = getIdentTypeSize(ident) == BOOL_CHAR_SIZE;
+
+            Register rhsRegister = visit(expr);
+            Register arrayReg = registers.getRegister();
+            Register indexRegister;
+            state.add(new AddInstruction(arrayReg, Registers.sp, new Operand2('#', offset)));
+            for(int i = 0; i < arrayElem.expr().size(); i++) {
+                indexRegister = visit(arrayElem.expr(i));
+                System.out.println(i);
+                state.add(new LoadInstruction(arrayReg, new Operand2(arrayReg, true))); // offset 0 is length
+                addArrayBoundsCheck(indexRegister, arrayReg);
+                state.add(new AddInstruction(arrayReg, arrayReg, new Operand2('#', INT_SIZE))); // elems start after length
+                // index always multiplied by 4 for nested arrays
+                if (isBoolOrChar && i == arrayElem.expr().size() - 1) {
+                    state.add(new AddInstruction(arrayReg, arrayReg, new Operand2(indexRegister)));
+                } else {
+                    // multiply index by 4 when !isBoolOrChar
+                    state.add(new AddInstruction(arrayReg, arrayReg, new Operand2(indexRegister), 2));
+                }
+                registers.free(indexRegister);
+                registers.freeReturnRegisters();
             }
+
+            state.add(new StoreInstruction(rhsRegister, arrayReg, 0, isBoolOrChar)); // store assigned value at index
+            registers.free(arrayReg);
+            registers.free(rhsRegister);
         }
         return null;
+    }
+
+    private void addArrayBoundsCheck(Register reg1, Register reg2) {
+        state.add(new MoveInstruction(registers.getReturnRegister(), reg1));
+        state.add(new MoveInstruction(registers.getReturnRegister(), reg2));
+        state.add(new BranchLinkInstruction(Arm11Program.ARRAY_BOUND_NAME));
+        state.addArrayBoundError();
     }
 
     private int getIdentTypeSize(String ident) {
