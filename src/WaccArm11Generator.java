@@ -712,6 +712,14 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         WaccType exprType = null;
         if(expr.ident() != null) {
             exprType = st.lookupType(expr.ident().getText());
+
+            if(exprType.isArray()) {
+                state.add(new MoveInstruction(Registers.r0, msgReg));
+                state.add(new BranchLinkInstruction(Arm11Program.PRINT_REF_NAME));
+                if (!state.functionDeclared(Arm11Program.PRINT_REF_NAME)) {
+                    state.addPrintRef();
+                }
+            }
         } else if(expr.otherBinaryOper() != null) {
             exprType = WaccType.fromBinaryOp(((TerminalNode) expr.otherBinaryOper().getChild(0)).getSymbol().getType());
         } else if(expr.boolBinaryOper() != null) {
@@ -721,7 +729,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         }
 
         if(expr.arrayElem() != null) {
-            System.out.println("here");
             state.add(new MoveInstruction(Registers.r0, msgReg));
             String ident = expr.arrayElem().ident().getText();
             WaccType arrayType = st.lookupType(ident);
