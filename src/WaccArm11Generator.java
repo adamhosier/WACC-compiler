@@ -124,7 +124,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     public Register visitFunc(FuncContext ctx) {
         // save stack size for this scope
         StackSizeVisitor sizeVisitor = new StackSizeVisitor();
-        funcOffset = sizeVisitor.getSize(ctx);
+        funcOffset = sizeVisitor.getSize(ctx.stat());
         st.setStackSize(ctx.ident().getText(), funcOffset);
         st.enterNextScope();
 
