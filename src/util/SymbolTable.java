@@ -1,6 +1,5 @@
 package util;
 
-import antlr.WaccParser;
 import org.antlr.v4.runtime.misc.Pair;
 
 import java.util.*;
@@ -10,17 +9,17 @@ public class SymbolTable {
     public boolean verbose = false;
 
     // points to the lowest table in the hash map list
-    private Map<String, Symbol> globaltable;
+    private Scope<Symbol> globaltable;
 
     // holds functions
-    private Map<String, FunctionSymbol> functions = new HashMap<>();
+    private Scope<FunctionSymbol> functions = new Scope<>();
 
     // holds tables in different scopes
-    private LinkedList<Map<String, Symbol>> tables = new LinkedList<>();
+    private LinkedList<Scope<Symbol>> tables = new LinkedList<>();
 
 
     public SymbolTable() {
-        globaltable = new HashMap<>();
+        globaltable = new Scope<>();
         tables.add(globaltable);
     }
 
@@ -50,20 +49,42 @@ public class SymbolTable {
      * Returns false on failure
      */
     public boolean addVariable(String ident, WaccType type) {
-        output("> ADDING THE VARIABLE " + ident + " WITH TYPE " + type.toString() + " AT SCOPE " + tables.size());
-        return addVar(tables.getFirst(), ident, new VariableSymbol(type));
+        output("> ADDING THE VARIABLE " + ident + " WITH TYPE " + type.toString() + " AT SCOPE " + getNumScopes());
+        return addVar(getFirstTable(), ident, new VariableSymbol(type));
+    }
+
+    private int getNumScopes() {
+        int num = 0;
+        for(Scope<Symbol> table : tables) {
+            if(table.isInScope()) num++;
+        }
+        return num;
+    }
+
+    private Scope<Symbol> getFirstTable() {
+        for(Scope<Symbol> table : tables) {
+            if(table.isInScope()) return table;
+        }
+        return null;
+    }
+
+    private Scope<Symbol> getNextOutOfScopeTable() {
+        for(Scope<Symbol> table : tables) {
+            if(!table.isInScope()) return table;
+        }
+        return null;
     }
 
     /*
      * Takes some generic table, an identifier and a symbol and adds that symbol to the given table under its ident
      */
-    private <T extends Symbol> boolean addVar(Map<String, T> table, String ident, T sym) {
-        if(table.containsKey(ident) && !(table.get(ident) instanceof FunctionSymbol && sym instanceof VariableSymbol)) {
+    private <T extends Symbol> boolean addVar(Scope<T> table, String ident, T sym) {
+        if(table.hasIdent(ident) && !(table.get(ident) instanceof FunctionSymbol && sym instanceof VariableSymbol)) {
             outputln("... FAILED");
             return false;
         }
         outputln("... DONE");
-        table.put(ident, sym);
+        table.add(ident, sym);
         return true;
     }
 
@@ -81,21 +102,24 @@ public class SymbolTable {
      * Create new scope
      */
     public void newScope() {
-        outputln("> NEW SCOPE CREATED: amount " + (tables.size() + 1));
-        tables.addFirst(new HashMap<String, Symbol>());
+        outputln("> NEW SCOPE CREATED: amount " + (getNumScopes() + 1));
+        tables.addFirst(new Scope<Symbol>());
+    }
+
+    public void enterNextScope() {
+        Scope<Symbol> table = getNextOutOfScopeTable();
+        if(table != null) table.enter();
     }
 
     /*
      * Destroy top most scope
      */
     public boolean endScope() {
-        outputln("> CURRENT SCOPE ENDED: amount " + (tables.size() - 1));
-        if(tables.size() > 1) {
-            tables.removeFirst();
-            return true;
-        } else {
-            return false;
-        }
+        outputln("> CURRENT SCOPE ENDED: amount " + (getNumScopes() - 1));
+        Scope<Symbol> table = getFirstTable();
+        if(table == null) return false;
+        else table.exit();
+        return true;
     }
 
     /*
@@ -117,21 +141,21 @@ public class SymbolTable {
     }
 
     private Symbol getSymbol(String ident) {
-        for(Map<String, ? extends Symbol> table : tables) {
-            if(table.containsKey(ident)) {
+        for(Scope<? extends Symbol> table : tables) {
+            if(table.isInScope() && table.hasIdent(ident)) {
                 return table.get(ident);
             }
         }
         return null;
     }
 
+
     private FunctionSymbol getFunctionSymbol(String funcIdent) {
-        if(!functions.containsKey(funcIdent)) {
+        if(!functions.hasIdent(funcIdent)) {
             return null;
         }
         return functions.get(funcIdent);
     }
-
 
     /*
      * Given the identifier of a function, return it's result type, or null if it doesn't exist
@@ -330,4 +354,32 @@ public class SymbolTable {
         }
     }
 
+    private class Scope<S> {
+        private Map<String, S> map = new HashMap<>();
+        private boolean isInScope = true;
+
+        public void enter() {
+            isInScope = true;
+        }
+
+        public void exit() {
+            isInScope = false;
+        }
+
+        public boolean isInScope() {
+            return isInScope;
+        }
+
+        public boolean hasIdent(String ident) {
+            return map.containsKey(ident);
+        }
+
+        public S get(String ident) {
+            return map.get(ident);
+        }
+
+        public void add(String ident, S sym) {
+            map.put(ident, sym);
+        }
+    }
 }
