@@ -460,7 +460,8 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         if (arrayElem != null) {
             String ident = arrayElem.ident().getText();
             int offset = st.getAddress(ident);
-            boolean isBoolOrChar = getIdentTypeSize(ident) == BOOL_CHAR_SIZE;
+            boolean isBoolOrCharArray = getIdentTypeSize(ident) == BOOL_CHAR_SIZE;
+            boolean isString = new WaccType(STRING).equals(st.lookupType(ident));
 
             Register rhsRegister = visit(expr);
             Register arrayReg = registers.getRegister();
@@ -473,7 +474,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 addArrayBoundsCheck(indexRegister, arrayReg);
                 state.add(new AddInstruction(arrayReg, arrayReg, new Operand2('#', INT_SIZE))); // elems start after length
                 // index always multiplied by 4 for nested arrays
-                if (isBoolOrChar && i == arrayElem.expr().size() - 1) {
+                if (isBoolOrCharArray && i == arrayElem.expr().size() - 1 || isString) {
                     state.add(new AddInstruction(arrayReg, arrayReg, new Operand2(indexRegister)));
                 } else {
                     // multiply index by 4 when !isBoolOrChar
@@ -483,7 +484,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 registers.freeReturnRegisters();
             }
 
-            state.add(new StoreInstruction(rhsRegister, arrayReg, 0, isBoolOrChar)); // store assigned value at index
+            state.add(new StoreInstruction(rhsRegister, arrayReg, 0, isBoolOrCharArray || isString)); // store the assigned value at index
             registers.free(rhsRegister);
         }
         return null;
@@ -591,7 +592,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                     typeSize = getTypeSize(type);
                 }
             }
-            int heapSize = arrLength * typeSize + INT_SIZE; // INT_SIZE IS TO STORE LENGTH OF ARRAY
+            int heapSize = arrLength * typeSize + INT_SIZE;
             boolean isBoolOrChar = typeSize == BOOL_CHAR_SIZE;
 
             // set up heap memory allocation
