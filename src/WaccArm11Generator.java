@@ -31,13 +31,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     private int StatementCurrentLabel = -1;
     private int StatementMaxForScope = 0;
     private int StatementScopeStartingVal = -1;
-    
-    /* 'While' statement logic variables to assign correctly
-     * numbered labels for branching around code
-     */
-    private int whileStatementCurrentLabel = -1;
-    private int whileStatementMaxForScope = 0;
-    private int whileStatementScopeStartingVal = -1;
 
     // size on stack for each type
     private static final int INT_SIZE = 4;
