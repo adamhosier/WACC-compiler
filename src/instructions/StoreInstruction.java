@@ -7,7 +7,7 @@ public class StoreInstruction extends Instruction {
     private final Register rDst;
     private final int offset;
     private boolean isByte = false;
-    public boolean preIndex = false;
+    public boolean  preIndex = false;
 
     public StoreInstruction(Register rSrc, Register rDst, int offset) {
         this.rSrc = rSrc;
