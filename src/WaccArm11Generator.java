@@ -787,12 +787,27 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitWhileStat(WhileStatContext ctx) {
-        return super.visitWhileStat(ctx);
+      ExprContext condition = (ExprContext) ctx.getChild(1);
+      state.add(new BranchInstruction("L" + (WhileStatementCounter * 2)));
+      
+      st.newScope();
+      state.add(new LabelInstruction("L" + ((WhileStatementCounter * 2) + 1)));
+      visitStat(ctx.stat());
+      state.add(new LabelInstruction("L" + (WhileStatementCounter * 2)));
+      Register reg = visitExpr(condition);
+      state.add(new CompareInstruction(reg, new Operand2('#', 1)));
+      state.add(new BranchLinkEqualInstruction("L" + (WhileStatementCounter * 2+ 1)));
+      registers.free(reg);
+      st.endScope();
+      WhileStatementCounter++;
+      
+      return null;
+      
     }
 
     @Override
     public Register visitUnaryOper(UnaryOperContext ctx) {
-        return super.visitUnaryOper(ctx);
+      return super.visitUnaryOper(ctx);
     }
 
     @Override
