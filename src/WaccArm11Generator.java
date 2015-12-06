@@ -23,8 +23,9 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     private SymbolTable st;
     private int stackOffset;
     private int currOffset;
+    private int funcOffset;
     private int ifStatementCounter = 0;
-    private int WhileStatementCounter = 0;
+    private int whileStatementCounter = 0;
 
     // size on stack for each type
     private static final int INT_SIZE = 4;
@@ -105,12 +106,13 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
         visitChildren(ctx);
 
+        if(stackOffset != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset)));
+
         // check if return register has been filled
         if(!registers.isInUse("r0")) {
             state.add(new LoadInstruction(Registers.r0, new Operand2(0)));
         }
 
-        if(stackOffset != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset)));
 
         state.endUserFunction();
         state.add(new TextDirective());
@@ -122,11 +124,13 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     public Register visitFunc(FuncContext ctx) {
         // save stack size for this scope
         StackSizeVisitor sizeVisitor = new StackSizeVisitor();
-        int size = sizeVisitor.getSize(ctx);
-        st.setStackSize(ctx.ident().getText(), size);
+        funcOffset = sizeVisitor.getSize(ctx.stat());
+        st.setStackSize(ctx.ident().getText(), funcOffset);
+        st.enterNextScope();
 
         String ident = ctx.ident().getText();
         state.startFunction("f_" + ident);
+        if(funcOffset != 0) state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', funcOffset)));
         if(ctx.paramList() != null) visit(ctx.paramList());
         visit(ctx.stat());
         state.endUserFunction();
@@ -163,7 +167,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
         state.add(new BranchLinkInstruction("f_" + ctx.ident().getText()));
         int stackSize = st.getStackSize(ctx.ident().getText());
-        if(stackSize != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', stackSize)));
+        //if(stackSize != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', stackSize)));
         Register next = registers.getRegister();
         state.add(new MoveInstruction(next, Registers.r0));
         state.add(new StoreInstruction(next, Registers.sp, 0));
@@ -285,7 +289,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             // array info stored on stack
             state.add(new LoadInstruction(nextRegister, new Operand2(Registers.sp, offset)));
             // array length is in first address
-            state.add(new LoadInstruction(nextRegister, new Operand2(nextRegister)));
+            state.add(new LoadInstruction(nextRegister, new Operand2(nextRegister, 0)));
             return nextRegister;
         }
 
@@ -460,7 +464,8 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         if (arrayElem != null) {
             String ident = arrayElem.ident().getText();
             int offset = st.getAddress(ident);
-            boolean isBoolOrChar = getIdentTypeSize(ident) == BOOL_CHAR_SIZE;
+            boolean isBoolOrCharArray = getIdentTypeSize(ident) == BOOL_CHAR_SIZE;
+            boolean isString = new WaccType(STRING).equals(st.lookupType(ident));
 
             Register rhsRegister = visit(expr);
             Register arrayReg = registers.getRegister();
@@ -473,7 +478,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 addArrayBoundsCheck(indexRegister, arrayReg);
                 state.add(new AddInstruction(arrayReg, arrayReg, new Operand2('#', INT_SIZE))); // elems start after length
                 // index always multiplied by 4 for nested arrays
-                if (isBoolOrChar && i == arrayElem.expr().size() - 1) {
+                if (isBoolOrCharArray && i == arrayElem.expr().size() - 1 || isString) {
                     state.add(new AddInstruction(arrayReg, arrayReg, new Operand2(indexRegister)));
                 } else {
                     // multiply index by 4 when !isBoolOrChar
@@ -483,8 +488,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 registers.freeReturnRegisters();
             }
 
-            state.add(new StoreInstruction(rhsRegister, arrayReg, 0, isBoolOrChar)); // store assigned value at index
-            registers.free(arrayReg);
+            state.add(new StoreInstruction(rhsRegister, arrayReg, 0, isBoolOrCharArray || isString)); // store the assigned value at index
             registers.free(rhsRegister);
         }
         return null;
@@ -584,13 +588,15 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             registers.free(src);
         } else if (arrayLiter != null) { // array declaration
             int arrLength = arrayLiter.expr().size();
-            int typeSize;
-            if (arrayLiter.expr(0).ident() != null) { // nested arrays
-                typeSize = ARRAY_SIZE;
-            } else {
-                typeSize = getTypeSize(type);
+            int typeSize = 0;
+            if (arrLength > 0) {
+                if (arrayLiter.expr(0).ident() != null) { // nested arrays
+                    typeSize = ARRAY_SIZE;
+                } else {
+                    typeSize = getTypeSize(type);
+                }
             }
-            int heapSize = arrLength * typeSize + INT_SIZE; // INT_SIZE IS TO STORE LENGTH OF ARRAY
+            int heapSize = arrLength * typeSize + INT_SIZE;
             boolean isBoolOrChar = typeSize == BOOL_CHAR_SIZE;
 
             // set up heap memory allocation
@@ -652,6 +658,8 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     public Register visitReturnStat(ReturnStatContext ctx) {
         Register returnReg = visit(ctx.expr());
         state.add(new MoveInstruction(Registers.r0, returnReg));
+        if(funcOffset != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', funcOffset)));
+        funcOffset = 0;
         state.add(new PopInstruction(Registers.pc));
         registers.free(returnReg);
         return null;
@@ -711,10 +719,49 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         WaccType exprType = null;
         if(expr.ident() != null) {
             exprType = st.lookupType(expr.ident().getText());
+
+            if(exprType.isArray()) {
+                state.add(new MoveInstruction(Registers.r0, msgReg));
+                state.add(new BranchLinkInstruction(Arm11Program.PRINT_REF_NAME));
+                if (!state.functionDeclared(Arm11Program.PRINT_REF_NAME)) {
+                    state.addPrintRef();
+                }
+            }
         } else if(expr.otherBinaryOper() != null) {
             exprType = WaccType.fromBinaryOp(((TerminalNode) expr.otherBinaryOper().getChild(0)).getSymbol().getType());
         } else if(expr.boolBinaryOper() != null) {
             exprType = WaccType.fromBinaryOp(((TerminalNode) expr.boolBinaryOper().getChild(0)).getSymbol().getType());
+        } else if(expr.unaryOper() != null) {
+            exprType = WaccType.fromUnaryOp(((TerminalNode) expr.unaryOper().getChild(0)).getSymbol().getType());
+        }
+
+        if(expr.arrayElem() != null) {
+            state.add(new MoveInstruction(Registers.r0, msgReg));
+            String ident = expr.arrayElem().ident().getText();
+            WaccType arrayType = st.lookupType(ident);
+            int id = arrayType.getId();
+            switch (id) {
+                case STRING:
+                    state.add(new BranchLinkInstruction(Arm11Program.PRINT_STRING_NAME));
+                    if (!state.functionDeclared(Arm11Program.PRINT_STRING_NAME)) {
+                        state.addPrintString();
+                    }
+                    break;
+                case BOOL:
+                    state.add(new BranchLinkInstruction(Arm11Program.PRINT_BOOL_NAME));
+                    if (!state.functionDeclared(Arm11Program.PRINT_BOOL_NAME)) {
+                        state.addPrintBool();
+                    }
+                    break;
+                case INT:
+                    state.add(new BranchLinkInstruction(Arm11Program.PRINT_INT_NAME));
+                    if (!state.functionDeclared(Arm11Program.PRINT_INT_NAME)) {
+                        state.addPrintInt();
+                    }
+                    break;
+                case CHAR:
+                    state.add(new BranchLinkInstruction(Arm11Program.PRINT_CHAR_NAME));
+            }
         }
 
         // print string

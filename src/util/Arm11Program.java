@@ -14,6 +14,7 @@ public class Arm11Program {
     public static final String PRINT_STRING_NAME = "p_print_string";
     public static final String PRINT_BOOL_NAME = "p_print_bool";
     public static final String PRINT_INT_NAME = "p_print_int";
+    public static final String PRINT_REF_NAME = "p_print_reference";
     public static final String PRINTLN_NAME = "p_print_ln";
     public static final String PRINT_CHAR_NAME = "putchar";
     public static final String READ_INT_NAME = "p_read_int";
@@ -40,6 +41,7 @@ public class Arm11Program {
     private String printTrueFunc;
     private String printFalseFunc;
     private String printIntFunc;
+    private String printRefFunc;
     private String readIntFunc;
     private String readCharFunc;
     private String arrayBoundNegFunc;
@@ -103,6 +105,15 @@ public class Arm11Program {
         add(new LoadInstruction(Registers.r0, new Operand2(printIntFunc)));
         endPrintFunction("printf");
     }
+
+    public void addPrintRef() {
+        printRefFunc = getMsgLabel("%p\\0");
+        startFunction(PRINT_REF_NAME);
+        add(new MoveInstruction(Registers.r1, Registers.r0));
+        add(new LoadInstruction(Registers.r0, new Operand2(printRefFunc)));
+        endPrintFunction("printf");
+    }
+
 
     public void addPrintlnFunc() {
         printlnFunc = addMsgLabel("\\0");
