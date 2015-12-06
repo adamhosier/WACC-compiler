@@ -457,13 +457,16 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     public Register visitVarAssignment(VarAssignmentContext ctx) {
         IdentContext id = ctx.assignLhs().ident();
         ExprContext expr = ctx.assignRhs().expr();
+        int offset;
+        int typeSize;
+        boolean isBoolOrChar;
         if (id != null) {
             String ident = id.getText();
-            int offset = st.getAddress(ident);
+            offset = st.getAddress(ident);
 
             if (expr !=  null) {
                 Register src = visit(expr);
-                boolean isBoolOrChar = expr.BOOL_LIT() != null || expr.CHAR_LIT() != null;
+                isBoolOrChar = expr.BOOL_LIT() != null || expr.CHAR_LIT() != null;
                 state.add(new StoreInstruction(src, Registers.sp, offset, isBoolOrChar));
                 registers.free(src);
             }
@@ -471,9 +474,9 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             ArrayLiterContext arrayLiter = ctx.assignRhs().arrayLiter();
             if (arrayLiter != null) {
                 int arrLength = arrayLiter.expr().size();
-                int typeSize = getIdentTypeSize(ident);
+                typeSize = getIdentTypeSize(ident);
                 int heapSize = arrLength * typeSize + INT_SIZE; // INT_SIZE IS TO STORE LENGTH OF ARRAY
-                boolean isBoolOrChar = typeSize == BOOL_CHAR_SIZE;
+                isBoolOrChar = typeSize == BOOL_CHAR_SIZE;
 
                 // set up heap memory allocation
                 state.add(new LoadInstruction(Registers.r0, new Operand2(heapSize)));
@@ -496,12 +499,22 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 state.add(new StoreInstruction(heapPtr, Registers.sp, offset));
                 registers.free(heapPtr);
             }
+
+            FuncCallContext funcCall = ctx.assignRhs().funcCall();
+            if (funcCall != null) {
+                offset = st.getAddress(ident);
+                typeSize = getIdentTypeSize(ident);
+                isBoolOrChar = typeSize == BOOL_CHAR_SIZE;
+                Register next = visitFuncCall(ctx.assignRhs().funcCall());
+                state.add(new StoreInstruction(next, Registers.sp, offset, isBoolOrChar));
+                registers.free(next);
+            }
         }
 
         ArrayElemContext arrayElem = ctx.assignLhs().arrayElem();
         if (arrayElem != null) {
             String ident = arrayElem.ident().getText();
-            int offset = st.getAddress(ident);
+            offset = st.getAddress(ident);
             boolean isBoolOrCharArray = getIdentTypeSize(ident) == BOOL_CHAR_SIZE;
             boolean isString = new WaccType(STRING).equals(st.lookupType(ident));
 
@@ -529,6 +542,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new StoreInstruction(rhsRegister, arrayReg, 0, isBoolOrCharArray || isString)); // store the assigned value at index
             registers.free(rhsRegister);
         }
+
         return null;
     }
 
