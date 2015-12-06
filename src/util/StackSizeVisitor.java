@@ -1,6 +1,5 @@
 package util;
 
-import antlr.WaccParser;
 import antlr.WaccParser.*;
 import antlr.WaccParserBaseVisitor;
 import org.antlr.v4.runtime.misc.NotNull;
