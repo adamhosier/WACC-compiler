@@ -40,8 +40,8 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     private static final int PAIR_SIZE = 4;
     private static final int PAIR_HEAP_SIZE = 8;
     private static final int ARRAY_SIZE = 4;
-    private static final int REG_SIZE = 4;
     private static final int BOOL_CHAR_SIZE = 1;
+    private static final int WORD_SIZE = 4;
 
     private static final String MALLOC = "malloc";
 
@@ -185,7 +185,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         for (int i = ctx.expr().size() - 1; i >= 0; i--) {
             Register nextRegister = visit(ctx.expr(i));
             boolean isByte = state.getLastInstruction() instanceof MoveInstruction;
-            offset = -(isByte ? BOOL_CHAR_SIZE : REG_SIZE);
+            offset = -(isByte ? BOOL_CHAR_SIZE : WORD_SIZE);
             funcOffset += offset;
             StoreInstruction str = new StoreInstruction(nextRegister, Registers.sp, offset, isByte);
             str.setPreIndex();
@@ -582,7 +582,23 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitNewPair(NewPairContext ctx) {
-        return super.visitNewPair(ctx);
+        Register heapPtr = heapMalloc(PAIR_HEAP_SIZE);
+        boolean isBoolOrChar;
+        for (int i = 0; i < ctx.expr().size(); i++) {
+            Register nextRegister = visit(ctx.expr(i));
+            if (state.getLastInstruction() instanceof MoveInstruction) {
+                state.add(new LoadInstruction(Registers.r0, new Operand2(BOOL_CHAR_SIZE)));
+                isBoolOrChar = true;
+            } else {
+                state.add(new LoadInstruction(Registers.r0, new Operand2(WORD_SIZE)));
+                isBoolOrChar = false;
+            }
+            state.add(new BranchLinkInstruction(MALLOC));
+            state.add(new StoreInstruction(nextRegister, Registers.r0, 0, isBoolOrChar));
+            state.add(new StoreInstruction(Registers.r0, heapPtr, PAIR_SIZE * i));
+            registers.free(nextRegister);
+        }
+        return heapPtr;
     }
 
     @Override
@@ -640,7 +656,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         TypeContext type = ctx.type();
         ExprContext expr = ctx.assignRhs().expr();
         ArrayLiterContext arrayLiter = ctx.assignRhs().arrayLiter();
-        NewPairContext pair = ctx.assignRhs().newPair();
+        NewPairContext newPair = ctx.assignRhs().newPair();
         int typeSize;
         boolean isBoolOrChar;
         int offset = 0;
@@ -684,15 +700,17 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new StoreInstruction(lengthReg, heapPtr, 0));
             registers.free(lengthReg);
 
-            currOffset += REG_SIZE;
+            currOffset += ARRAY_SIZE;
             offset = stackOffset - currOffset;
             state.add(new StoreInstruction(heapPtr, Registers.sp, offset));
             registers.free(heapPtr);
         }
 
-        if (pair != null) {
-            Register heapPtr = heapMalloc(PAIR_HEAP_SIZE);
-            // TODO: pairs
+        if (newPair != null) {
+            Register heapPtr = visit(newPair);
+            currOffset += PAIR_SIZE;
+            offset = stackOffset - currOffset;
+            state.add(new StoreInstruction(heapPtr, Registers.sp, offset));
         }
 
         if(ctx.assignRhs().funcCall() != null) {
@@ -714,6 +732,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         state.add(new BranchLinkInstruction(MALLOC));
         Register heapPtr = registers.getRegister();
         state.add(new MoveInstruction(heapPtr, Registers.r0));
+        registers.free(Registers.r0);
         return heapPtr;
     }
 
