@@ -305,6 +305,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             // array length is in first address
             state.add(new LoadInstruction(nextRegister, new Operand2(nextRegister, 0)));
             return nextRegister;
+        }
         if(ctx.unaryOper() != null) {
             return visit(ctx.unaryOper());
         }
