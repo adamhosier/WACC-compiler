@@ -125,6 +125,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         // save stack size for this scope
         StackSizeVisitor sizeVisitor = new StackSizeVisitor();
         funcOffset = sizeVisitor.getSize(ctx.stat());
+        if(funcOffset != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', funcOffset)));
         st.setStackSize(ctx.ident().getText(), funcOffset);
         st.enterNextScope();
 
@@ -424,8 +425,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
             if (expr !=  null) {
                 Register src = visit(expr);
-                boolean isBoolOrChar = expr.BOOL_LIT() != null
-                                        || expr.CHAR_LIT() != null;
+                boolean isBoolOrChar = expr.BOOL_LIT() != null || expr.CHAR_LIT() != null;
                 state.add(new StoreInstruction(src, Registers.sp, offset, isBoolOrChar));
                 registers.free(src);
             }
@@ -544,7 +544,20 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitScopeStat(ScopeStatContext ctx) {
-        return super.visitScopeStat(ctx);
+        StackSizeVisitor sizeVisitor = new StackSizeVisitor();
+        int offset = sizeVisitor.getSize(ctx.stat());
+
+        stackOffset += offset;
+        if(offset != 0) state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', offset)));
+        st.enterNextScope();
+
+        visitChildren(ctx);
+
+        if(offset != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', offset)));
+        stackOffset -= offset;
+        st.exitScope();
+
+        return null;
     }
 
     @Override
@@ -835,18 +848,18 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     @Override
     public Register visitWhileStat(WhileStatContext ctx) {
       ExprContext condition = (ExprContext) ctx.getChild(1);
-      state.add(new BranchInstruction("L" + (WhileStatementCounter * 2)));
+      state.add(new BranchInstruction("L" + (whileStatementCounter * 2)));
       
       st.newScope();
-      state.add(new LabelInstruction("L" + ((WhileStatementCounter * 2) + 1)));
+      state.add(new LabelInstruction("L" + ((whileStatementCounter * 2) + 1)));
       visitStat(ctx.stat());
-      state.add(new LabelInstruction("L" + (WhileStatementCounter * 2)));
+      state.add(new LabelInstruction("L" + (whileStatementCounter * 2)));
       Register reg = visitExpr(condition);
       state.add(new CompareInstruction(reg, new Operand2('#', 1)));
-      state.add(new BranchLinkEqualInstruction("L" + (WhileStatementCounter * 2+ 1)));
+      state.add(new BranchLinkEqualInstruction("L" + (whileStatementCounter * 2+ 1)));
       registers.free(reg);
       st.endScope();
-      WhileStatementCounter++;
+      whileStatementCounter++;
       
       return null;
       
