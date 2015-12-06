@@ -122,6 +122,10 @@ public class SymbolTable {
         return true;
     }
 
+    public void exitScope() {
+        endScope();
+    }
+
     /*
      * Gets the type of the variable [ident], or null if it doesn't exist
      */
@@ -140,15 +144,20 @@ public class SymbolTable {
         else return sym.getParams();
     }
 
+
     private Symbol getSymbol(String ident) {
+        outputln("Looking up symbol " + ident);
         for(Scope<? extends Symbol> table : tables) {
+            output("getSymbol: visited table ");
             if(table.isInScope() && table.hasIdent(ident)) {
+                outputln("is in scope");
                 return table.get(ident);
+            } else {
+                outputln("not in scope");
             }
         }
         return null;
     }
-
 
     private FunctionSymbol getFunctionSymbol(String funcIdent) {
         if(!functions.hasIdent(funcIdent)) {

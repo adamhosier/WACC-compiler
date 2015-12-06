@@ -47,8 +47,7 @@ public class StackSizeVisitor extends WaccParserBaseVisitor<Void> {
     @Override
     public Void visitStat(StatContext ctx) {
         // ignore inner scopes for now
-        if (ctx.whileStat() != null || ctx.ifStat() != null
-                || ctx.scopeStat() != null) {
+        if (ctx.whileStat() != null || ctx.ifStat() != null || ctx.scopeStat() != null) {
             return null;
         }
 
