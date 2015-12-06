@@ -31,13 +31,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     private int StatementCurrentLabel = -1;
     private int StatementMaxForScope = 0;
     private int StatementScopeStartingVal = -1;
-    
-    /* 'While' statement logic variables to assign correctly
-     * numbered labels for branching around code
-     */
-    private int whileStatementCurrentLabel = -1;
-    private int whileStatementMaxForScope = 0;
-    private int whileStatementScopeStartingVal = -1;
 
     // size on stack for each type
     private static final int INT_SIZE = 4;
@@ -929,8 +922,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitWhileStat(WhileStatContext ctx) {
-<<<<<<< HEAD
-      
       /* 'While' label start logic. Creates a new numbered 'while' label
        *  and finds the max 'while' label for the current scope 
        */
@@ -963,24 +954,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
       
       return null;
       
-    }
-=======
-        ExprContext condition = (ExprContext) ctx.getChild(1);
-        state.add(new BranchInstruction("L" + (whileStatementCounter * 2)));
-
-        st.newScope();
-        state.add(new LabelInstruction("L" + ((whileStatementCounter * 2) + 1)));
-        visitStat(ctx.stat());
-        state.add(new LabelInstruction("L" + (whileStatementCounter * 2)));
-        Register reg = visitExpr(condition);
-        state.add(new CompareInstruction(reg, new Operand2('#', 1)));
-        state.add(new BranchLinkEqualInstruction("L" + (whileStatementCounter * 2+ 1)));
-        registers.free(reg);
-        st.endScope();
-        whileStatementCounter++;
->>>>>>> 4cfeb35306736bb0329f1b69a756e7382e4e6d65
-
-        return null;
     }
 
     @Override
