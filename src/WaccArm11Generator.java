@@ -884,8 +884,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitWhileStat(WhileStatContext ctx) {
-<<<<<<< HEAD
-      
       /* 'While' label start logic. Creates a new numbered 'while' label
        *  and finds the max 'while' label for the current scope 
        */
@@ -918,24 +916,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
       
       return null;
       
-    }
-=======
-        ExprContext condition = (ExprContext) ctx.getChild(1);
-        state.add(new BranchInstruction("L" + (whileStatementCounter * 2)));
-
-        st.newScope();
-        state.add(new LabelInstruction("L" + ((whileStatementCounter * 2) + 1)));
-        visitStat(ctx.stat());
-        state.add(new LabelInstruction("L" + (whileStatementCounter * 2)));
-        Register reg = visitExpr(condition);
-        state.add(new CompareInstruction(reg, new Operand2('#', 1)));
-        state.add(new BranchLinkEqualInstruction("L" + (whileStatementCounter * 2+ 1)));
-        registers.free(reg);
-        st.endScope();
-        whileStatementCounter++;
->>>>>>> 4cfeb35306736bb0329f1b69a756e7382e4e6d65
-
-        return null;
     }
 
     @Override
