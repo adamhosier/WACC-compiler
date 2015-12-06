@@ -295,17 +295,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new LoadInstruction(arrayRegister, new Operand2(arrayRegister, true), getIdentTypeSize(ident) == BOOL_CHAR_SIZE));
             return arrayRegister;
         }
-        //TODO: MOVE THIS TO visitUnaryOper ???
-        if(ctx.unaryOper() != null && ctx.unaryOper().LEN() != null) {
-            String ident = ctx.expr(0).ident().getText();
-            int offset = st.getAddress(ident) - funcOffset;
-            Register nextRegister = registers.getRegister();
-            // array info stored on stack
-            state.add(new LoadInstruction(nextRegister, new Operand2(Registers.sp, offset)));
-            // array length is in first address
-            state.add(new LoadInstruction(nextRegister, new Operand2(nextRegister, 0)));
-            return nextRegister;
-        }
         if(ctx.unaryOper() != null) {
             return visit(ctx.unaryOper());
         }
