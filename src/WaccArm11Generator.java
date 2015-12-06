@@ -248,7 +248,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             int offset = st.getAddress(ident);
             Register nextRegister = registers.getRegister();
             WaccType type = st.lookupType(ident);
-            if(type.equals(new WaccType(BOOL))) {
+            if(type.equals(new WaccType(BOOL)) || type.equals(new WaccType(CHAR))) {
                 state.add(new LoadSignedByteInstruction(nextRegister, new Operand2(Registers.sp, offset)));
             } else {
                 state.add(new LoadInstruction(nextRegister, new Operand2(Registers.sp, offset)));
@@ -282,18 +282,9 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new LoadInstruction(arrayRegister, new Operand2(arrayRegister, true), getIdentTypeSize(ident) == BOOL_CHAR_SIZE));
             return arrayRegister;
         }
-        //TODO: MOVE THIS TO visitUnaryOper ???
-        if(ctx.unaryOper() != null && ctx.unaryOper().LEN() != null) {
-            String ident = ctx.expr(0).ident().getText();
-            int offset = st.getAddress(ident);
-            Register nextRegister = registers.getRegister();
-            // array info stored on stack
-            state.add(new LoadInstruction(nextRegister, new Operand2(Registers.sp, offset)));
-            // array length is in first address
-            state.add(new LoadInstruction(nextRegister, new Operand2(nextRegister, 0)));
-            return nextRegister;
+        if(ctx.unaryOper() != null) {
+            return visit(ctx.unaryOper());
         }
-
         if(ctx.boolBinaryOper() != null) {
             return visit(ctx.boolBinaryOper());
         }
@@ -301,6 +292,40 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             return visit(ctx.otherBinaryOper());
         }
         return null;
+    }
+
+    @Override
+    public Register visitUnaryOper(UnaryOperContext ctx) {
+        int tokenIndex = ((TerminalNode) ctx.getChild(0)).getSymbol().getType();
+
+        ExprContext expr = ((ExprContext) ctx.getParent()).expr(0);
+        Register exprReg = visit(expr);
+
+        registers.free(exprReg);
+
+        Register dest = registers.getRegister();
+
+        switch(tokenIndex) {
+            case NOT:
+                state.add(new ExclusiveOrInstruction(dest, exprReg, new Operand2('#', 1)));
+                return dest;
+            case MINUS:
+                state.add(new NegateInstruction(dest, exprReg, new Operand2('#', 0)));
+                state.add(new BranchLinkOverflowInstruction(Arm11Program.OVERFLOW_NAME));
+                if(!state.functionDeclared(Arm11Program.OVERFLOW_NAME)) state.addOverflowError();
+                return dest;
+            case LEN:
+                String ident = expr.ident().getText();
+                int offset = st.getAddress(ident);
+                state.add(new LoadInstruction(dest, new Operand2(Registers.sp, offset)));
+                state.add(new LoadInstruction(dest, new Operand2(dest, 0)));
+                return dest;
+            case ORD:
+            case CHR:
+                return dest;
+            default:
+                return null;
+        }
     }
 
     @Override
@@ -514,11 +539,11 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         return 0;
     }
 
+
     @Override
     public Register visitType(TypeContext ctx) {
         return super.visitType(ctx);
     }
-    
 
     @Override
     public Register visitCharacter(CharacterContext ctx) {
@@ -847,27 +872,21 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitWhileStat(WhileStatContext ctx) {
-      ExprContext condition = (ExprContext) ctx.getChild(1);
-      state.add(new BranchInstruction("L" + (whileStatementCounter * 2)));
-      
-      st.newScope();
-      state.add(new LabelInstruction("L" + ((whileStatementCounter * 2) + 1)));
-      visitStat(ctx.stat());
-      state.add(new LabelInstruction("L" + (whileStatementCounter * 2)));
-      Register reg = visitExpr(condition);
-      state.add(new CompareInstruction(reg, new Operand2('#', 1)));
-      state.add(new BranchLinkEqualInstruction("L" + (whileStatementCounter * 2+ 1)));
-      registers.free(reg);
-      st.endScope();
-      whileStatementCounter++;
-      
-      return null;
-      
-    }
+        ExprContext condition = (ExprContext) ctx.getChild(1);
+        state.add(new BranchInstruction("L" + (whileStatementCounter * 2)));
 
-    @Override
-    public Register visitUnaryOper(UnaryOperContext ctx) {
-      return super.visitUnaryOper(ctx);
+        st.newScope();
+        state.add(new LabelInstruction("L" + ((whileStatementCounter * 2) + 1)));
+        visitStat(ctx.stat());
+        state.add(new LabelInstruction("L" + (whileStatementCounter * 2)));
+        Register reg = visitExpr(condition);
+        state.add(new CompareInstruction(reg, new Operand2('#', 1)));
+        state.add(new BranchLinkEqualInstruction("L" + (whileStatementCounter * 2+ 1)));
+        registers.free(reg);
+        st.endScope();
+        whileStatementCounter++;
+
+        return null;
     }
 
     @Override
