@@ -24,8 +24,20 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     private int stackOffset;
     private int currOffset;
     private int funcOffset;
-    private int ifStatementCounter = 0;
-    private int whileStatementCounter = 0;
+    
+    /* 'If' statement logic variables to assign correctly
+     * numbered labels for branching around code
+     */
+    private int StatementCurrentLabel = -1;
+    private int StatementMaxForScope = 0;
+    private int StatementScopeStartingVal = -1;
+    
+    /* 'While' statement logic variables to assign correctly
+     * numbered labels for branching around code
+     */
+    private int whileStatementCurrentLabel = -1;
+    private int whileStatementMaxForScope = 0;
+    private int whileStatementScopeStartingVal = -1;
 
     // size on stack for each type
     private static final int INT_SIZE = 4;
@@ -847,19 +859,36 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitWhileStat(WhileStatContext ctx) {
+      
+      /* 'While' label start logic. Creates a new numbered 'while' label
+       *  and finds the max 'while' label for the current scope 
+       */
+      StatementCurrentLabel++;
+      StatementMaxForScope = Math.max(StatementCurrentLabel, StatementMaxForScope);
+      
+      // Code generation
       ExprContext condition = (ExprContext) ctx.getChild(1);
-      state.add(new BranchInstruction("L" + (whileStatementCounter * 2)));
+      state.add(new BranchInstruction("L" + (StatementCurrentLabel * 2)));
       
       st.newScope();
-      state.add(new LabelInstruction("L" + ((whileStatementCounter * 2) + 1)));
+      state.add(new LabelInstruction("L" + ((StatementCurrentLabel * 2) + 1)));
       visitStat(ctx.stat());
-      state.add(new LabelInstruction("L" + (whileStatementCounter * 2)));
+      state.add(new LabelInstruction("L" + (StatementCurrentLabel * 2)));
       Register reg = visitExpr(condition);
       state.add(new CompareInstruction(reg, new Operand2('#', 1)));
-      state.add(new BranchLinkEqualInstruction("L" + (whileStatementCounter * 2+ 1)));
+      state.add(new BranchLinkEqualInstruction("L" + (StatementCurrentLabel * 2 + 1)));
       registers.free(reg);
       st.endScope();
-      whileStatementCounter++;
+      
+      /* 'While' label end logic. When the scope has been completed it
+       *  sets up the labels so the next 'while' scope will start from the 
+       *  right number
+       */
+      StatementCurrentLabel--;
+      if (StatementCurrentLabel == StatementScopeStartingVal) {
+        StatementCurrentLabel = StatementMaxForScope;
+        StatementScopeStartingVal = StatementMaxForScope;
+      }
       
       return null;
       
@@ -871,27 +900,44 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     }
 
     @Override
-    public Register visitIfStat(IfStatContext ctx) {
+    public Register visitIfStat(IfStatContext ctx) {  
+      
+      /* 'If' label start logic. Creates a new numbered 'if' label
+       *  and finds the max 'if' label for the current scope 
+       */
+      StatementCurrentLabel++;
+      StatementMaxForScope = Math.max(StatementCurrentLabel, StatementMaxForScope);
+      
+      // Code Generation 
       ExprContext condition = (ExprContext) ctx.getChild(1);
       Register reg = visitExpr(condition);
       state.add(new CompareInstruction(reg, new Operand2('#',0)));
-      state.add(new BranchLinkEqualInstruction("L" + (ifStatementCounter * 2)));
+      state.add(new BranchLinkEqualInstruction("L" + (StatementCurrentLabel * 2)));
       
       registers.free(reg);
       st.newScope();
       reg = visitStat(ctx.stat(0));
-      state.add(new BranchLinkInstruction("L" + (ifStatementCounter * 2 + 1)));
+      state.add(new BranchInstruction("L" + (StatementCurrentLabel * 2 + 1)));
       st.endScope();
       
       registers.free(reg);
       st.newScope();
-      state.add(new LabelInstruction("L" + (ifStatementCounter * 2)));
+      state.add(new LabelInstruction("L" + (StatementCurrentLabel * 2)));
       visit(ctx.stat(1));
       st.endScope();
       
-      state.add(new LabelInstruction("L" + (ifStatementCounter * 2 + 1)));
-      ifStatementCounter++;
-     
+      state.add(new LabelInstruction("L" + (StatementCurrentLabel * 2 + 1)));
+      
+      /* 'If' label end logic. When the scope has been completed it
+       *  sets up the labels so the next 'if' scope will start from the 
+       *  right number
+       */
+      StatementCurrentLabel--;
+      if (StatementCurrentLabel == StatementScopeStartingVal) {
+        StatementCurrentLabel = StatementMaxForScope;
+        StatementScopeStartingVal = StatementMaxForScope;
+      }
+      
       return null;
     }
 
