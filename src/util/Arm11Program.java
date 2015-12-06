@@ -61,6 +61,11 @@ public class Arm11Program {
         else currentFunction.add(ins);
     }
 
+    public Instruction getLastInstruction() {
+        if (currentFunction == null) return globalCode.get(globalCode.size() - 1);
+        else return currentFunction.get(currentFunction.size() - 1);
+    }
+
     public String addMsgLabel(String msg) {
         if(numMsgLabels == 0) globalCode.add(new DataLabel());
         MsgLabel instruction = new MsgLabel(msg, numMsgLabels);
