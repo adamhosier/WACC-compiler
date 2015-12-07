@@ -109,10 +109,18 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         stackOffset = sizeVisitor.getSize(ctx);
 
         if(stackOffset != 0 && stackOffset <= 1024) state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset)));
-        
+        if(stackOffset > 1024) {
+            state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', 1024)));
+            state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset - 1024)));
+        }
+
         visitChildren(ctx);
 
         if(stackOffset != 0 && stackOffset <= 1024) state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset)));
+        if(stackOffset > 1024) {
+            state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', 1024)));
+            state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset - 1024)));
+        }
 
         // check if return register has been filled
         if(!registers.isInUse("r0")) {
