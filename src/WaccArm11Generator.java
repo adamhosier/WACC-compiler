@@ -138,7 +138,9 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         if(funcOffset != 0) state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', funcOffset)));
         if(ctx.paramList() != null) visit(ctx.paramList());
         visit(ctx.stat());
+
         state.endUserFunction();
+        st.exitScope();
         return null;
     }
 
@@ -223,6 +225,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitExpr(ExprContext ctx) {
+        System.out.println("ctx = [" + ctx.getText() + "]");
         if(ctx.INT_LIT() != null) {
             int i = Integer.parseInt(ctx.INT_LIT().getSymbol().getText());
             Register nextRegister = registers.getRegister();
@@ -955,7 +958,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
       ExprContext condition = (ExprContext) ctx.getChild(1);
       state.add(new BranchInstruction("L" + (StatementCurrentLabel * 2)));
       
-      st.newScope();
+      st.enterNextScope();
       state.add(new LabelInstruction("L" + ((StatementCurrentLabel * 2) + 1)));
       visitStat(ctx.stat());
       state.add(new LabelInstruction("L" + (StatementCurrentLabel * 2)));
@@ -963,7 +966,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
       state.add(new CompareInstruction(reg, new Operand2('#', 1)));
       state.add(new BranchLinkEqualInstruction("L" + (StatementCurrentLabel * 2 + 1)));
       registers.free(reg);
-      st.endScope();
+      st.exitScope();
       
       /* 'While' label end logic. When the scope has been completed it
        *  sets up the labels so the next 'while' scope will start from the 
@@ -995,16 +998,16 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
       state.add(new BranchLinkEqualInstruction("L" + (StatementCurrentLabel * 2)));
       
       registers.free(reg);
-      st.newScope();
+      st.enterNextScope();
       reg = visitStat(ctx.stat(0));
       state.add(new BranchInstruction("L" + (StatementCurrentLabel * 2 + 1)));
-      st.endScope();
+      st.exitScope();
       
       registers.free(reg);
-      st.newScope();
+      st.enterNextScope();
       state.add(new LabelInstruction("L" + (StatementCurrentLabel * 2)));
       visit(ctx.stat(1));
-      st.endScope();
+      st.exitScope();
       
       state.add(new LabelInstruction("L" + (StatementCurrentLabel * 2 + 1)));
       

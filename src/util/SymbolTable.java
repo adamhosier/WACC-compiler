@@ -69,7 +69,9 @@ public class SymbolTable {
     }
 
     private Scope<Symbol> getNextOutOfScopeTable() {
-        for(Scope<Symbol> table : tables) {
+        ListIterator<Scope<Symbol>> li = tables.listIterator(tables.size());
+        while(li.hasPrevious()) {
+            Scope<Symbol> table = li.previous();
             if(!table.isInScope()) return table;
         }
         return null;
@@ -107,8 +109,12 @@ public class SymbolTable {
     }
 
     public void enterNextScope() {
+        outputln("> ENTERING SCOPE: amount " + (getNumScopes() + 1));
         Scope<Symbol> table = getNextOutOfScopeTable();
-        if(table != null) table.enter();
+        if(table != null) {
+            table.enter();
+            outputln(table.toString());
+        }
     }
 
     /*
@@ -146,16 +152,14 @@ public class SymbolTable {
 
 
     private Symbol getSymbol(String ident) {
-        outputln("Looking up symbol " + ident);
+        output("> LOOKING UP " + ident);
         for(Scope<? extends Symbol> table : tables) {
-            output("getSymbol: visited table ");
             if(table.isInScope() && table.hasIdent(ident)) {
-                outputln("is in scope");
+                outputln(" FOUND");
                 return table.get(ident);
-            } else {
-                outputln("not in scope");
             }
         }
+        outputln(" NOT FOUND");
         return null;
     }
 
@@ -389,6 +393,10 @@ public class SymbolTable {
 
         public void add(String ident, S sym) {
             map.put(ident, sym);
+        }
+
+        public String toString() {
+            return map.values().toString();
         }
     }
 }
