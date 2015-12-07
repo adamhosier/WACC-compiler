@@ -220,8 +220,9 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         state.add(new BranchLinkInstruction("exit"));
 
         registers.freeReturnRegisters();
-
-        state.add(new LoadInstruction(Registers.r0, new Operand2(0)));
+        if (ctx.expr().ident() == null) {
+            state.add(new LoadInstruction(Registers.r0, new Operand2(0)));
+        }
         return null;
     }
 
