@@ -24,6 +24,7 @@ public class Arm11Program {
     public static final String DIVIDE_BY_ZERO_NAME = "p_check_divide_by_zero";
     public static final String RUNTIME_ERR_NAME = "p_throw_runtime_error";
     public static final String FREE_PAIR_NAME = "p_free_pair" ;
+    public static final String NULL_PTR_NAME = "p_check_null_pointer";
     public static String decode(String input) {
         return input.replace("\\0", "\0").replace("\\b", "\b").replace("\\n", "\n").replace("\\f", "\f").replace("\\r", "\r").replace("\\\"", "\"").replace("\\'", "'").replace("\\\\", "\\");
     }
@@ -171,6 +172,16 @@ public class Arm11Program {
         add(new CompareInstruction(Registers.r0, new Operand2(Registers.r1)));
         add(new LoadCarrySetInstruction(Registers.r0, new Operand2(arrayBoundTooLargeFunc)));
         add(new BranchLinkCarrySetInstruction(RUNTIME_ERR_NAME));
+        if(!functionDeclared(RUNTIME_ERR_NAME)) addRuntimeErrFunction();
+        endFunction();
+    }
+
+    public void addNullPtrError(){
+        String nullPtrFunc = getMsgLabel("NullReferenceError: dereference a null reference\\n\\0");
+        startFunction(NULL_PTR_NAME);
+        add(new CompareInstruction(Registers.r0, new Operand2('#', 0)));
+        add(new LoadEqualInstruction(Registers.r0, new Operand2(nullPtrFunc)));
+        add(new BranchLinkEqualInstruction(RUNTIME_ERR_NAME));
         if(!functionDeclared(RUNTIME_ERR_NAME)) addRuntimeErrFunction();
         endFunction();
     }

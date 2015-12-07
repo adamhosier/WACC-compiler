@@ -39,6 +39,8 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     private static final int STRING_SIZE = 4;
     private static final int PAIR_SIZE = 4;
     private static final int PAIR_HEAP_SIZE = 8;
+    private static final int FST_OFFSET = 0;
+    private static final int SND_OFFSET = 4;
     private static final int ARRAY_SIZE = 4;
     private static final int BOOL_CHAR_SIZE = 1;
     private static final int WORD_SIZE = 4;
@@ -464,7 +466,14 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     @Override
     public Register visitVarAssignment(VarAssignmentContext ctx) {
         IdentContext id = ctx.assignLhs().ident();
+        ArrayElemContext arrayElem = ctx.assignLhs().arrayElem();
+
         ExprContext expr = ctx.assignRhs().expr();
+        ArrayLiterContext arrayLiter = ctx.assignRhs().arrayLiter();
+        NewPairContext newPair = ctx.assignRhs().newPair();
+        FuncCallContext funcCall = ctx.assignRhs().funcCall();
+        PairElemContext pairElem = ctx.assignRhs().pairElem();
+
         int offset;
         int typeSize;
         boolean isBoolOrChar;
@@ -479,7 +488,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 registers.free(src);
             }
 
-            ArrayLiterContext arrayLiter = ctx.assignRhs().arrayLiter();
             if (arrayLiter != null) {
                 int arrLength = arrayLiter.expr().size();
                 typeSize = getIdentTypeSize(ident);
@@ -508,13 +516,21 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 registers.free(heapPtr);
             }
 
-            NewPairContext newPair = ctx.assignRhs().newPair();
             if (newPair != null) {
                 Register heapPtr = visit(newPair);
                 state.add(new StoreInstruction(heapPtr, Registers.sp, offset));
+                state.add(new BranchLinkInstruction(Arm11Program.NULL_PTR_NAME));
+
             }
 
-            FuncCallContext funcCall = ctx.assignRhs().funcCall();
+            if (pairElem != null) {
+                offset = st.getAddress(ident);
+                typeSize = getIdentTypeSize(ident);
+                isBoolOrChar = typeSize == BOOL_CHAR_SIZE;
+                Register nextRegister = visit(pairElem);
+                state.add(new LoadInstruction(nextRegister, new Operand2(nextRegister, 0), isBoolOrChar));
+                state.add(new StoreInstruction(nextRegister, Registers.sp, offset, isBoolOrChar));            }
+
             if (funcCall != null) {
                 offset = st.getAddress(ident);
                 typeSize = getIdentTypeSize(ident);
@@ -525,7 +541,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             }
         }
 
-        ArrayElemContext arrayElem = ctx.assignLhs().arrayElem();
         if (arrayElem != null) {
             String ident = arrayElem.ident().getText();
             offset = st.getAddress(ident);
@@ -669,9 +684,13 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     @Override
     public Register visitVarDeclaration(VarDeclarationContext ctx) {
         TypeContext type = ctx.type();
+
         ExprContext expr = ctx.assignRhs().expr();
         ArrayLiterContext arrayLiter = ctx.assignRhs().arrayLiter();
         NewPairContext newPair = ctx.assignRhs().newPair();
+        PairElemContext pairElem = ctx.assignRhs().pairElem();
+        FuncCallContext funcCall = ctx.assignRhs().funcCall();
+
         int typeSize;
         boolean isBoolOrChar;
         int offset = 0;
@@ -729,12 +748,23 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             registers.free(heapPtr);
         }
 
-        if(ctx.assignRhs().funcCall() != null) {
+        if (pairElem != null) {
+            typeSize = getTypeSize(type);
+            isBoolOrChar = typeSize == BOOL_CHAR_SIZE;
+            currOffset += typeSize;
+            offset = stackOffset - currOffset;
+
+            Register nextRegister = visit(pairElem);
+            state.add(new LoadInstruction(nextRegister, new Operand2(nextRegister, 0), isBoolOrChar));
+            state.add(new StoreInstruction(nextRegister, Registers.sp, offset, isBoolOrChar));
+        }
+
+        if(funcCall != null) {
             currOffset += getTypeSize(type);
             offset = stackOffset - currOffset;
             typeSize = getTypeSize(type);
             isBoolOrChar = typeSize == BOOL_CHAR_SIZE;
-            Register next = visitFuncCall(ctx.assignRhs().funcCall());
+            Register next = visitFuncCall(funcCall);
             state.add(new StoreInstruction(next, Registers.sp, offset, isBoolOrChar));
             registers.free(next);
         }
@@ -941,7 +971,13 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitPairElem(PairElemContext ctx) {
-        return super.visitPairElem(ctx);
+        Register nextRegister = visit(ctx.expr());
+        state.add(new MoveInstruction(Registers.r0, nextRegister));
+        state.add(new BranchLinkInstruction(Arm11Program.NULL_PTR_NAME));
+        state.addNullPtrError();
+        int offset = ctx.FST() != null ? FST_OFFSET : SND_OFFSET;
+        state.add(new LoadInstruction(nextRegister, new Operand2(nextRegister, offset)));
+        return nextRegister;
     }
 
     @Override
