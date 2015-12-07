@@ -279,11 +279,29 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         if(ctx.arrayElem() != null) {
             String ident = ctx.arrayElem().ident().getText();
             int offset = st.getAddress(ident) - funcOffset;
-            boolean isBoolOrChar = getIdentTypeSize(ident) == BOOL_CHAR_SIZE;
 
-            Register arrayReg = visitArrayElem(ctx.arrayElem(), offset);
-            state.add(new LoadInstruction(arrayReg, new Operand2(arrayReg, true), isBoolOrChar));
-            return arrayReg;
+            Register arrayRegister = registers.getRegister();
+            state.add(new AddInstruction(arrayRegister, Registers.sp, new Operand2('#', offset)));
+
+            for(int i = 0; i < ctx.arrayElem().expr().size(); i++) {
+                Register indexRegister = visit(ctx.arrayElem().expr(i)); // get index of arrayElem
+                state.add(new LoadInstruction(arrayRegister, new Operand2(arrayRegister, 0))); // get length of array
+                addArrayBoundsCheck(indexRegister, arrayRegister);
+                // indexes start after length at offset 0
+                state.add(new AddInstruction(arrayRegister, arrayRegister, new Operand2('#', INT_SIZE)));
+                if (getIdentTypeSize(ident) == BOOL_CHAR_SIZE) {
+                    state.add(new AddInstruction(arrayRegister, arrayRegister, new Operand2(indexRegister)));
+                } else {
+                    /* gets the correct index, takes index expr
+                       and multiplies by 4 (LSL #2) since reg indexes are 4 long
+                    */
+                    state.add(new AddInstruction(arrayRegister, arrayRegister, new Operand2(indexRegister), 2));
+                }
+                registers.free(indexRegister);
+                registers.freeReturnRegisters();
+            }
+            state.add(new LoadInstruction(arrayRegister, new Operand2(arrayRegister, true), getIdentTypeSize(ident) == BOOL_CHAR_SIZE));
+            return arrayRegister;
         }
         if(ctx.unaryOper() != null) {
             return visit(ctx.unaryOper());
@@ -507,12 +525,28 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         if (arrayElem != null) {
             String ident = arrayElem.ident().getText();
             offset = st.getAddress(ident);
-
             boolean isBoolOrCharArray = getIdentTypeSize(ident) == BOOL_CHAR_SIZE;
             boolean isString = new WaccType(STRING).equals(st.lookupType(ident));
 
             Register rhsRegister = visit(expr);
-            Register arrayReg = visitArrayElem(arrayElem, offset);
+            Register arrayReg = registers.getRegister();
+            Register indexRegister;
+            state.add(new AddInstruction(arrayReg, Registers.sp, new Operand2('#', offset)));
+            for(int i = 0; i < arrayElem.expr().size(); i++) {
+                indexRegister = visit(arrayElem.expr(i));
+                state.add(new LoadInstruction(arrayReg, new Operand2(arrayReg, true))); // offset 0 is length
+                addArrayBoundsCheck(indexRegister, arrayReg);
+                state.add(new AddInstruction(arrayReg, arrayReg, new Operand2('#', INT_SIZE))); // elems start after length
+                // index always multiplied by 4 for nested arrays
+                if (isBoolOrCharArray && i == arrayElem.expr().size() - 1 || isString) {
+                    state.add(new AddInstruction(arrayReg, arrayReg, new Operand2(indexRegister)));
+                } else {
+                    // multiply index by 4 when !isBoolOrChar
+                    state.add(new AddInstruction(arrayReg, arrayReg, new Operand2(indexRegister), 2));
+                }
+                registers.free(indexRegister);
+                registers.freeReturnRegisters();
+            }
 
             state.add(new StoreInstruction(rhsRegister, arrayReg, 0, isBoolOrCharArray || isString)); // store the assigned value at index
             registers.free(rhsRegister);
@@ -922,48 +956,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitArrayElem(ArrayElemContext ctx) {
-        String ident = ctx.ident().getText();
-        VarAssignmentContext varAssignmentContext = (VarAssignmentContext) ctx.getParent();
-        ExprContext exprContext = (ExprContext) ctx.getParent();
-
-        boolean isBoolOrCharArray = getIdentTypeSize(ident) == BOOL_CHAR_SIZE;
-        boolean isString = new WaccType(STRING).equals(st.lookupType(ident));
-
-        Register arrayReg = registers.getRegister();
-        Register indexRegister;
-        for(int i = 0; i < ctx.expr().size(); i++) {
-            indexRegister = visit(ctx.expr(i));
-            state.add(new LoadInstruction(arrayReg, new Operand2(arrayReg, true))); // offset 0 is length
-            addArrayBoundsCheck(indexRegister, arrayReg);
-            state.add(new AddInstruction(arrayReg, arrayReg, new Operand2('#', INT_SIZE))); // elems start after length
-            // index always multiplied by 4 for nested arrays
-            if (varAssignmentContext != null) {
-                if (isBoolOrCharArray && i == ctx.expr().size() - 1 || isString) {
-                    state.add(new AddInstruction(arrayReg, arrayReg, new Operand2(indexRegister)));
-                } else {
-                    // multiply index by 4 when !isBoolOrChar
-                    state.add(new AddInstruction(arrayReg, arrayReg, new Operand2(indexRegister), 2));
-                }
-            } else if (exprContext != null ) {
-                if (getIdentTypeSize(ident) == BOOL_CHAR_SIZE) {
-                    state.add(new AddInstruction(arrayReg, arrayReg, new Operand2(indexRegister)));
-                } else {
-                    // multiply index by 4 when !isBoolOrChar
-                    state.add(new AddInstruction(arrayReg, arrayReg, new Operand2(indexRegister), 2));
-                }
-            }
-            registers.free(indexRegister);
-            registers.freeReturnRegisters();
-        }
-        return arrayReg;
-    }
-
-    private Register visitArrayElem(ArrayElemContext ctx, int offset) {
-        Register arrayReg = registers.getRegister();
-        state.add(new AddInstruction(arrayReg, Registers.sp, new Operand2('#', offset)));
-        registers.free(arrayReg);
-        arrayReg = visit(ctx);
-        return arrayReg;
+        return super.visitArrayElem(ctx);
     }
 
     @Override

@@ -19,7 +19,7 @@ public class Main {
             //System.setIn(new FileInputStream("/home/adam/labs/wacclab/examples/valid/while/max.wacc"));
             //System.setIn(new FileInputStream("/home/adam/labs/wacclab/examples/valid/runtimeErr/nullDereference/freeNull.wacc"));
             //System.setIn(new FileInputStream("/Users/Dyl/Documents/workspace/WACC-compiler/examples/valid/if/if1.wacc"));
-            System.setIn(new FileInputStream("/Users/cyrusvahidi/WACC-compiler/examples/valid/variables/boolDeclaration2.wacc"));
+            System.setIn(new FileInputStream("/Users/cyrusvahidi/WACC-compiler/examples/valid/variables/_VarNames.wacc"));
         }
 
         // create a lexer that feeds off of input from System.in
