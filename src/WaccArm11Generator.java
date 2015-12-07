@@ -1,13 +1,10 @@
-import antlr.WaccParser.ExprContext;
-import antlr.WaccParser.StatContext;
+import antlr.WaccParser.*;
 import antlr.WaccParserBaseVisitor;
 import instructions.*;
-
 import org.antlr.v4.runtime.misc.Pair;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.RuleNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
-
 import util.*;
 
 import java.util.Comparator;
@@ -108,11 +105,19 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         StackSizeVisitor sizeVisitor = new StackSizeVisitor();
         stackOffset = sizeVisitor.getSize(ctx);
 
-        if(stackOffset != 0) state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset)));
+        if(stackOffset != 0 && stackOffset <= 1024) state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset)));
+        if (stackOffset > 1024) {
+            state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', 1024)));
+            state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset - 1024)));
+        }
 
         visitChildren(ctx);
 
-        if(stackOffset != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset)));
+        if(stackOffset != 0 && stackOffset <= 1024) state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset)));
+        if (stackOffset > 1024) {
+            state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', 1024)));
+            state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset - 1024)));
+        }
 
         // check if return register has been filled
         if(!registers.isInUse("r0")) {
