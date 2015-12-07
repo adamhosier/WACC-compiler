@@ -576,6 +576,8 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             Register nextRegister = visit(expr);
             Register pairElemRegister = visit(pairElemLhs);
             state.add(new StoreInstruction(nextRegister, pairElemRegister, 0));
+            registers.free(nextRegister);
+            registers.free(pairElemRegister);
         }
 
         return null;
