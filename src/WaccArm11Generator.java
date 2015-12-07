@@ -490,29 +490,8 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             }
 
             if (arrayLiter != null) {
-                int arrLength = arrayLiter.expr().size();
                 typeSize = getIdentTypeSize(ident);
-                int heapSize = arrLength * typeSize + INT_SIZE; // INT_SIZE IS TO STORE LENGTH OF ARRAY
-                isBoolOrChar = typeSize == BOOL_CHAR_SIZE;
-
-                // set up heap memory allocation
-                state.add(new LoadInstruction(Registers.r0, new Operand2(heapSize)));
-                state.add(new BranchLinkInstruction(MALLOC));
-                Register heapPtr = registers.getRegister();
-                state.add(new MoveInstruction(heapPtr, Registers.r0));
-
-                // process each array elem
-                for (int i = 0; i < arrLength; i++) {
-                    Register src = visit(arrayLiter.expr(i));
-                    state.add(new StoreInstruction(src, heapPtr, INT_SIZE + i * typeSize, isBoolOrChar));
-                    registers.free(src);
-                }
-                // process length
-                Register lengthReg = registers.getRegister();
-                state.add(new LoadInstruction(lengthReg, new Operand2(arrLength)));
-                state.add(new StoreInstruction(lengthReg, heapPtr, 0));
-                registers.free(lengthReg);
-
+                Register heapPtr = visitArrayLiter(arrayLiter, typeSize);
                 state.add(new StoreInstruction(heapPtr, Registers.sp, offset));
                 registers.free(heapPtr);
             }
@@ -725,23 +704,8 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                     typeSize = getTypeSize(type);
                 }
             }
-            int heapSize = arrLength * typeSize + INT_SIZE;
-            isBoolOrChar = typeSize == BOOL_CHAR_SIZE;
 
-            // set up heap memory allocation
-            Register heapPtr = heapMalloc(heapSize);
-
-            // process each array elem
-            for (int i = 0; i < arrLength; i++) {
-                Register src = visit(arrayLiter.expr(i));
-                state.add(new StoreInstruction(src, heapPtr, INT_SIZE + i * typeSize, isBoolOrChar));
-                registers.free(src);
-            }
-            // process length
-            Register lengthReg = registers.getRegister();
-            state.add(new LoadInstruction(lengthReg, new Operand2(arrLength)));
-            state.add(new StoreInstruction(lengthReg, heapPtr, 0));
-            registers.free(lengthReg);
+            Register heapPtr = visitArrayLiter(arrayLiter, typeSize);
 
             currOffset += ARRAY_SIZE;
             offset = stackOffset - currOffset;
@@ -1096,6 +1060,28 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     @Override
     public Register visitArrayLiter(ArrayLiterContext ctx) {
         return super.visitArrayLiter(ctx);
+    }
+
+    private Register visitArrayLiter(ArrayLiterContext ctx, int typeSize) {
+        int arrLength = ctx.expr().size();
+        int heapSize = arrLength * typeSize + INT_SIZE; // INT_SIZE IS TO STORE LENGTH OF ARRAY
+        boolean isBoolOrChar = typeSize == BOOL_CHAR_SIZE;
+
+        // set up heap memory allocation
+        Register heapPtr = heapMalloc(heapSize);
+
+        // process each array elem
+        for (int i = 0; i < arrLength; i++) {
+            Register src = visit(ctx.expr(i));
+            state.add(new StoreInstruction(src, heapPtr, INT_SIZE + i * typeSize, isBoolOrChar));
+            registers.free(src);
+        }
+        // process length
+        Register lengthReg = registers.getRegister();
+        state.add(new LoadInstruction(lengthReg, new Operand2(arrLength)));
+        state.add(new StoreInstruction(lengthReg, heapPtr, 0));
+        registers.free(lengthReg);
+        return heapPtr;
     }
 
     @Override
