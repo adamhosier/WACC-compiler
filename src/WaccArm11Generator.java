@@ -225,7 +225,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitExpr(ExprContext ctx) {
-        System.out.println("ctx = [" + ctx.getText() + "]");
         if(ctx.INT_LIT() != null) {
             int i = Integer.parseInt(ctx.INT_LIT().getSymbol().getText());
             Register nextRegister = registers.getRegister();
