@@ -306,6 +306,9 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         if(ctx.otherBinaryOper() != null) {
             return visit(ctx.otherBinaryOper());
         }
+        if(ctx.OPEN_PARENTHESES() != null) {
+            return visitExpr(ctx.expr(0));
+        }
         return null;
     }
 
