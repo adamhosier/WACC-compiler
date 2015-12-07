@@ -105,18 +105,20 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         StackSizeVisitor sizeVisitor = new StackSizeVisitor();
         stackOffset = sizeVisitor.getSize(ctx);
 
-        if(stackOffset != 0 && stackOffset <= 1024) state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset)));
-        if (stackOffset > 1024) {
+        if(stackOffset != 0 && stackOffset <= 1024) {
+            state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset)));
+
+            visitChildren(ctx);
+
+            state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset)));
+        } else if (stackOffset > 1024) {
             state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', 1024)));
             state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset - 1024)));
-        }
 
-        visitChildren(ctx);
+            visitChildren(ctx);
 
-        if(stackOffset != 0 && stackOffset <= 1024) state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset)));
-        if (stackOffset > 1024) {
-            state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', 1024)));
-            state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset - 1024)));
+            state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', 1024)));
+            state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset - 1024)));
         }
 
         // check if return register has been filled
