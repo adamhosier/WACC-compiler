@@ -1000,7 +1000,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
       state.add(new LabelInstruction("L" + (StatementCurrentLabel * 2)));
       Register reg = visitExpr(condition);
       state.add(new CompareInstruction(reg, new Operand2('#', 1)));
-      state.add(new BranchLinkEqualInstruction("L" + (StatementCurrentLabel * 2 + 1)));
+      state.add(new BranchEqualInstruction("L" + (StatementCurrentLabel * 2 + 1)));
       registers.free(reg);
       st.exitScope();
       
