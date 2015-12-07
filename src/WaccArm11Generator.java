@@ -161,7 +161,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
         int offset = 0;
         for(Pair<WaccType, String> param : params) {
-            offset += 4; // TODO: find size of type param.b
+            offset += getIdentTypeSize(param.b);
             st.setAddress(param.b, offset);
         }
 
