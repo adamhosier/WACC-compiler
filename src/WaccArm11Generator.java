@@ -61,7 +61,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
      */
     @Override
     public Register visitChildren(RuleNode tree) {
-        PriorityQueue<ParseTree> children = new PriorityQueue<ParseTree>(1, new Comparator<ParseTree>() {
+        PriorityQueue<ParseTree> children = new PriorityQueue<>(1, new Comparator<ParseTree>() {
             @Override
             public int compare(ParseTree p1, ParseTree p2) {
                 return compareWeights(p1, p2);
@@ -204,19 +204,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(str);
             registers.free(nextRegister);
         }
-//        String funcName = ((FuncCallContext) ctx.getParent()).ident().getText();
-//        List<Pair<WaccType, String>> params = st.getParamList(funcName);
-//
-//        for(int i = 0; i < params.size(); i++) {
-//            String paramName = params.get(i).b;
-//            Register exprReg = visit(ctx.expr(i));
-//
-//            StoreInstruction ins = new StoreInstruction(exprReg, Registers.sp, -1 * st.getAddress(paramName));
-//            ins.setPreIndex();
-//            state.add(ins);
-//
-//            registers.free(exprReg);
-//        }
         return null;
     }
 
@@ -493,7 +480,8 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
             if (expr !=  null) {
                 Register src = visit(expr);
-                isBoolOrChar = expr.BOOL_LIT() != null || expr.CHAR_LIT() != null;
+                typeSize = getIdentTypeSize(ident);
+                isBoolOrChar = typeSize == BOOL_CHAR_SIZE;
                 state.add(new StoreInstruction(src, Registers.sp, offset, isBoolOrChar));
                 registers.free(src);
             }

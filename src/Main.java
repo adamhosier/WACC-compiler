@@ -16,7 +16,7 @@ public class Main {
 
         if(args.length == 0) {
             //System.setIn(new FileInputStream("/tmp/prog"));
-            System.setIn(new FileInputStream("/home/adam/labs/wacclab/examples/valid/pairs/printPair.wacc"));
+            System.setIn(new FileInputStream("/home/adam/labs/wacclab/examples/valid/while/whileBoolFlip.wacc"));
             //System.setIn(new FileInputStream("/Users/Dyl/Documents/workspace/WACC-compiler/examples/valid/if/if1.wacc"));
             //System.setIn(new FileInputStream("/Users/cyrusvahidi/WACC-compiler/examples/valid/variables/manyVariables.wacc"));
         }
