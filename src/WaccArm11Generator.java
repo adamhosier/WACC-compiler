@@ -221,7 +221,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
         registers.freeReturnRegisters();
 
-        state.add(new LoadInstruction(Registers.r0, new Operand2(0)));
+        // state.add(new LoadInstruction(Registers.r0, new Operand2(0)));
         return null;
     }
 
