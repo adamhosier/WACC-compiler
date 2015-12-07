@@ -509,7 +509,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 Register heapPtr = visit(newPair);
                 state.add(new StoreInstruction(heapPtr, Registers.sp, offset));
                 state.add(new BranchLinkInstruction(Arm11Program.NULL_PTR_NAME));
-
+                registers.free(heapPtr);
             }
 
             if (pairElemRhs != null) {
@@ -518,7 +518,9 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 isBoolOrChar = typeSize == BOOL_CHAR_SIZE;
                 Register nextRegister = visit(pairElemRhs);
                 state.add(new LoadInstruction(nextRegister, new Operand2(nextRegister, 0), isBoolOrChar));
-                state.add(new StoreInstruction(nextRegister, Registers.sp, offset, isBoolOrChar));            }
+                state.add(new StoreInstruction(nextRegister, Registers.sp, offset, isBoolOrChar));
+                registers.free(nextRegister);
+            }
 
             if (funcCall != null) {
                 offset = st.getAddress(ident);
@@ -739,6 +741,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             Register nextRegister = visit(pairElem);
             state.add(new LoadInstruction(nextRegister, new Operand2(nextRegister, 0), isBoolOrChar));
             state.add(new StoreInstruction(nextRegister, Registers.sp, offset, isBoolOrChar));
+            registers.free(nextRegister);
         }
 
         if(funcCall != null) {
@@ -859,10 +862,10 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         if(expr.ident() != null) {
             exprType = st.lookupType(expr.ident().getText());
 
-            if(exprType.isArray()) {
+            if(exprType.isArray() || exprType.isPair()) {
                 state.add(new MoveInstruction(Registers.r0, msgReg));
                 state.add(new BranchLinkInstruction(Arm11Program.PRINT_REF_NAME));
-                if (!state.functionDeclared(Arm11Program.PRINT_REF_NAME)) {
+                if(!state.functionDeclared(Arm11Program.PRINT_REF_NAME)) {
                     state.addPrintRef();
                 }
             }
@@ -956,7 +959,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         Register nextRegister = visit(ctx.expr());
         state.add(new MoveInstruction(Registers.r0, nextRegister));
         state.add(new BranchLinkInstruction(Arm11Program.NULL_PTR_NAME));
-        state.addNullPtrError();
+        if(!state.functionDeclared(Arm11Program.NULL_PTR_NAME)) state.addNullPtrError();
         int offset = ctx.FST() != null ? FST_OFFSET : SND_OFFSET;
         state.add(new LoadInstruction(nextRegister, new Operand2(nextRegister, offset)));
         return nextRegister;
