@@ -21,6 +21,8 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     private Arm11Program state = new Arm11Program();
     private Registers registers = new Registers();
     private SymbolTable st;
+
+    // stack offsets used to calculate variable positions on the stack
     private int stackOffset;
     private int currOffset;
     private int funcOffset;
@@ -47,6 +49,9 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     private static final String MALLOC = "malloc";
 
+    /*
+     * Converts the program stored in [state] to a string of runnable assembly code
+     */
     public String generate() {
         return state.toCode();
     }
@@ -108,6 +113,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         StackSizeVisitor sizeVisitor = new StackSizeVisitor();
         stackOffset = sizeVisitor.getSize(ctx);
 
+        // deal with stak offsets of size greater than 1024
         if(stackOffset != 0 && stackOffset <= 1024) state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset)));
         if(stackOffset > 1024) {
             state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', 1024)));
@@ -127,7 +133,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new LoadInstruction(Registers.r0, new Operand2(0)));
         }
 
-
         state.endUserFunction();
         state.add(new TextDirective());
         state.add(new GlobalDirective("main"));
@@ -143,12 +148,17 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         st.setStackSize(ctx.ident().getText(), funcOffset);
         st.enterNextScope();
 
+        // add label and create function in state
         String ident = ctx.ident().getText();
         state.startFunction("f_" + ident);
+
         if(funcOffset != 0) state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', funcOffset)));
+
+        // add parameters and visit body
         if(ctx.paramList() != null) visit(ctx.paramList());
         visit(ctx.stat());
 
+        // end function
         state.endUserFunction();
         st.exitScope();
         return null;
@@ -159,6 +169,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         String funcName = ((FuncContext) ctx.getParent()).ident().getText();
         List<Pair<WaccType, String>> params = st.getParamList(funcName);
 
+        // calculate parameter offset and store it to symbol table for later use
         int offset = 0;
         for(Pair<WaccType, String> param : params) {
             offset += getIdentTypeSize(param.b);
@@ -169,21 +180,12 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     }
 
     @Override
-    public Register visitParam(ParamContext ctx) {
-        // only do this when the param is needed
-        //Register next = registers.getRegister();
-        //state.add(new LoadInstruction(next, Registers.sp, 4));
-        //st.setRegister(ctx.ident().getText(), next);
-        //return next;
-        return null;
-    }
-
-    @Override
     public Register visitFuncCall(FuncCallContext ctx) {
+        // visit arg list only if it exists
         if(ctx.argList() != null) visit(ctx.argList());
 
+        // branch to function and store result
         state.add(new BranchLinkInstruction("f_" + ctx.ident().getText()));
-        // int stackSize = st.getStackSize(ctx.ident().getText());
         if(funcOffset != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', -funcOffset)));
         funcOffset = 0;
         Register next = registers.getRegister();
@@ -193,7 +195,8 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitArgList(ArgListContext ctx) {
-        int offset;
+        // load each argument into its own register
+        int offset = 0;
         for (int i = ctx.expr().size() - 1; i >= 0; i--) {
             Register nextRegister = visit(ctx.expr(i));
             boolean isByte = state.getLastInstruction() instanceof MoveInstruction;
@@ -213,8 +216,9 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
         state.add(new MoveInstruction(Registers.r0, result));
         state.add(new BranchLinkInstruction("exit"));
-
         registers.freeReturnRegisters();
+
+        // if no exit code is supplied, just return with 0
         if (ctx.expr().ident() == null) {
             state.add(new LoadInstruction(Registers.r0, new Operand2(0)));
         }
@@ -302,10 +306,10 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             return visit(ctx.unaryOper());
         }
         if(ctx.boolBinaryOper() != null) {
-            return visit(ctx.boolBinaryOper());
+            return visitBinOp(ctx.boolBinaryOper());
         }
         if(ctx.otherBinaryOper() != null) {
-            return visit(ctx.otherBinaryOper());
+            return visitBinOp(ctx.otherBinaryOper());
         }
         if(ctx.OPEN_PARENTHESES() != null) {
             return visitExpr(ctx.expr(0));
@@ -315,13 +319,15 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitUnaryOper(UnaryOperContext ctx) {
+        // get antlr index of the operator
         int tokenIndex = ((TerminalNode) ctx.getChild(0)).getSymbol().getType();
 
+        // visit associated expression
         ExprContext expr = ((ExprContext) ctx.getParent()).expr(0);
         Register exprReg = visit(expr);
-
         registers.free(exprReg);
 
+        // store result in new register
         Register dest = registers.getRegister();
 
         switch(tokenIndex) {
@@ -347,25 +353,17 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         }
     }
 
-    @Override
-    public Register visitOtherBinaryOper(OtherBinaryOperContext ctx) {
-        return visitBinOp(ctx);
-    }
-
-    @Override
-    public Register visitBoolBinaryOper(BoolBinaryOperContext ctx) {
-        return visitBinOp(ctx);
-    }
-
     private Register visitBinOp(ParseTree ctx) {
+        // get antlr index of the operator
         int tokenIndex = ((TerminalNode) ctx.getChild(0)).getSymbol().getType();
 
+        // visit associated expressions
         Register lhs = visit(((ExprContext) ctx.getParent()).expr(0));
         Register rhs = visit(((ExprContext) ctx.getParent()).expr(1));
-
         registers.free(lhs);
         registers.free(rhs);
 
+        // store result in new register
         Register dest = registers.getRegister();
 
         switch(tokenIndex) {
@@ -450,16 +448,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     }
 
     @Override
-    public Register visitIntSign(IntSignContext ctx) {
-        return super.visitIntSign(ctx);
-    }
-
-    @Override
-    public Register visitAssignRhs(AssignRhsContext ctx) {
-        return visitChildren(ctx);
-    }
-
-    @Override
     public Register visitVarAssignment(VarAssignmentContext ctx) {
         IdentContext id = ctx.assignLhs().ident();
         ArrayElemContext arrayElem = ctx.assignLhs().arrayElem();
@@ -521,6 +509,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         }
 
         if (arrayElem != null) {
+            expr = ctx.assignRhs().expr();
             String ident = arrayElem.ident().getText();
             offset = st.getAddress(ident);
             boolean isBoolOrCharArray = getIdentTypeSize(ident) == BOOL_CHAR_SIZE;
@@ -551,6 +540,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         }
 
         if (pairElemLhs != null) {
+            expr = ctx.assignRhs().expr();
             Register nextRegister = visit(expr);
             Register pairElemRegister = visit(pairElemLhs);
             state.add(new StoreInstruction(nextRegister, pairElemRegister, 0));
@@ -584,17 +574,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         return 0;
     }
 
-
-    @Override
-    public Register visitType(TypeContext ctx) {
-        return super.visitType(ctx);
-    }
-
-    @Override
-    public Register visitCharacter(CharacterContext ctx) {
-        return super.visitCharacter(ctx);
-    }
-
     @Override
     public Register visitNewPair(NewPairContext ctx) {
         Register heapPtr = heapMalloc(PAIR_HEAP_SIZE);
@@ -623,13 +602,10 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         return next;
     }
 
-    @Override
-    public Register visitBaseType(BaseTypeContext ctx) {
-        return super.visitBaseType(ctx);
-    }
 
     @Override
     public Register visitScopeStat(ScopeStatContext ctx) {
+        // find size of scope
         StackSizeVisitor sizeVisitor = new StackSizeVisitor();
         int offset = sizeVisitor.getSize(ctx.stat());
 
@@ -648,18 +624,16 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitPairLiter(PairLiterContext ctx) {
+        // loads next register with "null"
         Register next = registers.getRegister();
         state.add(new LoadInstruction(next, new Operand2(0)));
         return next;
     }
 
-    @Override
-    public Register visitPairElemType(PairElemTypeContext ctx) {
-        return super.visitPairElemType(ctx);
-    }
 
     @Override
     public Register visitStat(StatContext ctx) {
+        // semicolon returns its statments in order, else just visit the children
         if(ctx.SEMICOLON() != null) {
             visit(ctx.stat(0));
             return visit(ctx.stat(1));
@@ -786,10 +760,14 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitReturnStat(ReturnStatContext ctx) {
+        // move return expression into return register
         Register returnReg = visit(ctx.expr());
         state.add(new MoveInstruction(Registers.r0, returnReg));
+
+        // reset stack pointer
         if(funcOffset != 0) state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', funcOffset)));
         funcOffset = 0;
+
         state.add(new PopInstruction(Registers.pc));
         registers.free(returnReg);
         return null;
@@ -809,6 +787,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
         Register lhsReg = visit(ctx.assignLhs());
 
+        // reading integers
         if(varType.equals(new WaccType(INT))) {
             state.add(new MoveInstruction(Registers.r0, lhsReg));
             state.add(new BranchLinkInstruction(Arm11Program.READ_INT_NAME));
@@ -818,6 +797,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             }
         }
 
+        // reading characters
         if(varType.equals(new WaccType(CHAR))) {
             state.add(new MoveInstruction(Registers.r0, lhsReg));
             state.add(new BranchLinkInstruction(Arm11Program.READ_CHAR_NAME));
@@ -844,8 +824,10 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     }
 
     private void visitPrint(ExprContext expr, boolean ln) {
+        // visit printint expression
         Register msgReg = visit(expr);
 
+        // find type of expression, and deal with reference cases
         WaccType exprType = null;
         if(expr.ident() != null) {
             exprType = st.lookupType(expr.ident().getText());
@@ -865,6 +847,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             exprType = WaccType.fromUnaryOp(((TerminalNode) expr.unaryOper().getChild(0)).getSymbol().getType());
         }
 
+        // print array elems
         if(expr.arrayElem() != null) {
             state.add(new MoveInstruction(Registers.r0, msgReg));
             String ident = expr.arrayElem().ident().getText();
@@ -944,31 +927,30 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitPairElem(PairElemContext ctx) {
+        // visit expression
         Register nextRegister = visit(ctx.expr());
+
+        // check for null pointer
         state.add(new MoveInstruction(Registers.r0, nextRegister));
         state.add(new BranchLinkInstruction(Arm11Program.NULL_PTR_NAME));
         if(!state.functionDeclared(Arm11Program.NULL_PTR_NAME)) state.addNullPtrError();
+
+        //  load fst or snd element
         int offset = ctx.FST() != null ? FST_OFFSET : SND_OFFSET;
         state.add(new LoadInstruction(nextRegister, new Operand2(nextRegister, offset)));
         return nextRegister;
     }
 
     @Override
-    public Register visitArrayElem(ArrayElemContext ctx) {
-        return super.visitArrayElem(ctx);
-    }
-
-    @Override
-    public Register visitEscapedChar(EscapedCharContext ctx) {
-        return super.visitEscapedChar(ctx);
-    }
-
-    @Override
     public Register visitFreeStat(FreeStatContext ctx) {
-        if(!state.functionDeclared(Arm11Program.FREE_PAIR_NAME)) state.addFreePair();
+        // visit expression
         Register expr = visit(ctx.expr());
+
+        // free the pair
         state.add(new MoveInstruction(Registers.r0, expr));
         state.add(new BranchLinkInstruction(Arm11Program.FREE_PAIR_NAME));
+        if(!state.functionDeclared(Arm11Program.FREE_PAIR_NAME)) state.addFreePair();
+
         registers.free(expr);
         return null;
     }
@@ -1051,17 +1033,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
       return null;
     }
 
-
-    @Override
-    public Register visitPairType(PairTypeContext ctx) {
-        return super.visitPairType(ctx);
-    }
-
-    @Override
-    public Register visitArrayLiter(ArrayLiterContext ctx) {
-        return super.visitArrayLiter(ctx);
-    }
-
     private Register visitArrayLiter(ArrayLiterContext ctx, int typeSize) {
         int arrLength = ctx.expr().size();
         int heapSize = arrLength * typeSize + INT_SIZE; // INT_SIZE IS TO STORE LENGTH OF ARRAY
@@ -1082,15 +1053,5 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         state.add(new StoreInstruction(lengthReg, heapPtr, 0));
         registers.free(lengthReg);
         return heapPtr;
-    }
-
-    @Override
-    public Register visitAssignLhs(AssignLhsContext ctx) {
-        return super.visitAssignLhs(ctx);
-    }
-
-    @Override
-    public Register visitComment(CommentContext ctx) {
-        return super.visitComment(ctx);
     }
 }
