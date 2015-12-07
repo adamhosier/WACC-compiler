@@ -508,6 +508,12 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 registers.free(heapPtr);
             }
 
+            NewPairContext newPair = ctx.assignRhs().newPair();
+            if (newPair != null) {
+                Register heapPtr = visit(newPair);
+                state.add(new StoreInstruction(heapPtr, Registers.sp, offset));
+            }
+
             FuncCallContext funcCall = ctx.assignRhs().funcCall();
             if (funcCall != null) {
                 offset = st.getAddress(ident);
@@ -720,6 +726,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             currOffset += PAIR_SIZE;
             offset = stackOffset - currOffset;
             state.add(new StoreInstruction(heapPtr, Registers.sp, offset));
+            registers.free(heapPtr);
         }
 
         if(ctx.assignRhs().funcCall() != null) {
