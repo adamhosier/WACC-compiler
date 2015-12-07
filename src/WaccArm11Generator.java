@@ -258,6 +258,9 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new LoadInstruction(nextRegister, new Operand2(label)));
             return nextRegister;
         }
+        if(ctx.pairLiter() != null) {
+            return visit(ctx.pairLiter());
+        }
         if(ctx.ident() != null) {
             String ident = ctx.ident().getText();
             int offset = st.getAddress(ident) - funcOffset;
@@ -529,7 +532,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             state.add(new AddInstruction(arrayReg, Registers.sp, new Operand2('#', offset)));
             for(int i = 0; i < arrayElem.expr().size(); i++) {
                 indexRegister = visit(arrayElem.expr(i));
-                System.out.println(i);
                 state.add(new LoadInstruction(arrayReg, new Operand2(arrayReg, true))); // offset 0 is length
                 addArrayBoundsCheck(indexRegister, arrayReg);
                 state.add(new AddInstruction(arrayReg, arrayReg, new Operand2('#', INT_SIZE))); // elems start after length
@@ -638,7 +640,9 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitPairLiter(PairLiterContext ctx) {
-        return super.visitPairLiter(ctx);
+        Register next = registers.getRegister();
+        state.add(new LoadInstruction(next, new Operand2(0)));
+        return next;
     }
 
     @Override
@@ -945,7 +949,12 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
     @Override
     public Register visitFreeStat(FreeStatContext ctx) {
-        return super.visitFreeStat(ctx);
+        if(!state.functionDeclared(Arm11Program.FREE_PAIR_NAME)) state.addFreePair();
+        Register expr = visit(ctx.expr());
+        state.add(new MoveInstruction(Registers.r0, expr));
+        state.add(new BranchLinkInstruction(Arm11Program.FREE_PAIR_NAME));
+        registers.free(expr);
+        return null;
     }
 
     @Override

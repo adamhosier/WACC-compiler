@@ -23,31 +23,21 @@ public class Arm11Program {
     public static final String OVERFLOW_NAME = "p_throw_overflow_error";
     public static final String DIVIDE_BY_ZERO_NAME = "p_check_divide_by_zero";
     public static final String RUNTIME_ERR_NAME = "p_throw_runtime_error";
+    public static final String FREE_PAIR_NAME = "p_free_pair" ;
     public static String decode(String input) {
         return input.replace("\\0", "\0").replace("\\b", "\b").replace("\\n", "\n").replace("\\f", "\f").replace("\\r", "\r").replace("\\\"", "\"").replace("\\'", "'").replace("\\\\", "\\");
     }
 
-
     Map<String, List<Instruction>> functions = new LinkedHashMap<>();
+
 
     Stack<List<Instruction>> scope = new Stack<>();
 
     List<Instruction> currentFunction;
 
     List<Instruction> globalCode = new LinkedList<>();
+
     int numMsgLabels = 0;
-    private String printStringFunc;
-    private String printlnFunc;
-    private String printTrueFunc;
-    private String printFalseFunc;
-    private String printIntFunc;
-    private String printRefFunc;
-    private String readIntFunc;
-    private String readCharFunc;
-    private String arrayBoundNegFunc;
-    private String arrayBoundTooLargeFunc;
-    private String overflowFunc;
-    private String divideByZeroFunc;
 
     public Arm11Program() {
         functions.put("global", globalCode);
@@ -84,7 +74,7 @@ public class Arm11Program {
     }
 
     public void addPrintString() {
-        printStringFunc = getMsgLabel("%.*s\\0");
+        String printStringFunc = getMsgLabel("%.*s\\0");
         startFunction(PRINT_STRING_NAME);
         add(new LoadInstruction(Registers.r1, new Operand2(Registers.r0, true)));
         add(new AddInstruction(Registers.r2, Registers.r0, new Operand2('#', 4)));
@@ -94,8 +84,8 @@ public class Arm11Program {
 
 
     public void addPrintBool() {
-        printTrueFunc = getMsgLabel("true\\0");
-        printFalseFunc = getMsgLabel("false\\0");
+        String printTrueFunc = getMsgLabel("true\\0");
+        String printFalseFunc = getMsgLabel("false\\0");
         startFunction(PRINT_BOOL_NAME);
         add(new CompareInstruction(Registers.r0, new Operand2('#', 0)));
         add(new LoadNotEqualInstruction(Registers.r0, new Operand2(printTrueFunc)));
@@ -104,7 +94,7 @@ public class Arm11Program {
     }
 
     public void addPrintInt() {
-        printIntFunc = getMsgLabel("%d\\0");
+        String printIntFunc = getMsgLabel("%d\\0");
         startFunction(PRINT_INT_NAME);
         add(new MoveInstruction(Registers.r1, Registers.r0));
         add(new LoadInstruction(Registers.r0, new Operand2(printIntFunc)));
@@ -112,7 +102,7 @@ public class Arm11Program {
     }
 
     public void addPrintRef() {
-        printRefFunc = getMsgLabel("%p\\0");
+        String printRefFunc = getMsgLabel("%p\\0");
         startFunction(PRINT_REF_NAME);
         add(new MoveInstruction(Registers.r1, Registers.r0));
         add(new LoadInstruction(Registers.r0, new Operand2(printRefFunc)));
@@ -121,14 +111,14 @@ public class Arm11Program {
 
 
     public void addPrintlnFunc() {
-        printlnFunc = addMsgLabel("\\0");
+        String printlnFunc = addMsgLabel("\\0");
         startFunction(PRINTLN_NAME);
         add(new LoadInstruction(Registers.r0, new Operand2(printlnFunc)));
         endPrintFunction("puts");
     }
 
     public void addReadInt() {
-        readIntFunc = getMsgLabel("%d\\0");
+        String readIntFunc = getMsgLabel("%d\\0");
         startFunction(READ_INT_NAME);
         add(new MoveInstruction(Registers.r1, Registers.r0));
         add(new LoadInstruction(Registers.r0, new Operand2(readIntFunc)));
@@ -136,7 +126,7 @@ public class Arm11Program {
     }
 
     public void addReadChar() {
-        readCharFunc = getMsgLabel(" %c\\0");
+        String readCharFunc = getMsgLabel(" %c\\0");
         startFunction(READ_CHAR_NAME);
         add(new MoveInstruction(Registers.r1, Registers.r0));
         add(new LoadInstruction(Registers.r0, new Operand2(readCharFunc)));
@@ -153,6 +143,7 @@ public class Arm11Program {
     }
 
     public void addOverflowError() {
+        String overflowFunc;
         overflowFunc = getMsgLabel("OverflowError: the result is too small/large to store in a 4-byte signed-integer.\\n");
         startErrorFunction(OVERFLOW_NAME);
         add(new LoadInstruction(Registers.r0, new Operand2(overflowFunc)));
@@ -160,7 +151,7 @@ public class Arm11Program {
     }
 
     public void addDivideByZeroError() {
-        divideByZeroFunc = getMsgLabel("DivideByZeroError: divide or modulo by zero\\n\\0");
+        String divideByZeroFunc = getMsgLabel("DivideByZeroError: divide or modulo by zero\\n\\0");
         startFunction(DIVIDE_BY_ZERO_NAME);
         add(new CompareInstruction(Registers.r1, new Operand2('#', 0)));
         add(new LoadEqualInstruction(Registers.r0, new Operand2(divideByZeroFunc)));
@@ -170,8 +161,8 @@ public class Arm11Program {
     }
 
     public void addArrayBoundError() {
-        arrayBoundNegFunc = getMsgLabel("ArrayIndexOutOfBoundsError: negative index\\n\\0");
-        arrayBoundTooLargeFunc = getMsgLabel("ArrayIndexOutOfBoundsError: index too large\\n\\0");
+        String arrayBoundNegFunc = getMsgLabel("ArrayIndexOutOfBoundsError: negative index\\n\\0");
+        String arrayBoundTooLargeFunc = getMsgLabel("ArrayIndexOutOfBoundsError: index too large\\n\\0");
         startFunction(ARRAY_BOUND_NAME);
         add(new CompareInstruction(Registers.r0, new Operand2('#', 0)));
         add(new LoadLessThanInstruction(Registers.r0, new Operand2(arrayBoundNegFunc)));
@@ -180,6 +171,24 @@ public class Arm11Program {
         add(new CompareInstruction(Registers.r0, new Operand2(Registers.r1)));
         add(new LoadCarrySetInstruction(Registers.r0, new Operand2(arrayBoundTooLargeFunc)));
         add(new BranchLinkCarrySetInstruction(RUNTIME_ERR_NAME));
+        if(!functionDeclared(RUNTIME_ERR_NAME)) addRuntimeErrFunction();
+        endFunction();
+    }
+
+    public void addFreePair() {
+        String freePairFunc = getMsgLabel("NullReferenceError: dereference a null reference\\n\\0");
+        startFunction(FREE_PAIR_NAME);
+        add(new CompareInstruction(Registers.r0, new Operand2('#', 0)));
+        add(new LoadEqualInstruction(Registers.r0, new Operand2(freePairFunc)));
+        add(new BranchEqualInstruction(RUNTIME_ERR_NAME));
+        add(new PushInstruction(Registers.r0));
+        add(new LoadInstruction(Registers.r0, new Operand2(Registers.r0, true)));
+        add(new BranchLinkInstruction("free"));
+        add(new LoadInstruction(Registers.r0, new Operand2(Registers.sp, true)));
+        add(new LoadInstruction(Registers.r0, new Operand2(Registers.r0, 4)));
+        add(new BranchLinkInstruction("free"));
+        add(new PopInstruction(Registers.r0));
+        add(new BranchLinkInstruction("free"));
         if(!functionDeclared(RUNTIME_ERR_NAME)) addRuntimeErrFunction();
         endFunction();
     }
@@ -196,12 +205,12 @@ public class Arm11Program {
         scope.push(currentFunction);
     }
 
+
     public void endFunction() {
         currentFunction.add(new PopInstruction(Registers.pc));
         scope.pop();
         currentFunction = scope.peek();
     }
-
 
     public void endUserFunction() {
         currentFunction.add(new PopInstruction(Registers.pc));

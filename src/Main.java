@@ -17,7 +17,7 @@ public class Main {
         if(args.length == 0) {
             //System.setIn(new FileInputStream("/tmp/prog"));
             //System.setIn(new FileInputStream("/home/adam/labs/wacclab/examples/valid/while/max.wacc"));
-            System.setIn(new FileInputStream("/home/adam/labs/wacclab/examples/valid/expressions/boolExpr1.wacc"));
+            System.setIn(new FileInputStream("/home/adam/labs/wacclab/examples/valid/runtimeErr/nullDereference/freeNull.wacc"));
             //System.setIn(new FileInputStream("/Users/Dyl/Documents/workspace/WACC-compiler/examples/valid/if/if1.wacc"));
         }
 
