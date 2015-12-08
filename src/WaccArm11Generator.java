@@ -782,7 +782,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         } else if(lhs.arrayElem() != null) {
             varType = st.lookupType(lhs.arrayElem().ident().getText());
         } else {
-            varType = WaccType.INVALID; //TODO
+            varType = WaccType.INVALID;
         }
 
         Register lhsReg = visit(ctx.assignLhs());
@@ -845,6 +845,15 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             exprType = WaccType.fromBinaryOp(((TerminalNode) expr.boolBinaryOper().getChild(0)).getSymbol().getType());
         } else if(expr.unaryOper() != null) {
             exprType = WaccType.fromUnaryOp(((TerminalNode) expr.unaryOper().getChild(0)).getSymbol().getType());
+        }
+
+        // print null pair
+        if(expr.pairLiter() != null) {
+            state.add(new MoveInstruction(Registers.r0, msgReg));
+            state.add(new BranchLinkInstruction(Arm11Program.PRINT_REF_NAME));
+            if(!state.functionDeclared(Arm11Program.PRINT_REF_NAME)) {
+                state.addPrintRef();
+            }
         }
 
         // print array elems
