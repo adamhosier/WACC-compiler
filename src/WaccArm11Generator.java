@@ -46,6 +46,8 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     private static final int ARRAY_SIZE = 4;
     private static final int BOOL_CHAR_SIZE = 1;
     private static final int WORD_SIZE = 4;
+    private static final int LSL_VALUE_2 = 2;
+    private static final int MAX_STACK_OFFSET = 1024;
 
     private static final String MALLOC = "malloc";
 
@@ -114,18 +116,22 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         stackOffset = sizeVisitor.getSize(ctx);
 
         // deal with stak offsets of size greater than 1024
-        if(stackOffset != 0 && stackOffset <= 1024) state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset)));
-        if(stackOffset > 1024) {
-            state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', 1024)));
-            state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset - 1024)));
+        if(stackOffset != 0 && stackOffset <= MAX_STACK_OFFSET) {
+            state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset)));
+        }
+        if(stackOffset > MAX_STACK_OFFSET) {
+            state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', MAX_STACK_OFFSET)));
+            state.add(new SubInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset - MAX_STACK_OFFSET)));
         }
 
         visitChildren(ctx);
 
-        if(stackOffset != 0 && stackOffset <= 1024) state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset)));
-        if(stackOffset > 1024) {
-            state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', 1024)));
-            state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset - 1024)));
+        if(stackOffset != 0 && stackOffset <= MAX_STACK_OFFSET) {
+            state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset)));
+        }
+        if(stackOffset > MAX_STACK_OFFSET) {
+            state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', MAX_STACK_OFFSET)));
+            state.add(new AddInstruction(Registers.sp, Registers.sp, new Operand2('#', stackOffset - MAX_STACK_OFFSET)));
         }
 
         // check if return register has been filled
@@ -294,7 +300,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                     /* gets the correct index, takes index expr
                        and multiplies by 4 (LSL #2) since reg indexes are 4 long
                     */
-                    state.add(new AddInstruction(arrayRegister, arrayRegister, new Operand2(indexRegister), 2));
+                    state.add(new AddInstruction(arrayRegister, arrayRegister, new Operand2(indexRegister), LSL_VALUE_2));
                 }
                 registers.free(indexRegister);
                 registers.freeReturnRegisters();
@@ -466,7 +472,7 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
             String ident = id.getText();
             offset = st.getAddress(ident);
 
-            if (expr !=  null) {
+           if (expr !=  null) {
                 Register src = visit(expr);
                 typeSize = getIdentTypeSize(ident);
                 isBoolOrChar = typeSize == BOOL_CHAR_SIZE;
@@ -523,19 +529,20 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
                 indexRegister = visit(arrayElem.expr(i));
                 state.add(new LoadInstruction(arrayReg, new Operand2(arrayReg, true))); // offset 0 is length
                 addArrayBoundsCheck(indexRegister, arrayReg);
-                state.add(new AddInstruction(arrayReg, arrayReg, new Operand2('#', INT_SIZE))); // elems start after length
+                // offset of indexes start after the length which is at 0
+                state.add(new AddInstruction(arrayReg, arrayReg, new Operand2('#', INT_SIZE)));
                 // index always multiplied by 4 for nested arrays
                 if (isBoolOrCharArray && i == arrayElem.expr().size() - 1 || isString) {
                     state.add(new AddInstruction(arrayReg, arrayReg, new Operand2(indexRegister)));
                 } else {
                     // multiply index by 4 when !isBoolOrChar
-                    state.add(new AddInstruction(arrayReg, arrayReg, new Operand2(indexRegister), 2));
+                    state.add(new AddInstruction(arrayReg, arrayReg, new Operand2(indexRegister), LSL_VALUE_2));
                 }
                 registers.free(indexRegister);
                 registers.freeReturnRegisters();
             }
 
-            state.add(new StoreInstruction(rhsRegister, arrayReg, 0, isBoolOrCharArray || isString)); // store the assigned value at index
+            state.add(new StoreInstruction(rhsRegister, arrayReg, 0, isBoolOrCharArray || isString));
             registers.free(rhsRegister);
         }
 
@@ -664,7 +671,6 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
             state.add(new StoreInstruction(src, Registers.sp, offset, isBoolOrChar));
 
-            // src register does not need to hold expr value anymore
             registers.free(src);
         }
         if (arrayLiter != null) { // array declaration
