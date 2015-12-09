@@ -2,7 +2,7 @@ from subprocess import Popen, call, PIPE, STDOUT
 import os
 import sys
 
-testdir = "examples/valid/runtimeErr" if len(sys.argv) == 1 else sys.argv[1]
+testdir = "examples/valid" if len(sys.argv) == 1 else sys.argv[1]
 numtests = 0
 numpasses = 0
 

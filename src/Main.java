@@ -40,6 +40,9 @@ public class Main {
         generator.setSymbolTable(analyser.getSymbolTable());
         generator.visit(tree);
 
+        Arm11Optimiser optimiser = new Arm11Optimiser();
+        optimiser.optimise(generator);
+
         System.out.print(generator.generate());
 
     }
