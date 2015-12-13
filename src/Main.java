@@ -16,7 +16,7 @@ public class Main {
 
         if(args.length == 0) {
             //System.setIn(new FileInputStream("/tmp/prog"));
-            System.setIn(new FileInputStream("/home/adam/labs/wacclab/examples/valid/pairs/printNull.wacc"));
+            System.setIn(new FileInputStream("/home/adam/labs/wacclab/examples/valid/if/if1.wacc"));
             //System.setIn(new FileInputStream("/Users/Dyl/Documents/workspace/WACC-compiler/examples/valid/if/if1.wacc"));
             //System.setIn(new FileInputStream("/Users/cyrusvahidi/WACC-compiler/examples/valid/variables/manyVariables.wacc"));
         }
@@ -40,8 +40,8 @@ public class Main {
         generator.setSymbolTable(analyser.getSymbolTable());
         generator.visit(tree);
 
-        Arm11Optimiser optimiser = new Arm11Optimiser();
-        optimiser.optimise(generator);
+        Arm11Optimiser optimiser = new Arm11Optimiser(generator);
+        optimiser.optimise();
 
         System.out.print(generator.generate());
 

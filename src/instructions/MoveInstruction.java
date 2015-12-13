@@ -28,6 +28,18 @@ public class MoveInstruction extends Instruction {
         isImmediate = true;
     }
 
+    public Register getSrc() {
+        return rSrc;
+    }
+
+    public Register getDest() {
+        return rDest;
+    }
+
+    public boolean isRegisterSrc() {
+        return !isImmediate && !isChar;
+    }
+
     @Override
     public String toCode() {
         return "MOV " + rDest + ", " + (isImmediate ? ("#" + (isChar ? "'" + cSrc + "'" : iSrc)) :  rSrc);

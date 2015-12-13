@@ -4,6 +4,8 @@ import util.Register;
 
 public class Operand2 {
 
+    public static Operand2 any = new Operand2();
+
     private boolean isReg = false;
     private boolean isImm = false;
     private Register reg;
@@ -49,9 +51,16 @@ public class Operand2 {
         isStr = true;
     }
 
+    public Operand2() {
+    }
+
     public void setAsr(int asr) {
         this.asr = true;
         this.asrVal = asr;
+    }
+
+    public Register getReg() {
+        return reg;
     }
 
     @Override

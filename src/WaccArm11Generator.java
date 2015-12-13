@@ -58,6 +58,10 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
         return state.toCode();
     }
 
+    public Arm11Program getProgram() {
+        return state;
+    }
+
     public void setSymbolTable(SymbolTable symbolTable) {
         this.st = symbolTable;
     }

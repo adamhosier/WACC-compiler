@@ -1,5 +1,6 @@
 package instructions;
 
+import sun.security.jgss.spi.GSSNameSpi;
 import util.Register;
 
 public class PopInstruction extends Instruction {
@@ -7,6 +8,10 @@ public class PopInstruction extends Instruction {
 
     public PopInstruction(Register r) {
         this.r = r;
+    }
+
+    public Register getReg() {
+        return r;
     }
 
     @Override

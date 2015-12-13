@@ -1,5 +1,7 @@
 package util;
 
+import instructions.Operand2;
+
 public class Register {
 
     private String name;
@@ -7,6 +9,8 @@ public class Register {
     public Register(String name) {
         this.name = name;
     }
+
+    public Register() {}
 
     public void setName(String name) {
         this.name = name;
@@ -24,6 +28,13 @@ public class Register {
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof Register && ((Register) obj).name.equals(this.name);
+        if(obj instanceof Register) {
+            return ((Register) obj).name.equals(this.name);
+        }
+        if(obj instanceof Operand2) {
+            Register other = ((Operand2) obj).getReg();
+            return other != null && other.equals(this);
+        }
+        return false;
     }
 }

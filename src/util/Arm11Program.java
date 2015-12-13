@@ -31,7 +31,6 @@ public class Arm11Program {
 
     Map<String, List<Instruction>> functions = new LinkedHashMap<>();
 
-
     Stack<List<Instruction>> scope = new Stack<>();
 
     List<Instruction> currentFunction;
@@ -44,6 +43,10 @@ public class Arm11Program {
         functions.put("global", globalCode);
         scope.push(globalCode);
         currentFunction = globalCode;
+    }
+
+    public Map<String, List<Instruction>> getCode() {
+        return functions;
     }
 
     public void add(Instruction ins) {
@@ -74,6 +77,7 @@ public class Arm11Program {
         return addMsgLabel(msg);
     }
 
+
     public void addPrintString() {
         String printStringFunc = getMsgLabel("%.*s\\0");
         startFunction(PRINT_STRING_NAME);
@@ -82,7 +86,6 @@ public class Arm11Program {
         add(new LoadInstruction(Registers.r0, new Operand2(printStringFunc)));
         endPrintFunction("printf");
     }
-
 
     public void addPrintBool() {
         String printTrueFunc = getMsgLabel("true\\0");
@@ -102,6 +105,7 @@ public class Arm11Program {
         endPrintFunction("printf");
     }
 
+
     public void addPrintRef() {
         String printRefFunc = getMsgLabel("%p\\0");
         startFunction(PRINT_REF_NAME);
@@ -109,7 +113,6 @@ public class Arm11Program {
         add(new LoadInstruction(Registers.r0, new Operand2(printRefFunc)));
         endPrintFunction("printf");
     }
-
 
     public void addPrintlnFunc() {
         String printlnFunc = addMsgLabel("\\0");
@@ -209,13 +212,13 @@ public class Arm11Program {
         currentFunction.add(new PushInstruction(Registers.lr));
     }
 
+
     private void startErrorFunction(String name) {
         currentFunction = new LinkedList<>();
         functions.put(name, currentFunction);
         currentFunction.add(new LabelInstruction(name));
         scope.push(currentFunction);
     }
-
 
     public void endFunction() {
         currentFunction.add(new PopInstruction(Registers.pc));
@@ -268,7 +271,6 @@ public class Arm11Program {
                 program.append(ins.toCode());
                 program.append('\n');
             }
-            //program.append('\n');
         }
 
         return program.toString();

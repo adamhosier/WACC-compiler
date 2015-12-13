@@ -34,6 +34,7 @@ public class Registers {
     public static Register sp  = new Register("sp");
     public static Register lr  = new Register("lr");
     public static Register pc  = new Register("pc");
+    public static Register any = new Register();
 
     private Map<String, Register> regs = new HashMap<>();
     private Set<Register> inUse = new HashSet<>();
