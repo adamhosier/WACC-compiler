@@ -26,6 +26,10 @@ public class LoadInstruction extends Instruction {
         return op;
     }
 
+    public Object getOffset() {
+        return op.getOffset();
+    }
+
     @Override
     public String toCode() {
         return (!isByte ?  "LDR " : "LDRSB ") + rDest + ", " + op;

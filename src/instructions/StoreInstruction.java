@@ -36,6 +36,10 @@ public class StoreInstruction extends Instruction {
         preIndex = true;
     }
 
+    public int getOffset() {
+        return offset;
+    }
+
     @Override
     public String toCode() {
         return (!isByte ? "STR " : "STRB ") + rSrc + ", "

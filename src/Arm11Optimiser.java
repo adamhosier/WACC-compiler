@@ -46,7 +46,8 @@ public class Arm11Optimiser {
                 if(curr instanceof StoreInstruction && next instanceof LoadInstruction) {
                     StoreInstruction store = (StoreInstruction) curr;
                     LoadInstruction load = (LoadInstruction) next;
-                    if(store.getDest().equals(load.getSrc()) && store.getSrc().equals(load.getDest())) {
+                    if(store.getDest().equals(load.getSrc()) && store.getSrc().equals(load.getDest())
+                            && store.getOffset() == load.getOffset()) {
                         func.add(store);
                         continue;
                     }

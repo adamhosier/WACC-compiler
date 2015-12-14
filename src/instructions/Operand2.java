@@ -63,6 +63,10 @@ public class Operand2 {
         return reg;
     }
 
+    public int getOffset() {
+        return offset;
+    }
+
     @Override
     public String toString() {
         if(isReg) {
