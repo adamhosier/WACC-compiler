@@ -1,20 +1,16 @@
-import antlr.WaccParser.ExprContext;
-import antlr.WaccParser.StatContext;
-import antlr.WaccParserBaseVisitor;
 import instructions.*;
+import util.*;
 
+import antlr.WaccParserBaseVisitor;
 import org.antlr.v4.runtime.misc.Pair;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.RuleNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
-
-import util.*;
+import static antlr.WaccParser.*;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
-
-import static antlr.WaccParser.*;
 
 public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
@@ -102,11 +98,11 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     }
 
     /*
-     * TODO
      * Calculates how many registers [tree] will use in code generation
      */
     public int weight(ParseTree tree) {
-        return 0;
+        WeightAnalyser analyser = new WeightAnalyser();
+        return analyser.visit(tree);
     }
 
     ////////////// VISITOR METHODS /////////////
