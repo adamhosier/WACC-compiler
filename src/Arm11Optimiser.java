@@ -48,7 +48,7 @@ public class Arm11Optimiser {
                     LoadInstruction load = (LoadInstruction) next;
                     if(store.getDest().equals(load.getSrc()) && store.getSrc().equals(load.getDest())
                             && store.getOffset() == load.getOffset()) {
-                        func.add(store);
+                        func.add(i, store);
                         continue;
                     }
                 }
@@ -58,7 +58,7 @@ public class Arm11Optimiser {
                     PopInstruction p1 = (PopInstruction) curr;
                     PopInstruction p2 = (PopInstruction) next;
                     if(p1.getReg().equals(Registers.sp) && p2.getReg().equals(Registers.sp)) {
-                        func.add(p1);
+                        func.add(i, p1);
                         continue;
                     }
                 }
