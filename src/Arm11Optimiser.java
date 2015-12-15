@@ -33,14 +33,14 @@ public class Arm11Optimiser {
                 // OPTIMISATIONS
 
                 // load to reg, then instantly move to another reg
-                if(curr instanceof LoadInstruction && next instanceof MoveInstruction) {
-                    LoadInstruction load = (LoadInstruction) curr;
-                    MoveInstruction move = (MoveInstruction) next;
-                    if(load.getDest().equals(move.getSrc())) {
-                        func.add(i, new LoadInstruction(move.getDest(), load.getSrc()));
-                        continue;
-                    }
-                }
+                //if(curr instanceof LoadInstruction && next instanceof MoveInstruction) {
+                //    LoadInstruction load = (LoadInstruction) curr;
+                //    MoveInstruction move = (MoveInstruction) next;
+                //    if(load.getDest().equals(move.getSrc())) {
+                //        func.add(i, new LoadInstruction(move.getDest(), load.getSrc()));
+                //        continue;
+                //    }
+                //}
 
                 // store reg then load back to it
                 if(curr instanceof StoreInstruction && next instanceof LoadInstruction) {
