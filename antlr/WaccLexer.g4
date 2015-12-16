@@ -19,6 +19,7 @@ IF : 'if' ;
 THEN : 'then' ;
 ELSE : 'else' ;
 FI : 'fi' ;
+FOR : 'for' ;
 WHILE : 'while' ;
 DO : 'do' ;
 DONE : 'done' ;
@@ -46,6 +47,7 @@ NOT : '!' ;
 LEN : 'len' ;
 ORD : 'ord' ;
 CHR : 'chr' ;
+INC : '++' ;
 //binary
 MULT : '*' ;
 DIV : '/' ;
@@ -111,6 +113,8 @@ IDENT
   | UPPERCASE
   | DIGIT)*
   ;
+
+INC_IDENT : IDENT INC ;
 
 // literals
 INT_LIT : (PLUS | MINUS)? DIGIT+ ;
