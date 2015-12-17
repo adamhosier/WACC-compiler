@@ -26,6 +26,7 @@ stat
   | whileStat
   | scopeStat
   | <assoc=right> stat SEMICOLON stat
+  | ifStatSmall
   ;
 
 varDeclaration : type ident EQUALS assignRhs;
@@ -39,6 +40,7 @@ printlnStat : PRINTLN expr;
 ifStat : IF expr THEN stat ELSE stat FI;
 whileStat : WHILE expr DO stat DONE;
 scopeStat : BEGIN stat END;
+ifStatSmall : IF expr THEN stat FI;
 
 assignLhs
   : ident

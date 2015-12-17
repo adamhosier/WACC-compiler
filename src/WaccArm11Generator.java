@@ -1047,6 +1047,47 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
       
       return null;
     }
+    
+    @Override
+    public Register visitIfStatSmall(IfStatSmallContext ctx) {  
+      
+      /* 'If' label start logic. Creates a new numbered 'if' label
+       *  and finds the max 'if' label for the current scope 
+       */
+      StatementCurrentLabel++;
+      StatementMaxForScope = Math.max(StatementCurrentLabel, StatementMaxForScope);
+      
+      // Code Generation 
+      ExprContext condition = (ExprContext) ctx.getChild(1);
+      Register reg = visitExpr(condition);
+      state.add(new CompareInstruction(reg, new Operand2('#',0)));
+      state.add(new BranchLinkEqualInstruction("L" + (StatementCurrentLabel * 2)));
+      
+      registers.free(reg);
+      st.enterNextScope();
+      reg = visitStat(ctx.stat());
+      state.add(new BranchInstruction("L" + (StatementCurrentLabel * 2 + 1)));
+      st.exitScope();
+      
+      registers.free(reg);
+      st.enterNextScope();
+      state.add(new LabelInstruction("L" + (StatementCurrentLabel * 2)));
+     
+      
+      state.add(new LabelInstruction("L" + (StatementCurrentLabel * 2 + 1)));
+      
+      /* 'If' label end logic. When the scope has been completed it
+       *  sets up the labels so the next 'if' scope will start from the 
+       *  right number
+       */
+      StatementCurrentLabel--;
+      if (StatementCurrentLabel == StatementScopeStartingVal) {
+        StatementCurrentLabel = StatementMaxForScope;
+        StatementScopeStartingVal = StatementMaxForScope;
+      }
+      
+      return null;
+    }
 
     private Register visitArrayLiter(ArrayLiterContext ctx, int typeSize) {
         int arrLength = ctx.expr().size();

@@ -237,6 +237,23 @@ public class WaccSyntaxAnalyser extends WaccParserBaseVisitor<WaccType> {
         return typesMatch(stat1, stat2) ? stat1 : WaccType.INVALID;
     }
 
+    public WaccType visitIfStatSmall(IfStatContext ctx) {
+      outputln("Visited if small");
+
+      //check condition is a valid bool expr
+      WaccType conditional = visit(ctx.expr());
+      if(!typesMatch(BOOL, conditional)) {
+          errorHandler.typeMismatch(ctx, new WaccType(BOOL), conditional);
+      }
+
+      //visit statements in new scopes
+      st.newScope();
+      WaccType stat = visit(ctx.stat(0));
+      st.endScope();
+
+      return stat;
+  }
+
     @Override
     public WaccType visitWhileStat(WhileStatContext ctx) {
         outputln("Visited while");
