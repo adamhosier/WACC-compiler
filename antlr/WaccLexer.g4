@@ -48,6 +48,7 @@ LEN : 'len' ;
 ORD : 'ord' ;
 CHR : 'chr' ;
 INC : '++' ;
+DEC: '--' ;
 //binary
 MULT : '*' ;
 DIV : '/' ;
@@ -115,6 +116,7 @@ IDENT
   ;
 
 INC_IDENT : IDENT INC ;
+DEC_IDENT : IDENT DEC ;
 
 // literals
 INT_LIT : (PLUS | MINUS)? DIGIT+ ;

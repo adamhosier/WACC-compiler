@@ -1,16 +1,16 @@
-import instructions.*;
-import util.*;
-
 import antlr.WaccParserBaseVisitor;
+import instructions.*;
 import org.antlr.v4.runtime.misc.Pair;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.RuleNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import static antlr.WaccParser.*;
+import util.*;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
+
+import static antlr.WaccParser.*;
 
 public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
@@ -1004,6 +1004,11 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
       
       return null;
       
+    }
+
+    @Override
+    public Register visitForStat(ForStatContext ctx) {
+        return null;
     }
 
     @Override

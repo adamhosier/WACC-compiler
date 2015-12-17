@@ -32,7 +32,7 @@ stat
 
 varDeclaration : type ident EQUALS assignRhs;
 varAssignment : assignLhs EQUALS assignRhs;
-incrementStat : INC_IDENT ;
+incrementStat : INC_IDENT | DEC_IDENT ;
 readStat : READ assignLhs;
 freeStat : FREE expr;
 returnStat : RETURN expr;
@@ -40,7 +40,7 @@ exitStat : EXIT expr;
 printStat : PRINT expr;
 printlnStat : PRINTLN expr;
 ifStat : IF expr THEN stat ELSE stat FI;
-forStat: FOR OPEN_PARENTHESES stat SEMICOLON expr SEMICOLON stat CLOSE_PARENTHESES;
+forStat: FOR OPEN_PARENTHESES stat SEMICOLON expr SEMICOLON stat CLOSE_PARENTHESES DO stat DONE;
 whileStat : WHILE expr DO stat DONE;
 scopeStat : BEGIN stat END;
 

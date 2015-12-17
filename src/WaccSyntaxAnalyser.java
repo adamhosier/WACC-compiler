@@ -1,9 +1,9 @@
-import static antlr.WaccParser.*;
-
 import antlr.WaccParserBaseVisitor;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import util.SymbolTable;
 import util.WaccType;
+
+import static antlr.WaccParser.*;
 
 public class WaccSyntaxAnalyser extends WaccParserBaseVisitor<WaccType> {
 
@@ -160,6 +160,21 @@ public class WaccSyntaxAnalyser extends WaccParserBaseVisitor<WaccType> {
     }
 
     @Override
+    public WaccType visitIncrementStat(IncrementStatContext ctx) {
+        String ident = ctx.INC_IDENT().getText().substring(0, ctx.INC_IDENT().getText().length() - 2);
+
+        if(!st.isDeclared(ident)) {
+            errorHandler.symbolNotFound(ctx, ident);
+        }
+
+        WaccType type = st.lookupType(ident);
+        if(!typesMatch(INT, type)) {
+            errorHandler.typeMismatch(ctx, new WaccType(INT), type);
+        }
+        return null;
+    }
+
+    @Override
     public WaccType visitReadStat(ReadStatContext ctx) {
         outputln("Visited read");
         WaccType assignment = visit(ctx.assignLhs());
@@ -235,6 +250,29 @@ public class WaccSyntaxAnalyser extends WaccParserBaseVisitor<WaccType> {
 
         //deal with conditional branches with return statements
         return typesMatch(stat1, stat2) ? stat1 : WaccType.INVALID;
+    }
+
+    @Override
+    public WaccType visitForStat(ForStatContext ctx) {
+        if (ctx.stat(0).varDeclaration() == null && ctx.stat(0).varAssignment() == null) {
+            errorHandler.nonValidStatement(ctx.stat(0));
+        } else {
+            visit(ctx.stat(0));
+        }
+        WaccType conditional = visit(ctx.expr());
+        if(!typesMatch(BOOL, conditional)) {
+            errorHandler.typeMismatch(ctx, new WaccType(BOOL), conditional);
+        }
+        if (ctx.stat(1).varAssignment() == null && ctx.stat(1).incrementStat() == null) {
+            errorHandler.nonValidStatement(ctx.stat(0));
+        } else {
+            visit(ctx.stat(1));
+        }
+        st.newScope();
+        WaccType stat = visit(ctx.stat(2));
+        st.endScope();
+
+        return stat;
     }
 
     @Override
