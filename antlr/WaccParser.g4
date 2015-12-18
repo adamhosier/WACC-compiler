@@ -29,6 +29,7 @@ stat
   | scopeStat
   | <assoc=right> stat SEMICOLON stat
   | ifStatSmall
+  | doWhileStat
   ;
 
 varDeclaration : type ident EQUALS assignRhs;
@@ -45,6 +46,7 @@ forStat: FOR OPEN_PARENTHESES stat SEMICOLON expr SEMICOLON stat CLOSE_PARENTHES
 whileStat : WHILE expr DO stat DONE;
 scopeStat : BEGIN stat END;
 ifStatSmall : IF expr THEN stat FI;
+doWhileStat : DO stat WHILE expr DONE;
 
 assignLhs
   : ident

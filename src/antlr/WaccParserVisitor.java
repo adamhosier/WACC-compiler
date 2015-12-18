@@ -18,6 +18,12 @@ public interface WaccParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitReadStat(@NotNull WaccParser.ReadStatContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link WaccParser#doWhileStat}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDoWhileStat(@NotNull WaccParser.DoWhileStatContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link WaccParser#argList}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -89,6 +95,12 @@ public interface WaccParserVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitIfStatSmall(@NotNull WaccParser.IfStatSmallContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link WaccParser#incrementStat}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIncrementStat(@NotNull WaccParser.IncrementStatContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link WaccParser#baseType}.
 	 * @param ctx the parse tree
@@ -191,6 +203,12 @@ public interface WaccParserVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitFreeStat(@NotNull WaccParser.FreeStatContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link WaccParser#forStat}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitForStat(@NotNull WaccParser.ForStatContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link WaccParser#pairType}.
 	 * @param ctx the parse tree

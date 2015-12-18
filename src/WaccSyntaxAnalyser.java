@@ -253,7 +253,8 @@ public class WaccSyntaxAnalyser extends WaccParserBaseVisitor<WaccType> {
         return typesMatch(stat1, stat2) ? stat1 : WaccType.INVALID;
     }
 
-    public WaccType visitIfStatSmall(IfStatContext ctx) {
+    @Override
+    public WaccType visitIfStatSmall(IfStatSmallContext ctx) {
       outputln("Visited if small");
 
       //check condition is a valid bool expr
@@ -264,7 +265,7 @@ public class WaccSyntaxAnalyser extends WaccParserBaseVisitor<WaccType> {
 
       //visit statements in new scopes
       st.newScope();
-      WaccType stat = visit(ctx.stat(0));
+      WaccType stat = visit(ctx.stat());
       st.endScope();
 
       return stat;
@@ -295,6 +296,25 @@ public class WaccSyntaxAnalyser extends WaccParserBaseVisitor<WaccType> {
 
     @Override
     public WaccType visitWhileStat(WhileStatContext ctx) {
+        outputln("Visited while");
+
+        //check condition is a valid bool expr
+        WaccType conditional = visit(ctx.expr());
+        if(!typesMatch(BOOL, conditional)){
+            errorHandler.typeMismatch(ctx, new WaccType(BOOL), conditional);
+        }
+
+        //visit statement in its own scope
+        st.newScope();
+        WaccType stat = visit(ctx.stat());
+        st.endScope();
+
+        //deal with return statements in while loops
+        return stat;
+    }
+    
+    @Override
+    public WaccType visitDoWhileStat(DoWhileStatContext ctx) {
         outputln("Visited while");
 
         //check condition is a valid bool expr

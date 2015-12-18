@@ -1025,6 +1025,41 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
       return null;
       
     }
+    
+    @Override
+    public Register visitDoWhileStat(DoWhileStatContext ctx) {
+      /* 'While' label start logic. Creates a new numbered 'while' label
+       *  and finds the max 'while' label for the current scope 
+       */
+      StatementCurrentLabel++;
+      StatementMaxForScope = Math.max(StatementCurrentLabel, StatementMaxForScope);
+      
+      // Code generation
+      ExprContext condition = (ExprContext) ctx.expr();
+      
+      st.enterNextScope();
+      state.add(new LabelInstruction("L" + ((StatementCurrentLabel * 2) + 1)));
+      visitStat(ctx.stat());
+      state.add(new LabelInstruction("L" + (StatementCurrentLabel * 2)));
+      Register reg = visitExpr(condition);
+      state.add(new CompareInstruction(reg, new Operand2('#', 1)));
+      state.add(new BranchEqualInstruction("L" + (StatementCurrentLabel * 2 + 1)));
+      registers.free(reg);
+      st.exitScope();
+      
+      /* 'While' label end logic. When the scope has been completed it
+       *  sets up the labels so the next 'while' scope will start from the 
+       *  right number
+       */
+      StatementCurrentLabel--;
+      if (StatementCurrentLabel == StatementScopeStartingVal) {
+        StatementCurrentLabel = StatementMaxForScope;
+        StatementScopeStartingVal = StatementMaxForScope;
+      }
+      
+      return null;
+      
+    }
 
     @Override
     public Register visitForStat(ForStatContext ctx) {
