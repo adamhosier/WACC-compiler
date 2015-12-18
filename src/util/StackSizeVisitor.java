@@ -50,6 +50,13 @@ public class StackSizeVisitor extends WaccParserBaseVisitor<Void> {
             return null;
         }
 
+        if (ctx.forStat() != null) {
+            // add initialiser to stack offset
+            if (ctx.forStat().stat(0).varDeclaration() != null) {
+                getSizeOfType(ctx.forStat().stat(0).varDeclaration().type());
+            }
+        }
+
         // proceed to calculate size if stat is not new scope
         visitChildren(ctx);
         return null;

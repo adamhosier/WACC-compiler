@@ -161,7 +161,8 @@ public class WaccSyntaxAnalyser extends WaccParserBaseVisitor<WaccType> {
 
     @Override
     public WaccType visitIncrementStat(IncrementStatContext ctx) {
-        String ident = ctx.INC_IDENT().getText().substring(0, ctx.INC_IDENT().getText().length() - 2);
+        String text = ctx.INC_IDENT().getText();
+        String ident = text.substring(0, text.length() - 2);
 
         if(!st.isDeclared(ident)) {
             errorHandler.symbolNotFound(ctx, ident);
