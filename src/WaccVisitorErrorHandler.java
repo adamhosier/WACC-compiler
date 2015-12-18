@@ -92,6 +92,11 @@ public class WaccVisitorErrorHandler {
         throwError(ctx, msg, ERROR_CODE_SYNTAX);
     }
 
+    public void nonValidStatement(ParseTree ctx) {
+        String msg = "for loop initialiser is not a valid statement";
+        throwError(ctx, msg, ERROR_CODE_SYNTAX);
+    }
+
     private String getLine(ParseTree ctx) {
         int line = 0;
         int pos = 0;

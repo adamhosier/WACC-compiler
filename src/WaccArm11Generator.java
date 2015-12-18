@@ -1,16 +1,16 @@
-import instructions.*;
-import util.*;
-
 import antlr.WaccParserBaseVisitor;
+import instructions.*;
 import org.antlr.v4.runtime.misc.Pair;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.RuleNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import static antlr.WaccParser.*;
+import util.*;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
+
+import static antlr.WaccParser.*;
 
 public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
 
@@ -780,6 +780,26 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
     }
 
     @Override
+    public Register visitIncrementStat(IncrementStatContext ctx) {
+        String text = ctx.INC_IDENT().getText();
+        String ident = text.substring(0, text.length() - 2);
+        String operator = text.substring(text.length() - 2, text.length());
+
+        int offset = st.getAddress(ident);
+        boolean isBoolOrChar = getIdentTypeSize(ident) == BOOL_CHAR_SIZE;
+        Register nextRegister = registers.getRegister();
+        state.add(new LoadInstruction(nextRegister, new Operand2(registers.sp, offset), isBoolOrChar));
+        if (operator.equals("++")) {
+            state.add(new AddInstruction(nextRegister, nextRegister, new Operand2(1)));
+        } else {
+            state.add(new SubInstruction(nextRegister, nextRegister, new Operand2(1)));
+        }
+        state.add(new StoreInstruction(nextRegister, registers.sp, offset));
+        registers.free(nextRegister);
+        return null;
+    }
+
+    @Override
     public Register visitReadStat(ReadStatContext ctx) {
         WaccType varType;
         AssignLhsContext lhs = ctx.assignLhs();
@@ -1004,6 +1024,28 @@ public class WaccArm11Generator extends WaccParserBaseVisitor<Register> {
       
       return null;
       
+    }
+
+    @Override
+    public Register visitForStat(ForStatContext ctx) {
+        StatementCurrentLabel++;
+        StatementMaxForScope = Math.max(StatementCurrentLabel, StatementMaxForScope);
+
+        state.add(new BranchInstruction("L" + (StatementCurrentLabel * 2)));
+
+        st.enterNextScope();
+        visitStat(ctx.stat(0));
+        state.add(new LabelInstruction("L" + ((StatementCurrentLabel * 2) + 1)));
+        visitStat(ctx.stat(2));
+        state.add(new LabelInstruction("L" + (StatementCurrentLabel * 2)));
+        visitStat(ctx.stat(1));
+        Register reg = visitExpr(ctx.expr());
+        state.add(new CompareInstruction(reg, new Operand2('#', 1)));
+        state.add(new BranchEqualInstruction("L" + (StatementCurrentLabel * 2 + 1)));
+        registers.free(reg);
+        st.exitScope();
+
+        return null;
     }
 
     @Override
